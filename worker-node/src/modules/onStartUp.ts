@@ -73,9 +73,13 @@ function validateEnvironmentVariables(): void {
 
   const requiredEnvVars = [
     'PATH_MP3_SOUND_FILES',
+    'PATH_MP3_OUTPUT',
+    'PATH_PROJECT_RESOURCES',
     'PATH_QUEUER',
     'PATH_DATABASE',
     'NAME_DB',
+    'API_KEY_ELEVEN_LABS',
+    'PATH_SAVED_ELEVENLABS_AUDIO_MP3_OUTPUT',
   ];
 
   const missingVars: string[] = [];

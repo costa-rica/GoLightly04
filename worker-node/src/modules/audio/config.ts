@@ -1,7 +1,6 @@
 export interface AudioRuntimeConfig {
   projectResourcesPath: string;
   outputDirectory: string;
-  csvPath?: string;
 }
 
 export function getAudioRuntimeConfig(): AudioRuntimeConfig {
@@ -18,6 +17,5 @@ export function getAudioRuntimeConfig(): AudioRuntimeConfig {
   return {
     outputDirectory,
     projectResourcesPath,
-    csvPath: process.env.PATH_AND_FILENAME_AUDIO_CSV_FILE || process.env.PATH_AUDIO_CSV_FILE,
   };
 }

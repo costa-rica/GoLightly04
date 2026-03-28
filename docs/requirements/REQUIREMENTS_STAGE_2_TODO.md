@@ -85,16 +85,16 @@ Phase 4 closeout:
 
 ## Phase 5: refactor `worker-node` orchestration and endpoints
 
-- [ ] Replace child-process execution in `worker-node` with direct internal module or local package calls.
-- [ ] Remove dependence on `PATH_TO_ELEVENLABS_SERVICE` and `PATH_TO_AUDIO_FILE_CONCATENATOR` for production workflow execution.
-- [ ] Remove or rename remaining environment variables that only existed to support child-process orchestration once the internal workflow contract is in place.
-- [ ] Remove stdout parsing as a workflow contract.
-- [ ] Update the workflow orchestrator to use explicit returned values from the absorbed ElevenLabs and audio modules.
-- [ ] Update queue and status transitions so they still reflect the real workflow stages clearly.
-- [ ] Preserve one primary production endpoint surface for meditation generation.
-- [ ] Keep or add independent verification endpoints only if they materially help testing and do not complicate the production interface.
-- [ ] Review validation, file handling, and database writes after the workflow refactor.
-- [ ] Verify that `worker-node` creates the final meditation output using only monorepo-internal code paths.
+- [x] Replace child-process execution in `worker-node` with direct internal module or local package calls.
+- [x] Remove dependence on `PATH_TO_ELEVENLABS_SERVICE` and `PATH_TO_AUDIO_FILE_CONCATENATOR` for production workflow execution.
+- [x] Remove or rename remaining environment variables that only existed to support child-process orchestration once the internal workflow contract is in place.
+- [x] Remove stdout parsing as a workflow contract.
+- [x] Update the workflow orchestrator to use explicit returned values from the absorbed ElevenLabs and audio modules.
+- [x] Update queue and status transitions so they still reflect the real workflow stages clearly.
+- [x] Preserve one primary production endpoint surface for meditation generation.
+- [x] Keep or add independent verification endpoints only if they materially help testing and do not complicate the production interface.
+- [x] Review validation, file handling, and database writes after the workflow refactor.
+- [x] Verify that `worker-node` creates the final meditation output using only monorepo-internal code paths.
 
 Phase 5 closeout:
 

@@ -136,7 +136,7 @@ export async function getAllQueuedJobs(): Promise<QueueRecord[]> {
  * @returns Object with counts by status
  */
 export async function getQueueCounts(): Promise<Record<string, number>> {
-  const statuses: QueueStatus[] = ['queued', 'started', 'elevenlabs', 'concatenator', 'done'];
+  const statuses: QueueStatus[] = ['queued', 'started', 'elevenlabs', 'concatenator', 'done', 'failed'];
 
   const counts: Record<string, number> = {};
 

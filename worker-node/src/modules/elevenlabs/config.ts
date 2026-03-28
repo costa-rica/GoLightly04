@@ -4,7 +4,6 @@ export const DEFAULT_SPEED = 0.85;
 export interface ElevenLabsRuntimeConfig {
   apiKey: string;
   outputDirectory: string;
-  csvDirectory?: string;
   defaultVoiceId: string;
   defaultSpeed: number;
 }
@@ -25,7 +24,6 @@ export function getElevenLabsRuntimeConfig(): ElevenLabsRuntimeConfig {
   return {
     apiKey,
     outputDirectory,
-    csvDirectory: process.env.PATH_USER_ELEVENLABS_CSV_FILES,
     defaultVoiceId:
       process.env.DEFAULT_ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID,
     defaultSpeed: parseFloat(

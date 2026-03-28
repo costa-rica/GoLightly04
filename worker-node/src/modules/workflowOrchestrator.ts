@@ -1,5 +1,6 @@
 import logger from "./logger";
 import {
+  ElevenLabsGeneratedFile,
   MeditationRequestBody,
   MeditationArrayElement,
   WorkflowResult,
@@ -8,8 +9,8 @@ import { parseCsvFile, parseMeditationArray } from "./csvParser";
 import { addJobToQueue, updateJobStatus } from "./queueManager";
 import { generateJobFilename } from "./fileManager";
 import { writeJobCsv } from "./csvWriter";
-import { runElevenLabsWorkflow } from "./elevenLabsHandler";
-import { runAudioConcatenatorWorkflow } from "./audioConcatenatorHandler";
+import { runInternalElevenLabsWorkflow } from "./elevenLabsHandler";
+import { runInternalAudioConcatenatorWorkflow } from "./audioConcatenatorHandler";
 import { saveMeditationToDatabase } from "./meditationsManager";
 import {
   saveElevenLabsFilesToDatabase,
@@ -19,6 +20,12 @@ import {
   findSoundFilesInMeditation,
   linkMeditationToSoundFiles,
 } from "./soundFilesManager";
+
+function collectGeneratedFilePaths(
+  generatedFiles: ElevenLabsGeneratedFile[],
+): string[] {
+  return generatedFiles.map((file) => file.filePath);
+}
 
 /**
  * Main workflow orchestrator for meditation creation
@@ -83,7 +90,10 @@ export async function orchestrateMeditationCreation(
     logger.info("Step 4-7: Running ElevenLabs workflow");
     await updateJobStatus(queueId, "elevenlabs");
 
-    const elevenLabsFiles = await runElevenLabsWorkflow(meditationElements);
+    const generatedElevenLabsFiles = await runInternalElevenLabsWorkflow(
+      meditationElements,
+    );
+    const elevenLabsFiles = collectGeneratedFilePaths(generatedElevenLabsFiles);
 
     logger.info(
       `ElevenLabs workflow completed with ${elevenLabsFiles.length} files`,
@@ -105,10 +115,16 @@ export async function orchestrateMeditationCreation(
     logger.info("Step 8-11: Running AudioConcatenator workflow");
     await updateJobStatus(queueId, "concatenator");
 
-    const finalFilePath = await runAudioConcatenatorWorkflow(
+    const audioWorkflowResult = await runInternalAudioConcatenatorWorkflow(
       meditationElements,
       elevenLabsFiles,
     );
+
+    if (!audioWorkflowResult.success || !audioWorkflowResult.generatedAudio) {
+      throw new Error(audioWorkflowResult.error || "Audio workflow failed");
+    }
+
+    const finalFilePath = audioWorkflowResult.generatedAudio.outputPath;
 
     logger.info(`AudioConcatenator workflow completed: ${finalFilePath}`);
 
@@ -153,7 +169,7 @@ export async function orchestrateMeditationCreation(
     // Update queue status to reflect error if queueId exists
     if (queueId) {
       try {
-        // We could add an 'error' or 'failed' status, but for now leave it at current status
+        await updateJobStatus(queueId, "failed");
         logger.error(`Workflow failed at queue ${queueId}`);
       } catch (updateError) {
         logger.error("Failed to update queue status after error:", updateError);

@@ -4,7 +4,8 @@ export type QueueStatus =
   | "started"
   | "elevenlabs"
   | "concatenator"
-  | "done";
+  | "done"
+  | "failed";
 
 // Queue record interface (matches database schema)
 export interface QueueRecord {
