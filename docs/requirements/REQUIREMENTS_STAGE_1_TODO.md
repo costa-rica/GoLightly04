@@ -62,14 +62,14 @@ Phase 3 closeout:
 
 ## Phase 4: absorb `web`
 
-- [ ] Copy the `GoLightly02NextJs` source into `web/` while preserving the `src/` structure.
-- [ ] Create or update `web/package.json` for monorepo workspace usage.
-- [ ] Confirm the Next.js app builds correctly inside the monorepo.
-- [ ] Normalize public environment variables and create or update `web/.env.example`.
-- [ ] Update API base URL configuration so `web` points at the absorbed `api` service.
-- [ ] Review the existing browser logging flow and document the stage 1 web logging decision separately from the Node Winston requirement.
-- [ ] Add baseline verification for app boot and the most important auth or API-facing flows if a web test framework is introduced in stage 1.
-- [ ] Record any web-specific testing work that must be deferred if stage 1 does not introduce a frontend test stack.
+- [x] Copy the `GoLightly02NextJs` source into `web/` while preserving the `src/` structure.
+- [x] Create or update `web/package.json` for monorepo workspace usage.
+- [x] Confirm the Next.js app builds correctly inside the monorepo.
+- [x] Normalize public environment variables and create or update `web/.env.example`.
+- [x] Update API base URL configuration so `web` points at the absorbed `api` service.
+- [x] Review the existing browser logging flow and document the stage 1 web logging decision separately from the Node Winston requirement.
+- [x] Add baseline verification for app boot and the most important auth or API-facing flows if a web test framework is introduced in stage 1.
+- [x] Record any web-specific testing work that must be deferred if stage 1 does not introduce a frontend test stack.
 
 Phase 4 closeout:
 
