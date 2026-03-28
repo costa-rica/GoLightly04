@@ -50,6 +50,89 @@ export interface AudioConcatenatorCsvRow {
   pause_duration: string | number;
 }
 
+export interface FileNameComponents {
+  voiceNamePart: string;
+  textPart: string;
+  timestamp: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+  voiceName?: string;
+}
+
+export interface ElevenLabsVoice {
+  voice_id: string;
+  name: string;
+  category?: string;
+  description?: string;
+  labels?: Record<string, string>;
+  preview_url?: string;
+  available_for_tiers?: string[];
+  settings?: {
+    stability?: number;
+    similarity_boost?: number;
+  };
+}
+
+export interface TTSRequest {
+  text: string;
+  model_id: string;
+  voice_settings: {
+    speed: number;
+  };
+}
+
+export interface GeneratedAudioFile {
+  fileName: string;
+  filePath: string;
+  outputDirectory: string;
+}
+
+export interface ElevenLabsRequest {
+  id: string | number;
+  text: string;
+  voiceId: string;
+  speed: number;
+}
+
+export interface ElevenLabsBatchRow {
+  id: string;
+  text: string;
+  voice_id?: string;
+  speed?: string;
+}
+
+export interface ElevenLabsGeneratedFile extends GeneratedAudioFile {
+  id: string | number;
+  text: string;
+  voiceId: string;
+  voiceName: string;
+  speed: number;
+}
+
+export interface ElevenLabsGeneratedFileResult {
+  id: string | number;
+  success: boolean;
+  generatedFile?: ElevenLabsGeneratedFile;
+  error?: string;
+}
+
+export interface ElevenLabsBatchResult {
+  success: boolean;
+  successCount: number;
+  failureCount: number;
+  results: ElevenLabsGeneratedFileResult[];
+}
+
+export interface ElevenLabsBatchProcessOptions {
+  requests: ElevenLabsRequest[];
+  outputDirectory?: string;
+  defaultVoiceId?: string;
+  defaultSpeed?: number;
+}
+
 // Child process result
 export interface ChildProcessResult {
   success: boolean;

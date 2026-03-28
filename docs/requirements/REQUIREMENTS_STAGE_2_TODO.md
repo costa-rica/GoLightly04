@@ -47,14 +47,14 @@ Phase 2 closeout:
 
 ## Phase 3: absorb ElevenLabs logic as internal code
 
-- [ ] Copy the `RequesterElevenLabs01` source into the chosen stage 2 location while preserving the useful `src/` structure.
-- [ ] Remove direct dependence on standalone repo layout and CLI-only entry assumptions where they are no longer needed.
-- [ ] Convert the useful request, validation, parsing, and file-save logic into internal module or local package exports.
-- [ ] Define explicit function contracts for text-to-speech requests, batch processing, generated file metadata, and error results.
-- [ ] Review logging and env handling for the absorbed ElevenLabs logic and align it with the monorepo strategy.
-- [ ] Create or update `.env.example` documentation for any retained ElevenLabs-specific variables.
-- [ ] Replace stdout-dependent success reporting with returned structured values that `worker-node` can consume directly.
-- [ ] Add baseline tests for the absorbed ElevenLabs module or local package.
+- [x] Copy the `RequesterElevenLabs01` source into the chosen stage 2 location while preserving the useful `src/` structure.
+- [x] Remove direct dependence on standalone repo layout and CLI-only entry assumptions where they are no longer needed.
+- [x] Convert the useful request, validation, parsing, and file-save logic into internal module or local package exports.
+- [x] Define explicit function contracts for text-to-speech requests, batch processing, generated file metadata, and error results.
+- [x] Review logging and env handling for the absorbed ElevenLabs logic and align it with the monorepo strategy.
+- [x] Create or update `.env.example` documentation for any retained ElevenLabs-specific variables.
+- [x] Replace stdout-dependent success reporting with returned structured values that `worker-node` can consume directly.
+- [x] Add baseline tests for the absorbed ElevenLabs module or local package.
 
 Phase 3 closeout:
 

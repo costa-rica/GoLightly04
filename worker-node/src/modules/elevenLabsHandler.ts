@@ -7,6 +7,14 @@ import {
 } from "../types";
 import { writeElevenLabsCsv, generateCsvFilename } from "./csvWriter";
 import { spawnChildProcess, buildChildProcessEnv } from "./childProcessSpawner";
+import {
+  ElevenLabsBatchResult,
+  ElevenLabsRequest,
+} from "../types";
+import {
+  parseCSVFile as parseInternalElevenLabsCsvFile,
+  processElevenLabsBatch,
+} from "./elevenlabs";
 
 /**
  * Generate ElevenLabs CSV from parsed meditation data
@@ -157,4 +165,49 @@ export async function runElevenLabsWorkflow(
   );
 
   return filePaths;
+}
+
+export function createInternalElevenLabsRequests(
+  meditationElements: MeditationArrayElement[],
+): ElevenLabsRequest[] {
+  return meditationElements
+    .filter((element) => element.text && element.text.trim() !== "")
+    .map((element) => ({
+      id: element.id,
+      text: element.text!.trim(),
+      voiceId: element.voice_id?.toString().trim() || "",
+      speed:
+        element.speed === undefined || element.speed === ""
+          ? Number.NaN
+          : Number(element.speed),
+    }));
+}
+
+export async function runInternalElevenLabsWorkflow(
+  meditationElements: MeditationArrayElement[],
+): Promise<ElevenLabsBatchResult> {
+  const requests = createInternalElevenLabsRequests(meditationElements);
+
+  return processElevenLabsBatch({
+    requests,
+  });
+}
+
+export async function parseElevenLabsCsvForInternalWorkflow(
+  fileName: string,
+): Promise<ElevenLabsBatchResult> {
+  const csvDirectory = process.env.PATH_USER_ELEVENLABS_CSV_FILES;
+  if (!csvDirectory) {
+    throw new Error("PATH_USER_ELEVENLABS_CSV_FILES environment variable is not set");
+  }
+
+  const rows = await parseInternalElevenLabsCsvFile(fileName, csvDirectory);
+  const requests: ElevenLabsRequest[] = rows.map((row) => ({
+    id: row.id,
+    text: row.text,
+    voiceId: row.voice_id || "",
+    speed: row.speed ? Number(row.speed) : Number.NaN,
+  }));
+
+  return processElevenLabsBatch({ requests });
 }
