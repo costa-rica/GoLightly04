@@ -41,16 +41,16 @@ Phase 2 closeout:
 
 ## Phase 3: absorb `api`
 
-- [ ] Copy the `GoLightly02API` source into `api/` while preserving the `src/` structure.
-- [ ] Create or update `api/package.json` for monorepo workspace usage.
-- [ ] Replace the old `file:../GoLightly02Db` dependency with the absorbed `db-models` workspace package.
-- [ ] Update import paths and package references so `api` no longer depends on the old standalone repo layout.
-- [ ] Create or update `api/tsconfig.json` and confirm the project builds inside the monorepo.
-- [ ] Review logging against `docs/requirements/LOGGING_NODE_JS_V07.md` and remove or replace remaining conflicting `console.*` usage.
-- [ ] Normalize environment-variable loading and create or update `api/.env.example`.
-- [ ] Add Jest and TypeScript test configuration following `docs/requirements/TEST_IMPLEMENTATION_NODE.md`.
-- [ ] Add baseline tests for app boot plus critical route contracts.
-- [ ] Verify that `api` can boot and use the absorbed `db-models` package correctly.
+- [x] Copy the `GoLightly02API` source into `api/` while preserving the `src/` structure.
+- [x] Create or update `api/package.json` for monorepo workspace usage.
+- [x] Replace the old `file:../GoLightly02Db` dependency with the absorbed `db-models` workspace package.
+- [x] Update import paths and package references so `api` no longer depends on the old standalone repo layout.
+- [x] Create or update `api/tsconfig.json` and confirm the project builds inside the monorepo.
+- [x] Review logging against `docs/requirements/LOGGING_NODE_JS_V07.md` and remove or replace remaining conflicting `console.*` usage.
+- [x] Normalize environment-variable loading and create or update `api/.env.example`.
+- [x] Add Jest and TypeScript test configuration following `docs/requirements/TEST_IMPLEMENTATION_NODE.md`.
+- [x] Add baseline tests for app boot plus critical route contracts.
+- [x] Verify that `api` can boot and use the absorbed `db-models` package correctly.
 
 Phase 3 closeout:
 
