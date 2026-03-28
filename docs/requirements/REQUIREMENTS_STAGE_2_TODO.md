@@ -4,17 +4,17 @@ This file tracks the stage 2 implementation work for `worker-node` and the absor
 
 ## Phase 1: stage 2 scope and architecture decisions
 
-- [ ] Confirm stage 2 scope is limited to `worker-node`, the absorbed ElevenLabs logic, and the absorbed audio-concatenation logic.
-- [ ] Decide whether the absorbed service logic should live inside `worker-node` as internal modules or as separate internal local packages.
-- [ ] Define the final package and import strategy for all stage 2 code.
-- [ ] Define the replacement design for the current child-process workflow.
-- [ ] Define the explicit TypeScript contracts for generated audio files, workflow inputs, workflow results, and error handling.
-- [ ] Decide which existing CLI-only behaviors should remain internal utilities versus which should be removed during absorption.
-- [ ] Define the environment-variable strategy for `worker-node` and any new internal packages or modules created in stage 2.
-- [ ] Inventory the current stage 2 environment variables and classify them as keep, rename, or remove.
-- [ ] Mark `PATH_TO_ELEVENLABS_SERVICE` and `PATH_TO_AUDIO_FILE_CONCATENATOR` for removal once the absorbed logic no longer shells out to external repos.
-- [ ] Review whether child-process-era variables such as `NAME_CHILD_PROCESS_ELEVENLABS`, `NAME_CHILD_PROCESS_AUDIO_FILE_CONCATENATOR`, `PATH_USER_ELEVENLABS_CSV_FILES`, `PATH_AUDIO_CSV_FILE`, and `PATH_SAVED_ELEVENLABS_AUDIO_MP3_OUTPUT` should remain, be renamed, or be removed.
-- [ ] Record the production endpoint strategy, including the one primary route surface and any optional test-only endpoints.
+- [x] Confirm stage 2 scope is limited to `worker-node`, the absorbed ElevenLabs logic, and the absorbed audio-concatenation logic.
+- [x] Decide whether the absorbed service logic should live inside `worker-node` as internal modules or as separate internal local packages.
+- [x] Define the final package and import strategy for all stage 2 code.
+- [x] Define the replacement design for the current child-process workflow.
+- [x] Define the explicit TypeScript contracts for generated audio files, workflow inputs, workflow results, and error handling.
+- [x] Decide which existing CLI-only behaviors should remain internal utilities versus which should be removed during absorption.
+- [x] Define the environment-variable strategy for `worker-node` and any new internal packages or modules created in stage 2.
+- [x] Inventory the current stage 2 environment variables and classify them as keep, rename, or remove.
+- [x] Mark `PATH_TO_ELEVENLABS_SERVICE` and `PATH_TO_AUDIO_FILE_CONCATENATOR` for removal once the absorbed logic no longer shells out to external repos.
+- [x] Review whether child-process-era variables such as `NAME_CHILD_PROCESS_ELEVENLABS`, `NAME_CHILD_PROCESS_AUDIO_FILE_CONCATENATOR`, `PATH_USER_ELEVENLABS_CSV_FILES`, `PATH_AUDIO_CSV_FILE`, and `PATH_SAVED_ELEVENLABS_AUDIO_MP3_OUTPUT` should remain, be renamed, or be removed.
+- [x] Record the production endpoint strategy, including the one primary route surface and any optional test-only endpoints.
 
 Phase 1 closeout:
 
