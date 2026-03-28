@@ -52,4 +52,4 @@ The projects to be absorbed will be:
 
 The first stage should be to assess the absorbption of the web (/Users/nick/Documents/GoLightly02NextJs), api (/Users/nick/Documents/GoLightly02API) and db-models (/Users/nick/Documents/GoLightly02Db) projects.
 
-The next stage would be to assess the aborption of the
+The next stage would be to assess the aborption of these applications and services. Make a file called docs/requirements/FIRST_INSTRUCTIONS_ASSESSMENT_20260328.md. Include an executive summary that is ideally less than 200 words with the feasilibility the difficulty and touch on the concerns that this endeavor might have. use bullets and be concise in this section. The engineer / agent can elaborate in later parts of the document.
