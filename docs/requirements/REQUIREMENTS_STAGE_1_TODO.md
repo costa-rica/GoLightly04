@@ -22,14 +22,14 @@ Phase 1 closeout:
 
 ## Phase 2: absorb `db-models`
 
-- [ ] Copy the `GoLightly02Db` source into `db-models/` while preserving the `src/` structure.
-- [ ] Create or update `db-models/package.json` for monorepo workspace usage.
-- [ ] Create or update `db-models/tsconfig.json` and confirm the package builds in isolation.
-- [ ] Replace the old external package identity with the final monorepo package name or alias.
-- [ ] Verify that the package still exports the full model surface and initialization entry points needed by consumers.
-- [ ] Review `db-models` startup and connection behavior and remove or replace `console.log` usage that should not remain.
-- [ ] Add baseline verification for connection, exports, and model initialization.
-- [ ] Create or update `db-models/.env.example` if the package requires documented environment variables.
+- [x] Copy the `GoLightly02Db` source into `db-models/` while preserving the `src/` structure.
+- [x] Create or update `db-models/package.json` for monorepo workspace usage.
+- [x] Create or update `db-models/tsconfig.json` and confirm the package builds in isolation.
+- [x] Replace the old external package identity with the final monorepo package name or alias.
+- [x] Verify that the package still exports the full model surface and initialization entry points needed by consumers.
+- [x] Review `db-models` startup and connection behavior and remove or replace `console.log` usage that should not remain.
+- [x] Add baseline verification for connection, exports, and model initialization.
+- [x] Create or update `db-models/.env.example` if the package requires documented environment variables.
 
 Phase 2 closeout:
 

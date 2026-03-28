@@ -1,5 +1,28 @@
 {
   "name": "@golightly/db-models",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "description": "TypeScript Sequelize SQLite database package for GoLightly03",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "npm run build && node --test tests/**/*.test.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "sequelize": "^6.35.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "tar": ">=7.5.7"
+  }
 }
