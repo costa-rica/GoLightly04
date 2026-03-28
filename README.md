@@ -1,6 +1,6 @@
 # GoLightly03
 
-GoLightly03 is a lightweight multi-project monorepo for the stage 1 absorbed GoLightly applications. The current stage 1 scope includes the shared `db-models` package, the `api` service, and the `web` Next.js app.
+GoLightly03 is a lightweight multi-project monorepo for the absorbed GoLightly applications. The current repo includes the shared `db-models` package, the `api` service, the `web` Next.js app, and the `worker-node` stage 2 workflow service.
 
 ## Setup
 
@@ -10,14 +10,14 @@ GoLightly03 is a lightweight multi-project monorepo for the stage 1 absorbed GoL
    - `db-models/.env.example`
    - `api/.env.example`
    - `web/.env.example`
-3. Build the stage 1 projects from the repo root:
+3. Build the repo projects from the repo root:
    - `npm run build`
 
 ## Usage
 
-Use the root scripts when you want to work across the stage 1 monorepo:
+Use the root scripts when you want to work across the monorepo:
 
-1. Build all stage 1 projects:
+1. Build all repo projects:
    - `npm run build`
 2. Run tests for projects that currently use tests:
    - `npm test`
@@ -30,19 +30,21 @@ Use project-specific commands when you want to focus on one application:
    - `npm --prefix api run dev`
 2. Run the web app in development:
    - `npm --prefix web run dev`
-3. Build only `db-models`:
+3. Run the worker-node app in development:
+   - `npm --prefix worker-node run dev`
+4. Build only `db-models`:
    - `npm --prefix db-models run build`
 
 ## Project Structure
 
 ```text
 GoLightly03/
-├── api/                         # Stage 1 Express API project
-├── db-models/                   # Stage 1 shared Sequelize package
+├── api/                         # Express API project
+├── db-models/                   # Shared Sequelize package
 ├── docs/
 │   └── requirements/           # Requirements, assessments, and TODO files
-├── web/                        # Stage 1 Next.js project
-├── worker-node/                # Reserved for stage 2 absorption work
+├── web/                        # Next.js project
+├── worker-node/                # Stage 2 workflow service
 ├── package.json                # Root coordination scripts
 ├── tsconfig.base.json          # Shared TypeScript defaults
 └── README.md
@@ -62,6 +64,8 @@ Environment variables are documented per project instead of through a single roo
    - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
    - `NEXT_PUBLIC_MODE`
    - `PORT`
+4. `worker-node/.env.example`
+   - worker, logging, database, ElevenLabs, and audio-processing variables
 
 ## References
 

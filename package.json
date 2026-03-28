@@ -2,10 +2,10 @@
   "name": "golightly03",
   "private": true,
   "scripts": {
-    "build": "npm --prefix db-models run build && npm --prefix api run build && npm --prefix web run build",
-    "test": "npm --prefix db-models test && npm --prefix api test",
+    "build": "npm --prefix db-models run build && npm --prefix api run build && npm --prefix web run build && npm --prefix worker-node run build",
+    "test": "npm --prefix db-models test && npm --prefix api test && npm --prefix worker-node test",
     "lint": "npm --prefix web run lint",
-    "typecheck": "npm --prefix db-models run typecheck && npm --prefix api run typecheck && npm --prefix web run typecheck",
+    "typecheck": "npm --prefix db-models run typecheck && npm --prefix api run typecheck && npm --prefix web run typecheck && npm --prefix worker-node run typecheck",
     "clean": "npm --prefix db-models run clean"
   }
 }
