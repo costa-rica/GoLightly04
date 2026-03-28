@@ -133,6 +133,34 @@ export interface ElevenLabsBatchProcessOptions {
   defaultSpeed?: number;
 }
 
+export interface AudioSequenceStep {
+  id: string;
+  audio_file_name_and_path?: string;
+  pause_duration?: number;
+}
+
+export interface AudioWorkflowInputStep {
+  id: string | number;
+  audioFilePath?: string;
+  pauseDuration?: number;
+}
+
+export interface AudioProcessingResult {
+  outputPath: string;
+  audioLengthSeconds: number;
+}
+
+export interface GeneratedMeditationAudio extends AudioProcessingResult {
+  outputFileName: string;
+  outputDirectory: string;
+}
+
+export interface AudioWorkflowResult {
+  success: boolean;
+  generatedAudio?: GeneratedMeditationAudio;
+  error?: string;
+}
+
 // Child process result
 export interface ChildProcessResult {
   success: boolean;

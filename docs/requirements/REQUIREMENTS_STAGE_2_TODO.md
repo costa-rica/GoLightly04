@@ -66,14 +66,14 @@ Phase 3 closeout:
 
 ## Phase 4: absorb audio-concatenation logic as internal code
 
-- [ ] Copy the `AudioFileConcatenator01` source into the chosen stage 2 location while preserving the useful `src/` structure.
-- [ ] Remove direct dependence on standalone repo layout and standalone entrypoint assumptions where they are no longer needed.
-- [ ] Convert the useful CSV, validation, FFmpeg, and output-generation logic into internal module or local package exports.
-- [ ] Define explicit function contracts for audio-sequence input, generated output metadata, and workflow errors.
-- [ ] Review logging and env handling for the absorbed audio logic and align it with the monorepo strategy.
-- [ ] Create or update `.env.example` documentation for any retained audio-processing variables.
-- [ ] Replace stdout-dependent output discovery with returned structured values that `worker-node` can consume directly.
-- [ ] Add baseline tests for the absorbed audio module or local package.
+- [x] Copy the `AudioFileConcatenator01` source into the chosen stage 2 location while preserving the useful `src/` structure.
+- [x] Remove direct dependence on standalone repo layout and standalone entrypoint assumptions where they are no longer needed.
+- [x] Convert the useful CSV, validation, FFmpeg, and output-generation logic into internal module or local package exports.
+- [x] Define explicit function contracts for audio-sequence input, generated output metadata, and workflow errors.
+- [x] Review logging and env handling for the absorbed audio logic and align it with the monorepo strategy.
+- [x] Create or update `.env.example` documentation for any retained audio-processing variables.
+- [x] Replace stdout-dependent output discovery with returned structured values that `worker-node` can consume directly.
+- [x] Add baseline tests for the absorbed audio module or local package.
 
 Phase 4 closeout:
 
