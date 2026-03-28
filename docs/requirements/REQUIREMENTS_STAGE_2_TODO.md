@@ -26,16 +26,16 @@ Phase 1 closeout:
 
 ## Phase 2: absorb `worker-node` base application
 
-- [ ] Copy the `GoLightly02Queuer` source into `worker-node/` while preserving the `src/` structure.
-- [ ] Create or update `worker-node/package.json` for local monorepo usage.
-- [ ] Replace the old `file:../GoLightly02Db` dependency with the absorbed `db-models` local package reference.
-- [ ] Create or update `worker-node/tsconfig.json` and confirm the project builds inside the monorepo.
-- [ ] Review startup, logging, and env handling against `docs/requirements/LOGGING_NODE_JS_V07.md`.
-- [ ] Remove or replace logging patterns that should not remain after absorption.
-- [ ] Normalize `worker-node` environment-variable loading and create or update `worker-node/.env.example`.
-- [ ] Reduce `worker-node/.env.example` to the retained stage 2 runtime contract and remove variables that only existed for external microservice paths.
-- [ ] Preserve the existing primary route shape while documenting the changes needed for internalized workflows.
-- [ ] Verify that the absorbed `worker-node` can boot inside the monorepo with the absorbed `db-models` package.
+- [x] Copy the `GoLightly02Queuer` source into `worker-node/` while preserving the `src/` structure.
+- [x] Create or update `worker-node/package.json` for local monorepo usage.
+- [x] Replace the old `file:../GoLightly02Db` dependency with the absorbed `db-models` local package reference.
+- [x] Create or update `worker-node/tsconfig.json` and confirm the project builds inside the monorepo.
+- [x] Review startup, logging, and env handling against `docs/requirements/LOGGING_NODE_JS_V07.md`.
+- [x] Remove or replace logging patterns that should not remain after absorption.
+- [x] Normalize `worker-node` environment-variable loading and create or update `worker-node/.env.example`.
+- [x] Reduce `worker-node/.env.example` to the retained stage 2 runtime contract and remove variables that only existed for external microservice paths.
+- [x] Preserve the existing primary route shape while documenting the changes needed for internalized workflows.
+- [x] Verify that the absorbed `worker-node` can boot inside the monorepo with the absorbed `db-models` package.
 
 Phase 2 closeout:
 

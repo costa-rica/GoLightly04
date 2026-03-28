@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+
+# Environment files
+.env
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local runtime scratch space
+tmp/
+logs/
