@@ -7,6 +7,20 @@ describe("workflowOrchestrator", () => {
   });
 
   it("uses the internal stage 2 workflows and completes successfully", async () => {
+    const updateJobStatus = jest.fn(async () => undefined);
+    const saveElevenLabsFilesToDatabase = jest.fn(async () => [9]);
+    const linkMeditationToElevenLabsFiles = jest.fn(async () => [1]);
+    const saveMeditationToDatabase = jest.fn(async () => ({ id: 14 }));
+
+    jest.doMock("../../src/modules/logger", () => ({
+      __esModule: true,
+      default: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+      },
+    }));
     jest.doMock("../../src/modules/csvParser", () => ({
       parseCsvFile: jest.fn(),
       parseMeditationArray: jest.fn(() => [
@@ -15,7 +29,7 @@ describe("workflowOrchestrator", () => {
     }));
     jest.doMock("../../src/modules/queueManager", () => ({
       addJobToQueue: jest.fn(async () => ({ id: 77 })),
-      updateJobStatus: jest.fn(async () => undefined),
+      updateJobStatus,
     }));
     jest.doMock("../../src/modules/fileManager", () => ({
       generateJobFilename: jest.fn(() => "job_user1_20260328_120000.csv"),
@@ -49,11 +63,11 @@ describe("workflowOrchestrator", () => {
       })),
     }));
     jest.doMock("../../src/modules/meditationsManager", () => ({
-      saveMeditationToDatabase: jest.fn(async () => ({ id: 14 })),
+      saveMeditationToDatabase,
     }));
     jest.doMock("../../src/modules/elevenLabsFilesManager", () => ({
-      saveElevenLabsFilesToDatabase: jest.fn(async () => [9]),
-      linkMeditationToElevenLabsFiles: jest.fn(async () => [1]),
+      saveElevenLabsFilesToDatabase,
+      linkMeditationToElevenLabsFiles,
     }));
     jest.doMock("../../src/modules/soundFilesManager", () => ({
       findSoundFilesInMeditation: jest.fn(async () => []),
@@ -74,11 +88,38 @@ describe("workflowOrchestrator", () => {
       queueId: 77,
       finalFilePath: "/tmp/final.mp3",
     });
+    expect(updateJobStatus.mock.calls).toEqual([
+      [77, "started"],
+      [77, "elevenlabs"],
+      [77, "concatenator"],
+      [77, "done"],
+    ]);
+    expect(saveElevenLabsFilesToDatabase).toHaveBeenCalledWith(
+      ["/tmp/voice.mp3"],
+      [{ id: "1", text: "hello", voice_id: "voice-1", speed: "0.9" }],
+    );
+    expect(linkMeditationToElevenLabsFiles).toHaveBeenCalledWith(14, [9]);
+    expect(saveMeditationToDatabase).toHaveBeenCalledWith(
+      "/tmp/final.mp3",
+      1,
+      undefined,
+      undefined,
+    );
   });
 
   it("marks the queue as failed when an internal workflow fails", async () => {
     const updateJobStatus = jest.fn(async () => undefined);
+    const loggerError = jest.fn();
 
+    jest.doMock("../../src/modules/logger", () => ({
+      __esModule: true,
+      default: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: loggerError,
+        debug: jest.fn(),
+      },
+    }));
     jest.doMock("../../src/modules/csvParser", () => ({
       parseCsvFile: jest.fn(),
       parseMeditationArray: jest.fn(() => [
@@ -128,5 +169,6 @@ describe("workflowOrchestrator", () => {
     expect(result.queueId).toBe(88);
     expect(result.error).toBe("elevenlabs broke");
     expect(updateJobStatus).toHaveBeenLastCalledWith(88, "failed");
+    expect(loggerError).toHaveBeenCalled();
   });
 });

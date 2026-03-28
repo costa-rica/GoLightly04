@@ -106,17 +106,17 @@ Phase 5 closeout:
 
 ## Phase 6: stage 2 testing, documentation, and hardening
 
-- [ ] Replace the placeholder `worker-node` test plan with real implemented tests.
-- [ ] Add endpoint-level tests for the primary `worker-node` route contract.
-- [ ] Add workflow integration tests that cover queue creation, internal ElevenLabs processing, internal audio concatenation, and final output handling.
-- [ ] Add failure-path tests for validation errors, upstream API failures, file problems, and workflow cleanup behavior.
-- [ ] Review all stage 2 logging behavior in development, testing, and production modes.
-- [ ] Review all retained environment variables and remove no-longer-needed child-process path variables from docs and config.
-- [ ] Confirm that `PATH_TO_ELEVENLABS_SERVICE` and `PATH_TO_AUDIO_FILE_CONCATENATOR` are no longer present anywhere in the final stage 2 runtime docs or config.
-- [ ] Add or update stage 2 setup and usage documentation for `worker-node` and any new internal packages or modules.
-- [ ] Run final build verification for `worker-node` and any new stage 2 internal packages.
-- [ ] Run final stage 2 test verification for each touched application or package that uses tests.
-- [ ] Review this file and make sure all completed stage 2 tasks are checked off.
+- [x] Replace the placeholder `worker-node` test plan with real implemented tests.
+- [x] Add endpoint-level tests for the primary `worker-node` route contract.
+- [x] Add workflow integration tests that cover queue creation, internal ElevenLabs processing, internal audio concatenation, and final output handling.
+- [x] Add failure-path tests for validation errors, upstream API failures, file problems, and workflow cleanup behavior.
+- [x] Review all stage 2 logging behavior in development, testing, and production modes.
+- [x] Review all retained environment variables and remove no-longer-needed child-process path variables from docs and config.
+- [x] Confirm that `PATH_TO_ELEVENLABS_SERVICE` and `PATH_TO_AUDIO_FILE_CONCATENATOR` are no longer present anywhere in the final stage 2 runtime docs or config.
+- [x] Add or update stage 2 setup and usage documentation for `worker-node` and any new internal packages or modules.
+- [x] Run final build verification for `worker-node` and any new stage 2 internal packages.
+- [x] Run final stage 2 test verification for each touched application or package that uses tests.
+- [x] Review this file and make sure all completed stage 2 tasks are checked off.
 
 Phase 6 closeout:
 
