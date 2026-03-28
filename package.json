@@ -1,0 +1,16 @@
+{
+  "name": "golightly03",
+  "private": true,
+  "workspaces": [
+    "db-models",
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  }
+}

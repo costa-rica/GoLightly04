@@ -4,13 +4,13 @@ This file tracks the stage 1 absorption work for `db-models`, `api`, and `web`. 
 
 ## Phase 1: monorepo setup and shared decisions
 
-- [ ] Confirm stage 1 scope is limited to `db-models`, `api`, and `web`.
-- [ ] Decide the workspace strategy for the monorepo and add the root workspace manifest.
-- [ ] Define the final internal package names for `db-models`, `api`, and `web`.
-- [ ] Decide the shared TypeScript, build, and script strategy for the root of the monorepo.
-- [ ] Define how root-level config and per-app config should be separated.
-- [ ] Document the environment-variable strategy for root files versus per-app `.env` files.
-- [ ] Record the stage 2 items that are intentionally out of scope for this file.
+- [x] Confirm stage 1 scope is limited to `db-models`, `api`, and `web`.
+- [x] Decide the workspace strategy for the monorepo and add the root workspace manifest.
+- [x] Define the final internal package names for `db-models`, `api`, and `web`.
+- [x] Decide the shared TypeScript, build, and script strategy for the root of the monorepo.
+- [x] Define how root-level config and per-app config should be separated.
+- [x] Document the environment-variable strategy for root files versus per-app `.env` files.
+- [x] Record the stage 2 items that are intentionally out of scope for this file.
 
 Phase 1 closeout:
 
