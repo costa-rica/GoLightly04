@@ -12,11 +12,11 @@ Stage 1 is limited to these three applications and packages:
 
 `worker-node` is intentionally excluded from stage 1 implementation work.
 
-## Workspace Strategy
+## Monorepo Strategy
 
-The monorepo uses npm workspaces for stage 1.
+The monorepo uses a lightweight multi-project structure for stage 1 instead of relying on npm workspaces.
 
-Included workspaces in Phase 1:
+Included stage 1 projects:
 
 1. `db-models`
 2. `api`
@@ -24,13 +24,13 @@ Included workspaces in Phase 1:
 
 Notes:
 
-- `worker-node` is not part of the root workspace manifest yet.
-- This keeps the root workspace aligned with the actual stage 1 implementation scope.
-- `worker-node` can be added to the root workspace manifest in stage 2 when its absorption work begins.
+- `worker-node` is intentionally outside stage 1 implementation scope.
+- The root of the repo provides coordination scripts, not workspace-driven package management.
+- Each project keeps its own package-level config and can be run directly from its own folder.
 
 ## Final Internal Package Names
 
-The stage 1 workspace package names are:
+The stage 1 internal package and project names are:
 
 1. `@golightly/db-models`
 2. `@golightly/api`
@@ -42,7 +42,7 @@ These names should be treated as the target monorepo identities during the later
 
 The root of the monorepo now provides:
 
-1. a root `package.json` with npm workspace definitions
+1. a root `package.json` with repo-level coordination scripts
 2. root scripts for `build`, `test`, `lint`, `typecheck`, and `clean`
 3. a shared `tsconfig.base.json` for common TypeScript defaults
 
@@ -50,18 +50,18 @@ Strategy notes:
 
 - shared defaults should live at the root only when they are useful across more than one workspace
 - application-specific TypeScript details should stay in each application package
-- root scripts should coordinate workspaces, not replace per-package scripts
+- root scripts should coordinate projects, not replace per-project scripts
 
 ## Root-Level Config Versus Per-App Config
 
 Root-level config should be limited to shared repository concerns:
 
-1. workspace definitions
+1. repo-level coordination scripts
 2. shared TypeScript defaults
 3. shared repository scripts
 4. repo-wide ignore rules
 
-Per-app and per-package config should stay inside the relevant workspace:
+Per-app and per-package config should stay inside the relevant project:
 
 1. `package.json`
 2. `tsconfig.json`
@@ -77,7 +77,7 @@ Environment files should be documented per application or package rather than ce
 
 Rules for stage 1:
 
-1. each workspace should own its own `.env.example`
+1. each project or package should own its own `.env.example`
 2. root-level environment files should be avoided unless a variable is truly shared across multiple workspaces
 3. runtime env loading should stay local to each application
 4. package documentation should list only the variables actually needed by that package
