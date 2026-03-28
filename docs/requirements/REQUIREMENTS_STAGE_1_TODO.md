@@ -81,14 +81,14 @@ Phase 4 closeout:
 
 ## Phase 5: stage 1 integration and hardening
 
-- [ ] Confirm that `api` uses the absorbed `db-models` package with no dependency on the old standalone repo path.
-- [ ] Confirm that `web` uses the absorbed `api` contract and updated environment-variable names.
-- [ ] Add or update stage 1 setup and usage documentation for the monorepo and the absorbed apps.
-- [ ] Review root and per-app scripts for install, build, and test consistency.
-- [ ] Run final build verification for `db-models`, `api`, and `web`.
-- [ ] Run final stage 1 test verification for each application that uses tests.
-- [ ] Review this file and make sure all completed stage 1 tasks are checked off.
-- [ ] Record the remaining stage 2 work that should move into the next TODO file.
+- [x] Confirm that `api` uses the absorbed `db-models` package with no dependency on the old standalone repo path.
+- [x] Confirm that `web` uses the absorbed `api` contract and updated environment-variable names.
+- [x] Add or update stage 1 setup and usage documentation for the monorepo and the absorbed apps.
+- [x] Review root and per-app scripts for install, build, and test consistency.
+- [x] Run final build verification for `db-models`, `api`, and `web`.
+- [x] Run final stage 1 test verification for each application that uses tests.
+- [x] Review this file and make sure all completed stage 1 tasks are checked off.
+- [x] Record the remaining stage 2 work that should move into the next TODO file.
 
 Phase 5 closeout:
 
