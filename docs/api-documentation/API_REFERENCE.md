@@ -5,12 +5,7 @@ This API is an Express and TypeScript service backed by SQLite through the `db-m
 This directory is the API documentation home for the `api/` subproject. Router-level endpoint docs live under [`./endpoints`](./endpoints).
 
 1. Available endpoint guides
-   - [health](./endpoints/health.md)
    - [users](./endpoints/users.md)
-   - [meditations](./endpoints/meditations.md)
-   - [sounds](./endpoints/sounds.md)
-   - [admin](./endpoints/admin.md)
-   - [database](./endpoints/database.md)
 
 2. Common conventions
    - Base URL for local development: `http://localhost:3000`
@@ -22,11 +17,11 @@ This directory is the API documentation home for the `api/` subproject. Router-l
 
 ```json
 {
-  "error": {
-    "code": "AUTH_FAILED",
-    "message": "Invalid email or password",
-    "status": 401
-  }
+	"error": {
+		"code": "AUTH_FAILED",
+		"message": "Invalid email or password",
+		"status": 401
+	}
 }
 ```
 
@@ -59,14 +54,14 @@ curl --location 'http://localhost:3000/users/login' \
 
 ```json
 {
-  "message": "Login successful",
-  "accessToken": "jwt-token-value",
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "isAdmin": false,
-    "hasPublicMeditations": false
-  }
+	"message": "Login successful",
+	"accessToken": "jwt-token-value",
+	"user": {
+		"id": 1,
+		"email": "user@example.com",
+		"isAdmin": false,
+		"hasPublicMeditations": false
+	}
 }
 ```
 
@@ -76,11 +71,11 @@ curl --location 'http://localhost:3000/users/login' \
 
 ```json
 {
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Email and password are required",
-    "status": 400
-  }
+	"error": {
+		"code": "VALIDATION_ERROR",
+		"message": "Email and password are required",
+		"status": 400
+	}
 }
 ```
 
@@ -88,11 +83,11 @@ curl --location 'http://localhost:3000/users/login' \
 
 ```json
 {
-  "error": {
-    "code": "AUTH_FAILED",
-    "message": "Invalid email or password",
-    "status": 401
-  }
+	"error": {
+		"code": "AUTH_FAILED",
+		"message": "Invalid email or password",
+		"status": 401
+	}
 }
 ```
 
@@ -100,11 +95,11 @@ curl --location 'http://localhost:3000/users/login' \
 
 ```json
 {
-  "error": {
-    "code": "EMAIL_NOT_VERIFIED",
-    "message": "Please verify your email before logging in",
-    "status": 403
-  }
+	"error": {
+		"code": "EMAIL_NOT_VERIFIED",
+		"message": "Please verify your email before logging in",
+		"status": 403
+	}
 }
 ```
 
