@@ -2,6 +2,7 @@
 
 **Date:** April 21, 2026
 **Supersedes:** `docs/requirements/20260421_GOLIGHTLY04_PLAN_ASSESSMENT.md`
+**Supplemented by:** `docs/requirements/20260421_GOLIGHTLY04_PLAN_ASSESSMENT_V04_CLAUDE.md` — V04 adds the canonical meditation-element DTO, worker recovery design, signed stream token, and the `web/` rebuild plan. V04 overrides any conflicting JSON example here.
 
 This document incorporates your responses from the V01 assessment and raises new concerns or questions that stem from those responses. When this document is fully resolved, it becomes the authoritative source for the TODO task list.
 
@@ -331,9 +332,9 @@ Both tokens should be short-lived JWTs (or random signed strings stored temporar
 
 New endpoints added vs V01:
 
-| Method | Path                      | Auth Required | Notes                                                                                             |
-| ------ | ------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| GET    | `/meditations/:id`        | Optional      | Single meditation detail (new)                                                                    |
+| Method | Path               | Auth Required | Notes                          |
+| ------ | ------------------ | ------------- | ------------------------------ |
+| GET    | `/meditations/:id` | Optional      | Single meditation detail (new) |
 
 **Note on `listen_count`:** Per Q-G Option 1, the existing `GET /meditations/:id/stream` endpoint auto-increments `listen_count` on each request. No new endpoint needed; no frontend change needed.
 
@@ -343,11 +344,11 @@ All other endpoints from V01 remain unchanged.
 
 ## 13. Open Questions — Resolved
 
-| #   | Question                                                                             | Resolution                                                         |
-| --- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| F   | Should `worker-node` also check/create directories on startup?                       | ✅ Yes — worker checks/creates the directories it uses             |
-| G   | listen_count: auto-increment on stream, or dedicated `POST /meditations/:id/listen`? | ✅ Option 1 — auto-increment on `GET /meditations/:id/stream`      |
-| H   | Jobs Queue delete: single row, all rows for meditation, or remove delete button?     | ✅ Full cascade delete for the entire `meditation_id` (see §8)     |
+| #   | Question                                                                             | Resolution                                                     |
+| --- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| F   | Should `worker-node` also check/create directories on startup?                       | ✅ Yes — worker checks/creates the directories it uses         |
+| G   | listen_count: auto-increment on stream, or dedicated `POST /meditations/:id/listen`? | ✅ Option 1 — auto-increment on `GET /meditations/:id/stream`  |
+| H   | Jobs Queue delete: single row, all rows for meditation, or remove delete button?     | ✅ Full cascade delete for the entire `meditation_id` (see §8) |
 
 **Audio folder interpretation (Section 4) is confirmed:** `prerecorded_audio/` is flat, no date subdirectory. The other two use `{YYYYMMDD}/` date subdirectories.
 
@@ -368,8 +369,8 @@ The API implements this as a single service function (e.g., `deleteMeditationCas
 
 All open questions are resolved. The TODO task lists are split into three files per `TODO_LIST_GUIDANCE.md`:
 
-- `docs/requirements/DB_MODELS_TODO_20260421.md`
-- `docs/requirements/API_TODO_20260421.md`
-- `docs/requirements/WORKER_NODE_TODO_20260421.md`
+- `docs/requirements/20260421_TODO_DB_MODELS.md`
+- `docs/requirements/20260421_TODO_API.md`
+- `docs/requirements/20260421_TODO_WORKER_NODE.md`
 
 Frontend-side updates (Jobs Queue table rename, `QueueRecord` type update, TanStack Table) will be folded into the `API_TODO` since they are tightly coupled to the `/admin/queuer` response shape — or can be split into a `WEB_TODO` file if you prefer a separate track.
