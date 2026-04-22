@@ -1,0 +1,13 @@
+{
+  "name": "@golightly/api",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "@golightly/db-models": "^0.1.0",
+    "@golightly/shared-types": "^0.1.0"
+  },
+  "scripts": {
+    "build": "echo 'api not scaffolded yet'",
+    "typecheck": "echo 'api not scaffolded yet'"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "golightly04",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "db-models",
+    "shared-types",
+    "api",
+    "worker-node",
+    "web"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @golightly/shared-types && npm run build -w @golightly/db-models",
+    "typecheck:shared": "npm run typecheck -w @golightly/shared-types && npm run typecheck -w @golightly/db-models"
+  }
+}

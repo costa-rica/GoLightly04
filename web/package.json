@@ -1,0 +1,12 @@
+{
+  "name": "@golightly/web",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "@golightly/shared-types": "^0.1.0"
+  },
+  "scripts": {
+    "build": "echo 'web not scaffolded yet'",
+    "typecheck": "echo 'web not scaffolded yet'"
+  }
+}

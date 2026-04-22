@@ -1,0 +1,13 @@
+{
+  "name": "@golightly/worker-node",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "@golightly/db-models": "^0.1.0",
+    "@golightly/shared-types": "^0.1.0"
+  },
+  "scripts": {
+    "build": "echo 'worker-node not scaffolded yet'",
+    "typecheck": "echo 'worker-node not scaffolded yet'"
+  }
+}
