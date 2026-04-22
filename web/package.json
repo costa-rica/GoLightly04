@@ -2,11 +2,35 @@
   "name": "@golightly/web",
   "private": true,
   "version": "0.1.0",
+  "description": "Next.js web app for GoLightly04",
   "dependencies": {
-    "@golightly/shared-types": "^0.1.0"
+    "@golightly/shared-types": "^0.1.0",
+    "@react-oauth/google": "^0.13.4",
+    "@reduxjs/toolkit": "^2.11.2",
+    "@tanstack/react-table": "^8.21.3",
+    "axios": "^1.13.4",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-redux": "^9.2.0",
+    "redux-persist": "^6.0.0"
   },
   "scripts": {
-    "build": "echo 'web not scaffolded yet'",
-    "typecheck": "echo 'web not scaffolded yet'"
+    "dev": "next dev -p ${PORT:-3001}",
+    "build": "next build --webpack",
+    "start": "next start -p ${PORT:-3001}",
+    "lint": "eslint . --ext .js,.ts,.tsx",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "@types/react": "^19.2.11",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.24",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.4",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.3"
   }
 }

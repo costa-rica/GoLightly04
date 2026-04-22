@@ -42,6 +42,7 @@ export function buildAdminRouter(): Router {
         users: users.map((user) => ({
           id: user.id,
           email: user.email,
+          authProvider: user.authProvider,
           isEmailVerified: user.isEmailVerified,
           emailVerifiedAt: user.emailVerifiedAt ? user.emailVerifiedAt.toISOString() : null,
           isAdmin: user.isAdmin,

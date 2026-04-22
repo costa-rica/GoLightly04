@@ -4,6 +4,7 @@ export type AdminUser = {
   id: number;
   username?: string | null;
   email: string;
+  authProvider: "local" | "google" | "both";
   isEmailVerified: boolean;
   emailVerifiedAt: string | null;
   isAdmin: boolean;
