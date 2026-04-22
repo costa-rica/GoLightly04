@@ -21,8 +21,10 @@ export function createApp() {
         return;
       }
 
+      logger.info(`POST /process received meditationId=${meditationId} mode=${mode}`);
+
       if (isMeditationActive(meditationId)) {
-        logger.info(`Meditation ${meditationId} is already processing`);
+        logger.info(`Meditation ${meditationId} is already processing — deduped`);
         res.status(202).json({ accepted: true, deduped: true });
         return;
       }
@@ -45,6 +47,7 @@ export function createApp() {
       }
 
       res.status(202).json({ accepted: true });
+      logger.info(`Meditation ${meditationId} accepted for processing`);
       void processMeditation(meditationId, mode).catch((error) => {
         logger.error(
           `Background processing failed for meditation ${meditationId}: ${

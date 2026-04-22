@@ -39,6 +39,7 @@ export async function processMeditation(
     throw new Error(`Meditation ${meditationId} not found`);
   }
 
+  logger.info(`Meditation ${meditationId} processing started (mode=${mode})`);
   await meditation.update({ status: "processing" });
 
   if (mode === "requeue") {
@@ -132,6 +133,7 @@ export async function processMeditation(
         filePath,
         lastError: null,
       });
+      logger.info(`Meditation ${meditationId} job ${claimedJob.id} sequence ${claimedJob.sequence} complete`);
     } catch (error) {
       const message = toErrorMessage(error);
       await claimedJob.update({
@@ -154,7 +156,9 @@ export async function processMeditation(
   });
 
   if (allJobs.every((job: { status: string }) => job.status === "complete")) {
+    logger.info(`Meditation ${meditationId} all jobs complete — starting concatenation`);
     await concatenateMeditation(meditationId);
+    logger.info(`Meditation ${meditationId} complete`);
   }
   } finally {
     activeMeditations.delete(meditationId);

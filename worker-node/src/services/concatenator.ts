@@ -92,11 +92,11 @@ export async function concatenateMeditation(meditationId: number) {
       } else if (job.type === "sound") {
         const soundPath = path.join(
           getPrerecordedAudioRoot(),
-          String(inputData.file ?? ""),
+          String(inputData.sound_file ?? ""),
         );
         await normalizeAudio(soundPath, target);
       } else {
-        await createSilentSegment(Number(inputData.seconds ?? 0), target);
+        await createSilentSegment(Number(inputData.pause_duration ?? 0), target);
       }
 
       normalizedFiles.push(target);
