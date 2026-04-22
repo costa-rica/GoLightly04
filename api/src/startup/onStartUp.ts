@@ -1,16 +1,16 @@
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
-import { getDefaultSequelize, initializeModels, provisionDatabase } from "@golightly/db-models";
+import { createSequelize, getDefaultSequelize, initializeModels, provisionDatabase } from "@golightly/db-models";
 import { logger } from "../config/logger";
 import { readApiEnv } from "../config/env";
 import { getDb } from "../lib/db";
 
 export async function onStartUp(): Promise<void> {
   const env = readApiEnv();
-  const sequelize = getDefaultSequelize();
-  initializeModels(sequelize);
-  await provisionDatabase(sequelize);
+  const bootSequelize = createSequelize({ role: "boot" });
+  initializeModels(bootSequelize);
+  await provisionDatabase(bootSequelize);
   logger.info("Database provisioned");
 
   for (const dirName of [

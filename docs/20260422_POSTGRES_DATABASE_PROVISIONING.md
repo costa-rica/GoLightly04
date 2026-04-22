@@ -72,13 +72,24 @@ first startup without needing superuser rights.
 
 ---
 
-## 6. Grant Privileges to the App Role
+## 6. Grant Privileges
 
-Connect to the new database, then grant `golightly04_app` the privileges it needs:
+Connect to the new database:
 
 ```sql
 \c golightly04_dev
 ```
+
+### 6.1 Boot role — schema create
+
+In PostgreSQL 15+, the `public` schema no longer grants `CREATE` to all roles automatically. The
+boot role needs it to create ENUM types and tables during `provisionDatabase()`:
+
+```sql
+GRANT CREATE ON SCHEMA public TO golightly04_boot;
+```
+
+### 6.2 App role — connect and schema usage
 
 Grant connect access:
 
@@ -92,21 +103,15 @@ Grant schema usage:
 GRANT USAGE ON SCHEMA public TO golightly04_app;
 ```
 
-Grant DML on existing tables (relevant after the API has run `provisionDatabase()` at least once):
+Set default privileges so the app role automatically gets DML access to every table and sequence
+the boot role creates. The `FOR ROLE golightly04_boot` clause is required — without it the grant
+only covers objects created by your current superuser, not by the boot role:
 
 ```sql
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO golightly04_app;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;
-```
-
-Set default privileges so that any tables created in the future (e.g. after a schema sync) are
-automatically accessible to the app role:
-
-```sql
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
+ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO golightly04_app;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
+ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
 ```
 
