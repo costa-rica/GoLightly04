@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to agent / engineerc when working with code in this repository.
+This file provides guidance to agent / engineers when working with code in this repository.
 
 ## Creating Markdown Files in docs/
 
