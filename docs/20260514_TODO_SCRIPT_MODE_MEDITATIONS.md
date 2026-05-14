@@ -185,12 +185,12 @@ Goal: the web can submit a script to the new endpoint, and the script editor is 
 
 Goal: users can switch between Script (default) and Spreadsheet modes on the home page, and the choice persists across reloads.
 
-- [ ] In [web/src/app/page.tsx](../web/src/app/page.tsx), add a segmented control above the editor area with two segments: **Script** (default) and **Spreadsheet**. Use plain Tailwind — no new libraries.
-- [ ] Persist the selected mode in `localStorage` under a stable key (e.g. `golightly.createMode`). Default for new users is `"script"`. Read on mount, write on change.
-- [ ] Render only the active editor; keep each editor's local state mounted so within-session switches don't lose work. Do **not** attempt to translate content between modes — out of scope for v1.
-- [ ] Confirm `TableMeditation` and the rest of the page render unchanged regardless of mode.
-- [ ] **Checks**: `npm run build -w web`. Manually verify the toggle in a browser: refresh keeps the selection, both editors mount their own state.
-- [ ] **Commit**: `feat: script-mode phase 7 — create-page mode toggle` referencing this TODO.
+- [x] In [web/src/app/page.tsx](../web/src/app/page.tsx), add a segmented control above the editor area with two segments: **Script** (default) and **Spreadsheet**. Use plain Tailwind — no new libraries.
+- [x] Persist the selected mode in `localStorage` under a stable key (e.g. `golightly.createMode`). Default for new users is `"script"`. Read on mount, write on change.
+- [x] Render only the active editor; keep each editor's local state mounted so within-session switches don't lose work. Do **not** attempt to translate content between modes — out of scope for v1.
+- [x] Confirm `TableMeditation` and the rest of the page render unchanged regardless of mode.
+- [x] **Checks**: `npm run build -w web`. Manually verify the toggle in a browser: refresh keeps the selection, both editors mount their own state.
+- [x] **Commit**: `feat: script-mode phase 7 — create-page mode toggle` referencing this TODO.
 
 ---
 
