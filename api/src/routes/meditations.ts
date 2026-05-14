@@ -14,6 +14,7 @@ import { getPrerecordedAudioPath } from "../lib/projectPaths";
 import { issueStreamToken } from "../lib/authTokens";
 import { notifyWorker } from "../services/workerClient";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
+import { normalizePauseDuration, normalizeSpeed } from "../services/meditations/normalize";
 
 function deriveType(element: MeditationElement): "text" | "sound" | "pause" {
   if (element.text) return "text";
@@ -103,7 +104,7 @@ export function buildMeditationsRouter(): Router {
             inputData = JSON.stringify({
               text: element.text,
               voice_id: element.voice_id,
-              speed: element.speed,
+              speed: normalizeSpeed(element.speed),
             });
           } else if (type === "sound") {
             if (!element.sound_file) {
@@ -112,7 +113,9 @@ export function buildMeditationsRouter(): Router {
             filePath = getPrerecordedAudioPath(element.sound_file);
             inputData = JSON.stringify({ sound_file: element.sound_file });
           } else {
-            inputData = JSON.stringify({ pause_duration: element.pause_duration });
+            inputData = JSON.stringify({
+              pause_duration: normalizePauseDuration(element.pause_duration),
+            });
           }
 
           await JobQueue.create(

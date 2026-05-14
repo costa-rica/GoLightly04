@@ -50,16 +50,16 @@ Goal: land all the shared types and validation constants that later phases depen
 
 Goal: numeric `speed` (and `pause_duration`) reach `JobQueue.inputData` from every code path. Today the spreadsheet route writes string speed and the worker silently drops it — see V02 Step 0.
 
-- [ ] Create `api/src/services/meditations/normalize.ts` exporting:
+- [x] Create `api/src/services/meditations/normalize.ts` exporting:
   - `normalizeSpeed(raw: string | number | undefined): number | undefined` — returns `undefined` on null/empty; parses string via `Number()`; rejects `NaN`; range-checks against `SPEED_MIN`/`SPEED_MAX` from shared-types/validation; throws `AppError(400, "VALIDATION_ERROR", …)` on out-of-range.
   - `normalizePauseDuration(raw: string | number | undefined): number | undefined` — same shape, range `PAUSE_MIN` (exclusive) ≤ value ≤ `PAUSE_MAX`.
-- [ ] Update [api/src/routes/meditations.ts](../api/src/routes/meditations.ts) `POST /meditations/create` (currently lines ~59–145) so the `inputData = JSON.stringify(...)` block for text/pause uses the normalizers:
+- [x] Update [api/src/routes/meditations.ts](../api/src/routes/meditations.ts) `POST /meditations/create` (currently lines ~59–145) so the `inputData = JSON.stringify(...)` block for text/pause uses the normalizers:
   - text: `{ text, voice_id, speed: normalizeSpeed(element.speed) }`
   - pause: `{ pause_duration: normalizePauseDuration(element.pause_duration) }`
-- [ ] Add unit tests for `normalize.ts` covering: undefined → undefined; `"1.0"` → `1.0`; `1.0` → `1.0`; `""` → undefined; `"abc"` → 400; below min → 400; above max → 400.
-- [ ] Update [api/tests/meditations/meditations.routes.test.ts](../api/tests/meditations/meditations.routes.test.ts) so a happy-path test asserts the `JobQueue.create` call received `inputData` JSON whose parsed `speed` is the **number** `0.9` (not `"0.9"`). This guards the regression.
-- [ ] **Checks**: `npm test -w api`, `npm run build -w api`. All pass.
-- [ ] **Commit**: `fix: script-mode phase 2 — normalize JobQueue speed to number` referencing this TODO. Note in the body that this changes audible behavior of existing spreadsheet meditations (users will now hear non-default speeds they had previously set).
+- [x] Add unit tests for `normalize.ts` covering: undefined → undefined; `"1.0"` → `1.0`; `1.0` → `1.0`; `""` → undefined; `"abc"` → 400; below min → 400; above max → 400.
+- [x] Update [api/tests/meditations/meditations.routes.test.ts](../api/tests/meditations/meditations.routes.test.ts) so a happy-path test asserts the `JobQueue.create` call received `inputData` JSON whose parsed `speed` is the **number** `0.9` (not `"0.9"`). This guards the regression.
+- [x] **Checks**: `npm test -w api`, `npm run build -w api`. All pass.
+- [x] **Commit**: `fix: script-mode phase 2 — normalize JobQueue speed to number` referencing this TODO. Note in the body that this changes audible behavior of existing spreadsheet meditations (users will now hear non-default speeds they had previously set).
 
 ---
 

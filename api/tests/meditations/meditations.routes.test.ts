@@ -68,7 +68,7 @@ describe("meditations routes", () => {
         title: "Morning",
         visibility: "public",
         meditationArray: [
-          { id: 1, text: "Breathe in" },
+          { id: 1, text: "Breathe in", speed: "0.9" },
           { id: 2, pause_duration: "5" },
         ],
       });
@@ -76,6 +76,10 @@ describe("meditations routes", () => {
     expect(response.status).toBe(201);
     expect(response.body.queueId).toBe(42);
     expect(jobQueueModel.create).toHaveBeenCalledTimes(2);
+    const firstJob = jobQueueModel.create.mock.calls[0][0];
+    const inputData = JSON.parse(firstJob.inputData);
+    expect(inputData.speed).toBe(0.9);
+    expect(typeof inputData.speed).toBe("number");
   });
 
   it("lists available meditations", async () => {
