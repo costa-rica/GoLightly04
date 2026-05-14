@@ -21,6 +21,15 @@ const TABLE_ORDER = [
   "contract_user_meditations",
 ] as const;
 
+const DATE_FIELDS = new Set([
+  "createdAt",
+  "updatedAt",
+  "emailVerifiedAt",
+  "lastAttemptedAt",
+]);
+
+const JSON_FIELDS = new Set(["meditationArray"]);
+
 function getTableModelMap() {
   const { ContractUserMeditation, JobQueue, Meditation, SoundFile, User } = getDb();
   return {
@@ -30,6 +39,29 @@ function getTableModelMap() {
     jobs_queue: JobQueue,
     contract_user_meditations: ContractUserMeditation,
   } as Record<(typeof TABLE_ORDER)[number], any>;
+}
+
+function normalizeRestoreRow(row: Record<string, string>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => {
+      if (DATE_FIELDS.has(key)) {
+        if (!value) {
+          return [key, null];
+        }
+        return [key, value.replace(/^"|"$/g, "")];
+      }
+
+      if (JSON_FIELDS.has(key) && value) {
+        return [key, JSON.parse(value)];
+      }
+
+      if (value === "") {
+        return [key, null];
+      }
+
+      return [key, value];
+    }),
+  );
 }
 
 async function zipDirectory(sourceDir: string, destinationZip: string): Promise<void> {
@@ -144,9 +176,13 @@ export function buildDatabaseRouter(): Router {
 
       const { sequelize } = getDb();
       await sequelize.transaction(async (transaction) => {
-        for (const tableName of [...TABLE_ORDER].reverse()) {
-          await tableModelMap[tableName].destroy({ where: {}, truncate: true, force: true, transaction });
-        }
+        await sequelize.query(
+          `TRUNCATE TABLE ${[...TABLE_ORDER]
+            .reverse()
+            .map((tableName) => `"public"."${tableName}"`)
+            .join(", ")} CASCADE`,
+          { transaction },
+        );
 
         for (const tableName of TABLE_ORDER) {
           const csvPath = path.join(tempDir, `${tableName}.csv`);
@@ -154,7 +190,7 @@ export function buildDatabaseRouter(): Router {
             rowsImported[tableName] = 0;
             continue;
           }
-          const parsedRows = parseCsv(await fsPromises.readFile(csvPath, "utf8"));
+          const parsedRows = parseCsv(await fsPromises.readFile(csvPath, "utf8")).map(normalizeRestoreRow);
           rowsImported[tableName] = parsedRows.length;
           totalRows += parsedRows.length;
           if (parsedRows.length > 0) {
