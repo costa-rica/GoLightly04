@@ -9,6 +9,10 @@ import { upload } from "../middleware/upload";
 import { ensureString } from "../middleware/validate";
 import { getPrerecordedAudioPath } from "../lib/projectPaths";
 
+function normalizeSoundName(name: string) {
+  return name.trim().toLowerCase();
+}
+
 export function buildSoundsRouter(): Router {
   const router = Router();
 
@@ -42,13 +46,25 @@ export function buildSoundsRouter(): Router {
         typeof req.body.description === "string" && req.body.description.trim()
           ? req.body.description.trim()
           : null;
+      const { SoundFile } = getDb();
+      const existingSounds = await SoundFile.findAll();
+      const duplicate = existingSounds.find(
+        (sound) => normalizeSoundName(sound.name) === normalizeSoundName(originalName),
+      );
+      if (duplicate) {
+        throw new AppError(
+          409,
+          "DUPLICATE_SOUND_NAME",
+          `A sound named "${duplicate.name}" already exists`,
+        );
+      }
+
       const filename = `${Date.now()}_${req.file.originalname.replace(/\s+/g, "_")}`;
       const filePath = getPrerecordedAudioPath(filename);
 
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, req.file.buffer);
 
-      const { SoundFile } = getDb();
       const soundFile = await SoundFile.create({
         name: originalName,
         description,

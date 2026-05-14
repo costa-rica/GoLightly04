@@ -99,7 +99,7 @@ Goal: a parser in shared-types that converts a script string into `MeditationEle
 
 Goal: `meditations` has the two new columns, `sound_files` has a normalized-name uniqueness index, and the upload route enforces it before the DB does.
 
-- [ ] **Preflight**: run on the local dev database and resolve any rows returned before going further:
+- [x] **Preflight**: run on the local dev database and resolve any rows returned before going further:
   ```sql
   SELECT LOWER(BTRIM(name)) AS normalized_name,
          COUNT(*) AS row_count,
@@ -109,7 +109,7 @@ Goal: `meditations` has the two new columns, `sound_files` has a normalized-name
   HAVING COUNT(*) > 1;
   ```
   If there are duplicates, merge them manually (re-point any `meditations.meditation_array[].sound_file` references to the surviving row's `filename`, delete the others). Document the resolution in the phase commit body.
-- [ ] Apply on the local dev DB:
+- [x] Apply on the local dev DB:
   ```sql
   ALTER TABLE meditations
     ADD COLUMN IF NOT EXISTS source_mode VARCHAR(16) NOT NULL DEFAULT 'spreadsheet',
@@ -118,14 +118,14 @@ Goal: `meditations` has the two new columns, `sound_files` has a normalized-name
   CREATE UNIQUE INDEX IF NOT EXISTS sound_files_name_normalized_idx
     ON sound_files (LOWER(BTRIM(name)));
   ```
-- [ ] Update [db-models/src/models/Meditation.ts](../db-models/src/models/Meditation.ts) to declare `sourceMode` and `scriptSource` with the same field names and types as the new columns (`VARCHAR(16)` mapped to the TS union, default `"spreadsheet"`; `scriptSource` nullable TEXT). Do **not** use a Postgres ENUM here.
-- [ ] Update [db-models/src/models/SoundFile.ts](../db-models/src/models/SoundFile.ts) — add a comment block referencing the normalized-name unique index (the index lives in raw SQL since Sequelize can't express functional indexes cleanly). No model change required, just the documentation note.
-- [ ] Update [api/src/routes/sounds.ts](../api/src/routes/sounds.ts) (the `POST /sounds/upload` handler): before creating the row, look for an existing `SoundFile` whose `LOWER(BTRIM(name))` matches the incoming name; if found, throw `AppError(409, "DUPLICATE_SOUND_NAME", …)` with a clear message. This returns a clean error instead of a raw DB constraint violation.
-- [ ] Update the `mapMeditationRecord` helper at [api/src/routes/meditations.ts:25](../api/src/routes/meditations.ts) to expose `sourceMode` and `scriptSource` on GET responses.
-- [ ] Add deploy-runbook section to V02 (or a new short `docs/DEPLOY_RUNBOOK_SCRIPT_MODE.md`) capturing: preflight → ALTER → CREATE INDEX → deploy api/worker → deploy web. Reuse the V02 wording.
-- [ ] Add an api test asserting `POST /sounds/upload` returns 409 on duplicate normalized names.
-- [ ] **Checks**: `npm run build -w db-models`, `npm test -w api`, `npm run build -w api`. All pass.
-- [ ] **Commit**: `feat: script-mode phase 4 — DB schema + sound-name uniqueness` referencing this TODO.
+- [x] Update [db-models/src/models/Meditation.ts](../db-models/src/models/Meditation.ts) to declare `sourceMode` and `scriptSource` with the same field names and types as the new columns (`VARCHAR(16)` mapped to the TS union, default `"spreadsheet"`; `scriptSource` nullable TEXT). Do **not** use a Postgres ENUM here.
+- [x] Update [db-models/src/models/SoundFile.ts](../db-models/src/models/SoundFile.ts) — add a comment block referencing the normalized-name unique index (the index lives in raw SQL since Sequelize can't express functional indexes cleanly). No model change required, just the documentation note.
+- [x] Update [api/src/routes/sounds.ts](../api/src/routes/sounds.ts) (the `POST /sounds/upload` handler): before creating the row, look for an existing `SoundFile` whose `LOWER(BTRIM(name))` matches the incoming name; if found, throw `AppError(409, "DUPLICATE_SOUND_NAME", …)` with a clear message. This returns a clean error instead of a raw DB constraint violation.
+- [x] Update the `mapMeditationRecord` helper at [api/src/routes/meditations.ts:25](../api/src/routes/meditations.ts) to expose `sourceMode` and `scriptSource` on GET responses.
+- [x] Add deploy-runbook section to V02 (or a new short `docs/DEPLOY_RUNBOOK_SCRIPT_MODE.md`) capturing: preflight → ALTER → CREATE INDEX → deploy api/worker → deploy web. Reuse the V02 wording.
+- [x] Add an api test asserting `POST /sounds/upload` returns 409 on duplicate normalized names.
+- [x] **Checks**: `npm run build -w db-models`, `npm test -w api`, `npm run build -w api`. All pass.
+- [x] **Commit**: `feat: script-mode phase 4 — DB schema + sound-name uniqueness` referencing this TODO.
 
 ---
 

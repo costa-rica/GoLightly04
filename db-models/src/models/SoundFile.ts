@@ -19,6 +19,9 @@ export class SoundFile extends Model<
   declare updatedAt: CreationOptional<Date>;
 }
 
+// The database owns a functional unique index on LOWER(BTRIM(name)) named
+// sound_files_name_normalized_idx. Keep duplicate-name behavior in sync with
+// api/src/routes/sounds.ts before changing sound upload semantics.
 export function initSoundFileModel(sequelize: Sequelize): typeof SoundFile {
   SoundFile.init(
     {

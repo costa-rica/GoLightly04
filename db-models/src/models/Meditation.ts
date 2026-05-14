@@ -19,6 +19,8 @@ export class Meditation extends Model<
   declare filename: string | null;
   declare filePath: string | null;
   declare visibility: CreationOptional<"public" | "private">;
+  declare sourceMode: CreationOptional<"spreadsheet" | "script">;
+  declare scriptSource: string | null;
   declare status: CreationOptional<"pending" | "processing" | "complete" | "failed">;
   declare listenCount: CreationOptional<number>;
   declare createdAt: CreationOptional<Date>;
@@ -65,6 +67,17 @@ export function initMeditationModel(sequelize: Sequelize): typeof Meditation {
         type: DataTypes.ENUM("public", "private"),
         allowNull: false,
         defaultValue: "public",
+      },
+      sourceMode: {
+        type: DataTypes.STRING(16),
+        allowNull: false,
+        defaultValue: "spreadsheet",
+        field: "source_mode",
+      },
+      scriptSource: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        field: "script_source",
       },
       status: {
         type: DataTypes.ENUM("pending", "processing", "complete", "failed"),

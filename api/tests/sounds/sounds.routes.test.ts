@@ -28,6 +28,7 @@ describe("sounds routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.PATH_PROJECT_RESOURCES = path.join(os.tmpdir(), "golightly04-sounds-tests");
+    soundFileModel.findAll.mockResolvedValue([]);
   });
 
   it("lists sound files", async () => {
@@ -60,6 +61,22 @@ describe("sounds routes", () => {
 
     expect(response.status).toBe(201);
     expect(response.body.soundFile.name).toBe("Bell");
+  });
+
+  it("rejects duplicate normalized sound names", async () => {
+    soundFileModel.findAll.mockResolvedValue([
+      { id: 1, name: "Tibetan Singing Bowl", filename: "bowl.mp3" },
+    ]);
+
+    const response = await request(buildApp())
+      .post("/sounds/upload")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .field("name", " tibetan singing bowl ")
+      .attach("file", Buffer.from("audio"), "bowl-copy.mp3");
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("DUPLICATE_SOUND_NAME");
+    expect(soundFileModel.create).not.toHaveBeenCalled();
   });
 
   it("deletes a sound file", async () => {

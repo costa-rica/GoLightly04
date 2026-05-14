@@ -35,6 +35,8 @@ function mapMeditationRecord(
     filename: meditation.filename ?? "",
     filePath: meditation.filePath ?? undefined,
     visibility: meditation.visibility,
+    sourceMode: meditation.sourceMode ?? "spreadsheet",
+    scriptSource: meditation.scriptSource ?? null,
     createdAt: meditation.createdAt instanceof Date ? meditation.createdAt.toISOString() : meditation.createdAt,
     updatedAt: meditation.updatedAt instanceof Date ? meditation.updatedAt.toISOString() : meditation.updatedAt,
     listenCount: meditation.listenCount,
