@@ -21,6 +21,14 @@ This file provides guidance to agent / engineerc when working with code in this 
   - adds a new route, component, workflow, or integration point
 - For broader commits, the title can stay concise, but the body should summarize the main change areas so a reader can understand scope without opening the diff.
 - Do not use the body as a file inventory. Summarize the logical changes in 2-5 bullets.
+- append co-authored-by line(s) at the end of the commit message
+  - format: `co-authored-by: <agent name> (<model>)`
+  - examples:
+    - `co-authored-by: claude (sonnet-4)`
+    - `co-authored-by: codex (gpt-5)`
+- never include emails or angle brackets (`< >`)
+- use lowercase only
+- if multiple agents contributed, add one line per agent (no bullets, just separate lines)
 
 ### Format
 
@@ -39,19 +47,6 @@ This file provides guidance to agent / engineerc when working with code in this 
 
 <bullet points summarizing what was updated>
 ```
-
-### Body expectations
-
-- Small single-purpose commits may omit the body if the title is fully clear.
-- Multi-file or cross-package commits should usually include 2-5 bullets.
-- Good body bullets summarize change areas such as:
-  - new UI section and status handling
-  - new API proxy route and validation
-  - added tests for the new route
-- If the staged changes span portal, api, and worker code, the body should mention each area that changed.
-- include a "co-authored-by:" at the end of the commit, with the ai agent name and model being used.
-  - Do not include `<noreply@anthropic.com>`
-  - keep it all lower case
 
 #### Types for Ideal Format
 
