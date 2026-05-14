@@ -133,9 +133,9 @@ Goal: `meditations` has the two new columns, `sound_files` has a normalized-name
 
 Goal: the new endpoint exists, both `/create` routes share one queueing helper, and route tests cover the new contract end-to-end.
 
-- [ ] Create `api/src/services/meditations/createMeditationFromElements.ts` exporting an async function with the signature in V02 Step 3. It runs the existing `sequelize.transaction(...)` block from `meditations.ts:80–135` — Meditation insert + per-element `JobQueue.create` using `deriveType` and normalized speed/pause. Returns the created `Meditation` row.
-- [ ] Refactor `POST /meditations/create` to delegate to `createMeditationFromElements` with `sourceMode: "spreadsheet"` and `scriptSource: null`. Behavior must remain identical (same response shape, same notifyWorker call, same status codes). The existing route tests should still pass without changes other than the speed assertion from Phase 2.
-- [ ] Add `POST /meditations/create/script` in [api/src/routes/meditations.ts](../api/src/routes/meditations.ts):
+- [x] Create `api/src/services/meditations/createMeditationFromElements.ts` exporting an async function with the signature in V02 Step 3. It runs the existing `sequelize.transaction(...)` block from `meditations.ts:80–135` — Meditation insert + per-element `JobQueue.create` using `deriveType` and normalized speed/pause. Returns the created `Meditation` row.
+- [x] Refactor `POST /meditations/create` to delegate to `createMeditationFromElements` with `sourceMode: "spreadsheet"` and `scriptSource: null`. Behavior must remain identical (same response shape, same notifyWorker call, same status codes). The existing route tests should still pass without changes other than the speed assertion from Phase 2.
+- [x] Add `POST /meditations/create/script` in [api/src/routes/meditations.ts](../api/src/routes/meditations.ts):
   - `requireAuth`
   - validate `{ title, description?, visibility, script }`; reject empty trimmed script and scripts exceeding `SCRIPT_MAX_BYTES`
   - load all `SoundFile` rows once; build `Map<string, SoundFile>` keyed by `name.trim().toLowerCase()`
@@ -143,17 +143,17 @@ Goal: the new endpoint exists, both `/create` routes share one queueing helper, 
   - call `createMeditationFromElements({ ..., elements, sourceMode: "script", scriptSource: rawScript })`
   - `void notifyWorker(meditation.id, "intake")`
   - return `201` with `{ message, queueId, filePath: "" }`
-- [ ] Confirm `AppError` supports a structured `details` field (or add it minimally). Update the API error response shape if needed; document it.
-- [ ] Add `api/tests/meditations/createScript.routes.test.ts` covering:
-  - [ ] happy path: text + pause + sound + speed block → 201, `Meditation.create` called with `sourceMode: "script"` and `scriptSource: rawScript`, `JobQueue.create` called N times with correct sequence + types
-  - [ ] numeric speed in `inputData` for the speed-block segment
-  - [ ] unknown sound name → 400 `SCRIPT_PARSE_ERROR` with `details` array
-  - [ ] malformed `<break>` → 400 `SCRIPT_PARSE_ERROR`
-  - [ ] missing `title` / `script` / `visibility` → 400 `VALIDATION_ERROR`
-  - [ ] no auth → 401
-  - [ ] oversize script → 400
-- [ ] **Checks**: `npm test -w api`, `npm run build -w api`. All pass.
-- [ ] **Commit**: `feat: script-mode phase 5 — POST /meditations/create/script` referencing this TODO.
+- [x] Confirm `AppError` supports a structured `details` field (or add it minimally). Update the API error response shape if needed; document it.
+- [x] Add `api/tests/meditations/createScript.routes.test.ts` covering:
+  - [x] happy path: text + pause + sound + speed block → 201, `Meditation.create` called with `sourceMode: "script"` and `scriptSource: rawScript`, `JobQueue.create` called N times with correct sequence + types
+  - [x] numeric speed in `inputData` for the speed-block segment
+  - [x] unknown sound name → 400 `SCRIPT_PARSE_ERROR` with `details` array
+  - [x] malformed `<break>` → 400 `SCRIPT_PARSE_ERROR`
+  - [x] missing `title` / `script` / `visibility` → 400 `VALIDATION_ERROR`
+  - [x] no auth → 401
+  - [x] oversize script → 400
+- [x] **Checks**: `npm test -w api`, `npm run build -w api`. All pass.
+- [x] **Commit**: `feat: script-mode phase 5 — POST /meditations/create/script` referencing this TODO.
 
 ---
 

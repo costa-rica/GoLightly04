@@ -3,25 +3,21 @@ import fsPromises from "fs/promises";
 import path from "path";
 import { Op } from "sequelize";
 import { Router } from "express";
-import type { MeditationElement } from "@golightly/shared-types";
+import {
+  parseMeditationScript,
+  SCRIPT_MAX_BYTES,
+  type MeditationElement,
+} from "@golightly/shared-types";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
 import { optionalAuth, requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
 import { canAccessMeditation, isStreamStart, readStreamToken } from "../lib/meditationAccess";
-import { getPrerecordedAudioPath } from "../lib/projectPaths";
 import { issueStreamToken } from "../lib/authTokens";
 import { notifyWorker } from "../services/workerClient";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
-import { normalizePauseDuration, normalizeSpeed } from "../services/meditations/normalize";
-
-function deriveType(element: MeditationElement): "text" | "sound" | "pause" {
-  if (element.text) return "text";
-  if (element.sound_file) return "sound";
-  if (element.pause_duration) return "pause";
-  throw new AppError(400, "VALIDATION_ERROR", "Unable to derive meditation element type");
-}
+import { createMeditationFromElements } from "../services/meditations/createMeditationFromElements";
 
 function mapMeditationRecord(
   meditation: any,
@@ -79,64 +75,67 @@ export function buildMeditationsRouter(): Router {
       }
 
       const meditationArray = req.body.meditationArray as MeditationElement[];
-      const { sequelize, JobQueue, Meditation } = getDb();
-      const meditation = await sequelize.transaction(async (transaction) => {
-        const createdMeditation = await Meditation.create(
-          {
-            userId: req.user!.id,
-            title,
-            description,
-            visibility,
-            status: "pending",
-            meditationArray: meditationArray.map((element, index) => ({
-              ...element,
-              sequence: index + 1,
-            })),
-          },
-          { transaction },
-        );
+      const meditation = await createMeditationFromElements({
+        userId: req.user!.id,
+        title,
+        description,
+        visibility,
+        elements: meditationArray,
+        sourceMode: "spreadsheet",
+        scriptSource: null,
+      });
 
-        for (const [index, element] of meditationArray.entries()) {
-          const type = deriveType(element);
-          let status: "pending" | "complete" = type === "text" ? "pending" : "complete";
-          let filePath: string | null = null;
-          let inputData = "";
+      void notifyWorker(meditation.id, "intake");
 
-          if (type === "text") {
-            inputData = JSON.stringify({
-              text: element.text,
-              voice_id: element.voice_id,
-              speed: normalizeSpeed(element.speed),
-            });
-          } else if (type === "sound") {
-            if (!element.sound_file) {
-              throw new AppError(400, "VALIDATION_ERROR", "sound_file is required for sound elements");
-            }
-            filePath = getPrerecordedAudioPath(element.sound_file);
-            inputData = JSON.stringify({ sound_file: element.sound_file });
-          } else {
-            inputData = JSON.stringify({
-              pause_duration: normalizePauseDuration(element.pause_duration),
-            });
-          }
+      res.status(201).json({
+        message: "Meditation created successfully",
+        queueId: meditation.id,
+        filePath: "",
+      });
+    }),
+  );
 
-          await JobQueue.create(
-            {
-              meditationId: createdMeditation.id,
-              sequence: index + 1,
-              type,
-              inputData,
-              status,
-              filePath,
-              attemptCount: 0,
-              lastError: null,
-              lastAttemptedAt: null,
-            },
-            { transaction },
-          );
-        }
+  router.post(
+    "/create/script",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      requireBodyFields(req.body, ["title", "visibility", "script"]);
+      const title = ensureString(req.body.title, "title");
+      const visibilityRaw = ensureString(req.body.visibility, "visibility");
+      if (visibilityRaw !== "public" && visibilityRaw !== "private") {
+        throw new AppError(400, "VALIDATION_ERROR", "visibility must be public or private");
+      }
+      const visibility: "public" | "private" = visibilityRaw;
+      const description =
+        typeof req.body.description === "string" && req.body.description.trim()
+          ? req.body.description.trim()
+          : null;
+      const script = ensureString(req.body.script, "script");
+      if (Buffer.byteLength(script, "utf8") > SCRIPT_MAX_BYTES) {
+        throw new AppError(400, "VALIDATION_ERROR", `script must be ${SCRIPT_MAX_BYTES} bytes or less`);
+      }
 
-        return createdMeditation;
+      const { SoundFile } = getDb();
+      const sounds = await SoundFile.findAll();
+      const soundMap = new Map(
+        sounds.map((sound) => [sound.name.trim().toLowerCase(), sound]),
+      );
+      const parseResult = parseMeditationScript(
+        script,
+        (bracketText) => soundMap.get(bracketText.trim().toLowerCase()) ?? null,
+      );
+      if (!parseResult.ok) {
+        throw new AppError(400, "SCRIPT_PARSE_ERROR", "Unable to parse meditation script", parseResult.errors);
+      }
+
+      const meditation = await createMeditationFromElements({
+        userId: req.user!.id,
+        title,
+        description,
+        visibility,
+        elements: parseResult.elements,
+        sourceMode: "script",
+        scriptSource: script,
       });
 
       void notifyWorker(meditation.id, "intake");
