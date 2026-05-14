@@ -2,6 +2,46 @@
 
 This file provides guidance to agent / engineerc when working with code in this repository.
 
+## Creating Markdown Files in docs/
+
+### Filenames
+
+The default naming pattern should be
+
+- prefix date using the `YYYYMMDD_` format
+- descriptive name in all caps
+- use "\_" in place of spaces
+
+### YAML frontmatter
+
+Every generated `.md` file will begin with a YAML frontmatter block delimited by `---` lines containing exactly these four keys:
+
+```yaml
+---
+created_at: YYYY-MM-DD
+updated_at: YYYY-MM-DD
+created_by: <agent name> (<model>)
+modified_by: <agent name> (<model>)
+---
+```
+
+Rules:
+
+- `created_at` is set once, at file creation, and MUST NEVER be modified on later edits.
+- `updated_at` is rewritten to today's date on every modification.
+- `created_by` is set once, at file creation, and MUST NEVER be modified on later edits.
+- `modified_by` is rewritten on every modification. On the very first write, set it to the same value as `created_by`.
+- The `created_by` / `modified_by` value uses the format `<agent name> (<model>)`, lowercase only, with no email addresses and no angle brackets.
+
+Acceptable examples:
+
+```yaml
+created_by: claude (sonnet-4)
+created_by: claude (opus-4.7)
+created_by: codex (gpt-5)
+modified_by: claude (haiku-4.5)
+```
+
 ## Commit Message Guidance
 
 ### Guidelines
