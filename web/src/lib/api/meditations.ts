@@ -1,6 +1,7 @@
 import type {
   CreateMeditationRequest,
   CreateMeditationResponse,
+  CreateMeditationScriptRequest,
   DeleteMeditationResponse,
   FavoriteMeditationResponse,
   GetAllMeditationsResponse,
@@ -34,6 +35,16 @@ export const createMeditation = async (
 ): Promise<CreateMeditationResponse> => {
   const response = await apiClient.post<CreateMeditationResponse>(
     "/meditations/create",
+    data,
+  );
+  return response.data;
+};
+
+export const createMeditationScript = async (
+  data: CreateMeditationScriptRequest,
+): Promise<CreateMeditationResponse> => {
+  const response = await apiClient.post<CreateMeditationResponse>(
+    "/meditations/create/script",
     data,
   );
   return response.data;

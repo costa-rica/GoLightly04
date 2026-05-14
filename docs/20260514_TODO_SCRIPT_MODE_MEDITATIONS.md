@@ -161,8 +161,8 @@ Goal: the new endpoint exists, both `/create` routes share one queueing helper, 
 
 Goal: the web can submit a script to the new endpoint, and the script editor is a usable component (even if not wired into the page yet).
 
-- [ ] Add `createMeditationScript(payload: CreateMeditationScriptRequest)` to [web/src/lib/api/meditations.ts](../web/src/lib/api/meditations.ts), modeled on the existing `createMeditation`. Surface the structured `details: ScriptParseError[]` from a 400 response so the caller can map errors back to source indexes.
-- [ ] Create `web/src/components/forms/ScriptMeditationEditor.tsx`:
+- [x] Add `createMeditationScript(payload: CreateMeditationScriptRequest)` to [web/src/lib/api/meditations.ts](../web/src/lib/api/meditations.ts), modeled on the existing `createMeditation`. Surface the structured `details: ScriptParseError[]` from a 400 response so the caller can map errors back to source indexes.
+- [x] Create `web/src/components/forms/ScriptMeditationEditor.tsx`:
   - title, description, visibility inputs reusing the same atoms as `CreateMeditationForm`
   - mirror-overlay highlighting: a transparent `<textarea>` over a `<pre aria-hidden>` that renders the same string with token spans. Synchronize scroll position (`onScroll` → set `pre.scrollTop/Left`) and ensure the `<pre>` uses the identical font, size, line-height, padding, and `white-space: pre-wrap` to keep glyph positions aligned.
   - token styling (Tailwind):
@@ -176,8 +176,8 @@ Goal: the web can submit a script to the new endpoint, and the script editor is 
   - sidebar listing available sound names from `getSoundFiles()`; clicking a name inserts `[Name]` at the cursor
   - submit button disabled when (a) there are parse errors, (b) title is empty, or (c) the sound catalog is still loading and unknown brackets exist (V02 finding #6)
   - on submit failure with `SCRIPT_PARSE_ERROR`, replace local diagnostics with the server's `details[]` — server is the authority of record
-- [ ] **Checks**: `npm run build -w web` (or `npm run typecheck -w web`). Passes. Component renders in isolation; verify in browser if needed (it isn't yet mounted on the page).
-- [ ] **Commit**: `feat: script-mode phase 6 — web API client + script editor` referencing this TODO.
+- [x] **Checks**: `npm run build -w web` (or `npm run typecheck -w web`). Passes. Component renders in isolation; verify in browser if needed (it isn't yet mounted on the page).
+- [x] **Commit**: `feat: script-mode phase 6 — web API client + script editor` referencing this TODO.
 
 ---
 
