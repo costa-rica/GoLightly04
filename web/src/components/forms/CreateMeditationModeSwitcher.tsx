@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import CreateMeditationForm from "@/components/forms/CreateMeditationForm";
 import ScriptMeditationEditor from "@/components/forms/ScriptMeditationEditor";
+import { useAppSelector } from "@/store/hooks";
 
 type CreateMode = "script" | "spreadsheet";
 
 const STORAGE_KEY = "golightly.createMode";
 
 export default function CreateMeditationModeSwitcher() {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const [mode, setMode] = useState<CreateMode>("script");
 
   useEffect(() => {
@@ -22,6 +24,10 @@ export default function CreateMeditationModeSwitcher() {
     setMode(nextMode);
     window.localStorage.setItem(STORAGE_KEY, nextMode);
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <section className="space-y-4">

@@ -84,24 +84,24 @@ function tokenClass(token: HighlightToken, hasError: boolean) {
   }
 
   if (token.type === "break") {
-    return "rounded bg-primary-50 px-1 font-mono text-primary-600";
+    return "rounded bg-primary-50 text-primary-600";
   }
 
   if (token.type === "sound") {
     if (token.knownSound === undefined) {
-      return "font-mono text-calm-600 underline decoration-dashed";
+      return "text-calm-600 underline decoration-dashed";
     }
     return token.knownSound
-      ? "rounded bg-emerald-50 px-1 font-mono text-emerald-700"
-      : "rounded bg-red-50 px-1 font-mono text-red-700";
+      ? "rounded bg-emerald-50 text-emerald-700"
+      : "rounded bg-red-50 text-red-700";
   }
 
   if (token.type === "speed") {
-    return "font-mono text-amber-700";
+    return "text-amber-700";
   }
 
   if (token.type === "text") {
-    return token.inSpeed ? "italic text-calm-900" : "text-calm-900";
+    return token.inSpeed ? "text-amber-900" : "text-calm-900";
   }
 
   return "text-calm-900";
@@ -122,6 +122,7 @@ export default function ScriptMeditationEditor() {
   const [titleError, setTitleError] = useState<string | undefined>();
   const [descriptionError, setDescriptionError] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSyntaxHelp, setShowSyntaxHelp] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
@@ -306,7 +307,7 @@ export default function ScriptMeditationEditor() {
                 <pre
                   ref={preRef}
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words p-4 font-sans text-sm leading-6"
+                  className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-sm leading-6"
                 >
                   {highlighted.tokens.map((token, index) => {
                     const hasError = parseErrors.some((error) => error.index === token.start);
@@ -324,7 +325,7 @@ export default function ScriptMeditationEditor() {
                   onScroll={handleScroll}
                   rows={12}
                   spellCheck
-                  className="relative z-10 min-h-72 w-full resize-y bg-transparent p-4 font-sans text-sm leading-6 text-transparent caret-calm-900 outline-none selection:bg-primary-100"
+                  className="relative z-10 min-h-72 w-full resize-y bg-transparent p-4 font-mono text-sm leading-6 text-transparent caret-calm-900 outline-none selection:bg-primary-100"
                   placeholder={'Welcome. Close your eyes.\n<break time="2s" />\n[Tibetan Singing Bowl]'}
                 />
               </div>
@@ -335,6 +336,23 @@ export default function ScriptMeditationEditor() {
                     Index {error.index}: {error.message}
                   </p>
                 ))}
+              </div>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSyntaxHelp((value) => !value)}
+                  className="rounded-lg border border-calm-200 px-3 py-1.5 text-xs font-medium text-calm-600 transition hover:border-primary-200 hover:text-primary-700"
+                  aria-expanded={showSyntaxHelp}
+                >
+                  {showSyntaxHelp ? "Hide syntax examples" : "Show syntax examples"}
+                </button>
+                {showSyntaxHelp && (
+                  <ul className="mt-2 space-y-1 rounded-xl border border-calm-200 bg-calm-50 p-3 text-xs text-calm-700">
+                    <li>add pause: <code className="font-mono text-primary-700">{'<break time="2s" />'}</code></li>
+                    <li>add sound: <code className="font-mono text-emerald-700">[Tibetan Singing Bowl]</code></li>
+                    <li>add speed: <code className="font-mono text-amber-700">{"{speed=0.9}slow breath{/speed}"}</code></li>
+                  </ul>
+                )}
               </div>
             </div>
 
