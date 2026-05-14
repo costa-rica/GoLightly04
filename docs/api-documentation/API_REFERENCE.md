@@ -1,107 +1,55 @@
-# GoLightly03 API Reference
+---
+created_at: 2026-05-14
+updated_at: 2026-05-14
+created_by: codex (gpt-5)
+modified_by: codex (gpt-5)
+---
 
-This API is an Express and TypeScript service backed by SQLite through the `db-models` package.
+# GoLightly04 API Reference
 
-This directory is the API documentation home for the `api/` subproject. Router-level endpoint docs live under [`./endpoints`](./endpoints).
+GoLightly04 exposes a TypeScript Express 5 API backed by Sequelize models over PostgreSQL.
 
-1. Available endpoint guides
-   - [users](./endpoints/users.md)
+This file is the top-level index for the API documentation. Each router has its own file under `./endpoints/`, with endpoint sections kept in source order.
 
-2. Common conventions
-   - Base URL for local development: `http://localhost:3000`
-   - Protected routes use `Authorization: Bearer <accessToken>`
-   - JSON request bodies should include `Content-Type: application/json`
-   - Error responses use a shared envelope with `code`, `message`, `status`, and optional `details`
+- [Health](./endpoints/health.md)
+- [Users](./endpoints/users.md)
+- [Sounds](./endpoints/sounds.md)
+- [Meditations](./endpoints/meditations.md)
+- [Admin](./endpoints/admin.md)
+- [Database](./endpoints/database.md)
 
-3. Shared error response shape
+## File naming
 
-```json
-{
-	"error": {
-		"code": "AUTH_FAILED",
-		"message": "Invalid email or password",
-		"status": 401
-	}
-}
-```
+Endpoint files use lowercase, hyphen-separated names that match the router URL prefix. For example, a router mounted at `/contract-users-teams` becomes `endpoints/contract-users-teams.md`. The root health route is documented as `endpoints/health.md` because it has no mounted router prefix and exposes `/healthz`.
 
-4. Endpoint documentation format
-   - Each file documents a single router or route group
-   - Each endpoint has its own section
-   - Each endpoint includes parameters, a sample request, a sample response, and notable error responses
-   - File names are lower case and follow the router subdomain
+## Endpoint documentation format
 
-## POST /users/login
+Every file under `endpoints/` follows this structure:
 
-Authenticate a local account with email and password and return an access token.
+1. Frontmatter with `created_at`, `updated_at`, `created_by`, and `modified_by`.
+2. `# <Resource> API` heading.
+3. A one-sentence description of what the router handles.
+4. A line stating the shared URL prefix, formatted as `All endpoints are prefixed with` `/<prefix>`.
+5. One `##` section per endpoint in source order.
 
-1. Authentication
-   - No authentication required
+Each endpoint section follows this structure:
 
-2. Parameters
-   - Body `email` string, required
-   - Body `password` string, required
+1. `## <METHOD> /<router-prefix>/<endpoint-path>`
+2. One short description sentence.
+3. A bullet list for endpoint flags, only when they apply:
+   - authentication requirements and token type
+   - rate limiting
+   - side effects
+   - non-JSON request or response content types
+4. `### Parameters`
+5. `### Sample Request`
+6. `### Sample Response`
+7. `### Error Responses`
+8. Optional focused sections such as `### Pagination`, `### Streaming`, or `### Idempotency`
 
-### Sample Request
+Formatting rules:
 
-```bash
-curl --location 'http://localhost:3000/users/login' \
---header 'Content-Type: application/json' \
---data-raw '{"email":"user@example.com","password":"test"}'
-```
-
-### Sample Response
-
-```json
-{
-	"message": "Login successful",
-	"accessToken": "jwt-token-value",
-	"user": {
-		"id": 1,
-		"email": "user@example.com",
-		"isAdmin": false,
-		"hasPublicMeditations": false
-	}
-}
-```
-
-### Error Responses
-
-#### Missing required field (400)
-
-```json
-{
-	"error": {
-		"code": "VALIDATION_ERROR",
-		"message": "Email and password are required",
-		"status": 400
-	}
-}
-```
-
-#### Invalid credentials (401)
-
-```json
-{
-	"error": {
-		"code": "AUTH_FAILED",
-		"message": "Invalid email or password",
-		"status": 401
-	}
-}
-```
-
-#### Email not verified (403)
-
-```json
-{
-	"error": {
-		"code": "EMAIL_NOT_VERIFIED",
-		"message": "Please verify your email before logging in",
-		"status": 403
-	}
-}
-```
-
-5. Additional notes
-   - Accounts created through Google-only authentication cannot use this endpoint until their auth provider supports password login.
+- Avoid bold text in section headings or at the start of list items.
+- Use inline code for parameter names, header names, environment variables, URL paths, table names, and HTTP methods.
+- Use code fences for structured payloads.
+- Keep prose descriptions to one or two sentences.

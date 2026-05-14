@@ -1,98 +1,97 @@
-# Users Endpoints
+---
+created_at: 2026-05-14
+updated_at: 2026-05-14
+created_by: codex (gpt-5)
+modified_by: codex (gpt-5)
+---
 
-These endpoints handle account registration, login, Google authentication, email verification, password reset, and self-service account deletion.
+# Users API
+
+The users router handles account registration, login, email verification, password reset, and Google authentication.
+
+All endpoints are prefixed with `/users`.
 
 ## POST /users/register
 
-Create a new local user account and send an email verification message.
+Creates a local user account and sends an email verification message.
 
-1. Authentication
-   - No authentication required
+- Sends a verification email.
 
-2. Parameters
-   - Body `email` string, required
-   - Body `password` string, required, minimum length `4`
+### Parameters
+
+- `email` (string, required): Email address for the new account; trimmed and lowercased.
+- `password` (string, required): Password for the new account.
 
 ### Sample Request
 
 ```bash
-curl --location 'http://localhost:3000/users/register' \
---header 'Content-Type: application/json' \
---data-raw '{"email":"user@example.com","password":"test"}'
+curl -X POST http://localhost:3000/users/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
 ```
 
 ### Sample Response
 
 ```json
 {
-  "message": "Registration successful. Please check your email to verify your account.",
-  "userId": 1
+  "message": "Registration successful",
+  "userId": 7
 }
 ```
 
 ### Error Responses
 
-1. `400 VALIDATION_ERROR`
-   - Missing email or password
-   - Invalid email format
-   - Password shorter than 4 characters
-2. `409 CONFLICT`
-   - User with this email already exists
-3. `409 GOOGLE_USER_EXISTS`
-   - An account with this email already exists and must use Google Sign-In
-
-## GET /users/verify
-
-Verify a user's email address using the emailed verification token.
-
-1. Authentication
-   - No authentication required
-
-2. Parameters
-   - Query `token` string, required
-
-### Sample Request
-
-```bash
-curl --location 'http://localhost:3000/users/verify?token=verification-token'
-```
-
-### Sample Response
+#### Validation error (400)
 
 ```json
 {
-  "message": "Email verified successfully. You can now log in."
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Missing required field: email",
+    "status": 400
+  }
 }
 ```
 
-### Error Responses
+#### Email already registered (409)
 
-1. `400 VALIDATION_ERROR`
-   - Missing verification token
-2. `401 TOKEN_EXPIRED`
-   - Verification token has expired
-3. `401 INVALID_TOKEN`
-   - Verification token is invalid
-4. `404 USER_NOT_FOUND`
-   - User for the token no longer exists
+```json
+{
+  "error": {
+    "code": "EMAIL_EXISTS",
+    "message": "Email is already registered",
+    "status": 409
+  }
+}
+```
+
+#### Server error (500)
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Internal server error",
+    "status": 500
+  }
+}
+```
 
 ## POST /users/login
 
-Authenticate a local account with email and password and return an access token.
+Authenticates a verified local user and returns a JWT access token.
 
-1. Authentication
-   - No authentication required
+### Parameters
 
-2. Parameters
-   - Body `email` string, required
-   - Body `password` string, required
+- `email` (string, required): Email address; trimmed and lowercased.
+- `password` (string, required): Account password.
 
 ### Sample Request
 
 ```bash
-curl --location 'http://localhost:3000/users/login' \
---header 'Content-Type: application/json' \
---data-raw '{"email":"user@example.com","password":"test"}'
+curl -X POST http://localhost:3000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
 ```
 
 ### Sample Response
@@ -100,11 +99,12 @@ curl --location 'http://localhost:3000/users/login' \
 ```json
 {
   "message": "Login successful",
-  "accessToken": "jwt-token-value",
+  "accessToken": "jwt-access-token",
   "user": {
-    "id": 1,
+    "id": 5,
     "email": "user@example.com",
     "isAdmin": false,
+    "authProvider": "local",
     "hasPublicMeditations": false
   }
 }
@@ -112,162 +112,321 @@ curl --location 'http://localhost:3000/users/login' \
 
 ### Error Responses
 
-1. `400 VALIDATION_ERROR`
-   - Missing email or password
-2. `401 AUTH_FAILED`
-   - Invalid email or password
-3. `403 PASSWORD_AUTH_DISABLED`
-   - Account must use Google Sign-In instead of password login
-4. `403 EMAIL_NOT_VERIFIED`
-   - Email verification has not been completed
+#### Validation error (400)
 
-## POST /users/google-auth
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Missing required field: email",
+    "status": 400
+  }
+}
+```
 
-Authenticate with a Google ID token. This route can create a new Google user, log in an existing Google user, or link Google auth to an existing local user.
+#### Authentication failed (401)
 
-1. Authentication
-   - No authentication required
+```json
+{
+  "error": {
+    "code": "AUTH_FAILED",
+    "message": "Invalid email or password",
+    "status": 401
+  }
+}
+```
 
-2. Parameters
-   - Body `idToken` string, required
+#### Email not verified (403)
+
+```json
+{
+  "error": {
+    "code": "EMAIL_NOT_VERIFIED",
+    "message": "Please verify your email before logging in",
+    "status": 403
+  }
+}
+```
+
+#### Server error (500)
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Internal server error",
+    "status": 500
+  }
+}
+```
+
+## POST /users/forgot-password
+
+Sends a password reset email when the account exists and always returns the same public response.
+
+- Sends a password reset email when a matching user exists.
+
+### Parameters
+
+- `email` (string, required): Account email address; trimmed and lowercased.
 
 ### Sample Request
 
 ```bash
-curl --location 'http://localhost:3000/users/google-auth' \
---header 'Content-Type: application/json' \
---data-raw '{"idToken":"google-id-token"}'
+curl -X POST http://localhost:3000/users/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
 ```
 
 ### Sample Response
 
 ```json
 {
-  "message": "Login successful via Google",
-  "accessToken": "jwt-token-value",
+  "message": "If that account exists, a password reset email has been sent"
+}
+```
+
+### Error Responses
+
+#### Validation error (400)
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Missing required field: email",
+    "status": 400
+  }
+}
+```
+
+#### Server error (500)
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Internal server error",
+    "status": 500
+  }
+}
+```
+
+## POST /users/reset-password
+
+Accepts a reset token and replaces the user's password.
+
+### Parameters
+
+- `token` (string, required): JWT reset token with `kind` equal to `reset-password`.
+- `newPassword` (string, required): New password value.
+
+### Sample Request
+
+```bash
+curl -X POST http://localhost:3000/users/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{"token":"reset-password-token","newPassword":"new-password123"}'
+```
+
+### Sample Response
+
+```json
+{
+  "message": "Password reset successful"
+}
+```
+
+### Error Responses
+
+#### Validation error (400)
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Missing required field: token",
+    "status": 400
+  }
+}
+```
+
+#### Invalid token (400)
+
+```json
+{
+  "error": {
+    "code": "INVALID_TOKEN",
+    "message": "Invalid reset token",
+    "status": 400
+  }
+}
+```
+
+#### User not found (404)
+
+```json
+{
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "User not found",
+    "status": 404
+  }
+}
+```
+
+#### Server error (500)
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Internal server error",
+    "status": 500
+  }
+}
+```
+
+## GET /users/verify
+
+Verifies a user's email address from an email verification token.
+
+### Parameters
+
+- `token` (string, required, query): JWT verification token with `kind` equal to `verify-email`.
+
+### Sample Request
+
+```bash
+curl "http://localhost:3000/users/verify?token=verify-email-token"
+```
+
+### Sample Response
+
+```json
+{
+  "message": "Email verified successfully"
+}
+```
+
+### Error Responses
+
+#### Validation error (400)
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "token must be a non-empty string",
+    "status": 400
+  }
+}
+```
+
+#### Invalid token (400)
+
+```json
+{
+  "error": {
+    "code": "INVALID_TOKEN",
+    "message": "Invalid verification token",
+    "status": 400
+  }
+}
+```
+
+#### User not found (404)
+
+```json
+{
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "User not found",
+    "status": 404
+  }
+}
+```
+
+#### Server error (500)
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Internal server error",
+    "status": 500
+  }
+}
+```
+
+## POST /users/google-auth
+
+Authenticates a Google account, creating or linking a user record as needed.
+
+- Calls Google's token verification service.
+
+### Parameters
+
+- `idToken` (string, required): Google ID token verified against `GOOGLE_CLIENT_ID`.
+
+### Sample Request
+
+```bash
+curl -X POST http://localhost:3000/users/google-auth \
+  -H "Content-Type: application/json" \
+  -d '{"idToken":"google-id-token"}'
+```
+
+### Sample Response
+
+```json
+{
+  "message": "Google authentication successful",
+  "accessToken": "jwt-access-token",
   "user": {
-    "id": 1,
-    "email": "user@example.com",
+    "id": 8,
+    "email": "google@example.com",
     "isAdmin": false,
-    "hasPublicMeditations": false,
-    "authProvider": "google"
+    "authProvider": "google",
+    "hasPublicMeditations": false
   }
 }
 ```
 
 ### Error Responses
 
-1. `400 VALIDATION_ERROR`
-   - Missing Google ID token
-2. `401 INVALID_GOOGLE_TOKEN`
-   - Google token could not be verified
-
-## POST /users/forgot-password
-
-Send a password reset email to an existing user.
-
-1. Authentication
-   - No authentication required
-
-2. Parameters
-   - Body `email` string, required
-
-### Sample Request
-
-```bash
-curl --location 'http://localhost:3000/users/forgot-password' \
---header 'Content-Type: application/json' \
---data-raw '{"email":"user@example.com"}'
-```
-
-### Sample Response
+#### Validation error (400)
 
 ```json
 {
-  "message": "Password reset link has been sent to your email address"
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Missing required field: idToken",
+    "status": 400
+  }
 }
 ```
 
-### Error Responses
-
-1. `400 VALIDATION_ERROR`
-   - Missing email
-2. `404 USER_NOT_FOUND`
-   - No account exists for the provided email
-
-## POST /users/reset-password
-
-Reset a password using a valid password reset token.
-
-1. Authentication
-   - No authentication required
-
-2. Parameters
-   - Body `token` string, required
-   - Body `newPassword` string, required, minimum length `2`
-
-### Sample Request
-
-```bash
-curl --location 'http://localhost:3000/users/reset-password' \
---header 'Content-Type: application/json' \
---data-raw '{"token":"reset-token","newPassword":"new-secret"}'
-```
-
-### Sample Response
+#### Google email unavailable (400)
 
 ```json
 {
-  "message": "Password has been reset successfully. You can now log in with your new password."
+  "error": {
+    "code": "GOOGLE_AUTH_FAILED",
+    "message": "Google account email is unavailable",
+    "status": 400
+  }
 }
 ```
 
-### Error Responses
-
-1. `400 VALIDATION_ERROR`
-   - Missing token or new password
-   - New password shorter than 2 characters
-2. `401 TOKEN_EXPIRED`
-   - Password reset token has expired
-3. `401 INVALID_TOKEN`
-   - Password reset token is invalid
-4. `404 USER_NOT_FOUND`
-   - User for the token no longer exists
-
-## DELETE /users/me
-
-Delete the authenticated user's account and optionally preserve public meditations under a benevolent replacement user.
-
-1. Authentication
-   - Requires `Authorization: Bearer <accessToken>`
-
-2. Parameters
-   - Body `savePublicMeditationsAsBenevolentUser` boolean, optional, default `false`
-
-### Sample Request
-
-```bash
-curl --location --request DELETE 'http://localhost:3000/users/me' \
---header 'Authorization: Bearer jwt-token-value' \
---header 'Content-Type: application/json' \
---data-raw '{"savePublicMeditationsAsBenevolentUser":true}'
-```
-
-### Sample Response
+#### Server error (500)
 
 ```json
 {
-  "message": "Your account has been deleted successfully",
-  "userId": 1,
-  "meditationsDeleted": 3,
-  "elevenLabsFilesDeleted": 6,
-  "benevolentUserCreated": true
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Internal server error",
+    "status": 500
+  }
 }
 ```
-
-### Error Responses
-
-1. `401 AUTH_FAILED`
-   - Missing or invalid bearer token
-2. `500 INTERNAL_ERROR`
-   - Account deletion workflow failed
