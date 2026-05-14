@@ -2,7 +2,7 @@
 created_at: 2026-05-14
 updated_at: 2026-05-14
 created_by: claude (opus-4.7)
-modified_by: claude (opus-4.7)
+modified_by: codex (gpt-5)
 ---
 
 # TODO — Script-mode meditation creation
@@ -27,22 +27,22 @@ Implementation checklist for the design in [20260514_SCRIPT_MODE_MEDITATIONS_V02
 
 Goal: land all the shared types and validation constants that later phases depend on, plus a working Jest harness in `shared-types`.
 
-- [ ] Create `shared-types/src/validation.ts` exporting `SPEED_MIN=0.7`, `SPEED_MAX=1.3`, `PAUSE_MIN=0`, `PAUSE_MAX=300`, `TITLE_MAX=100`, `DESCRIPTION_MAX=300`, `SCRIPT_MAX_BYTES=20_000`.
-- [ ] Refactor [web/src/lib/utils/validation.ts](../web/src/lib/utils/validation.ts) to re-export these constants and remove the duplicate literals. Confirm the web build still passes and no validation message text changes.
-- [ ] Extend [shared-types/src/meditation.ts](../shared-types/src/meditation.ts):
+- [x] Create `shared-types/src/validation.ts` exporting `SPEED_MIN=0.7`, `SPEED_MAX=1.3`, `PAUSE_MIN=0`, `PAUSE_MAX=300`, `TITLE_MAX=100`, `DESCRIPTION_MAX=300`, `SCRIPT_MAX_BYTES=20_000`.
+- [x] Refactor [web/src/lib/utils/validation.ts](../web/src/lib/utils/validation.ts) to re-export these constants and remove the duplicate literals. Confirm the web build still passes and no validation message text changes.
+- [x] Extend [shared-types/src/meditation.ts](../shared-types/src/meditation.ts):
   - add `export type SourceMode = "spreadsheet" | "script";`
   - add optional `sourceMode?: SourceMode` and `scriptSource?: string | null` to `Meditation`
   - add `export type CreateMeditationScriptRequest = { title: string; description?: string; visibility: MeditationVisibility; script: string };`
   - add the in-storage job input types: `TextJobInputData`, `SoundJobInputData`, `PauseJobInputData` (numeric `speed` and `pause_duration`)
   - add `export type ScriptParseError = { message: string; index: number };` and `ScriptParseResult` union (used by Phase 3)
-- [ ] Re-export new types from `shared-types/src/index.ts`.
-- [ ] Set up Jest in `shared-types`:
+- [x] Re-export new types from `shared-types/src/index.ts`.
+- [x] Set up Jest in `shared-types`:
   - add `shared-types/jest.config.ts` mirroring `api/jest.config.ts`
   - add `shared-types/tests/tsconfig.json` if api has one
   - add `"test": "jest"` to `shared-types/package.json` and dev-deps `jest`, `@types/jest`, `ts-jest` matching the versions in `api/package.json`
   - add a trivial placeholder test `shared-types/tests/validation.test.ts` asserting the constants are exported with the expected values, to prove the harness works
-- [ ] **Checks**: `npm install` from repo root, `npm run build -w shared-types`, `npm test -w shared-types`, `npm run build -w web`. All pass.
-- [ ] **Commit**: `feat: script-mode phase 1 — shared-types foundation` referencing this TODO.
+- [x] **Checks**: `npm install` from repo root, `npm run build -w shared-types`, `npm test -w shared-types`, `npm run build -w web`. All pass.
+- [x] **Commit**: `feat: script-mode phase 1 — shared-types foundation` referencing this TODO.
 
 ---
 

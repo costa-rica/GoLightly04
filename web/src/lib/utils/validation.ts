@@ -1,3 +1,21 @@
+import {
+  DESCRIPTION_MAX,
+  PAUSE_MAX,
+  PAUSE_MIN,
+  SPEED_MAX,
+  SPEED_MIN,
+  TITLE_MAX,
+} from "@golightly/shared-types";
+
+export {
+  DESCRIPTION_MAX,
+  PAUSE_MAX,
+  PAUSE_MIN,
+  SPEED_MAX,
+  SPEED_MIN,
+  TITLE_MAX,
+};
+
 /**
  * Validates an email address format
  */
@@ -45,7 +63,7 @@ export const validateMeditationTitle = (title: string): { valid: boolean; messag
       message: 'Title is required',
     };
   }
-  if (title.length > 100) {
+  if (title.length > TITLE_MAX) {
     return {
       valid: false,
       message: 'Title must be less than 100 characters',
@@ -65,7 +83,7 @@ export const validateSpeed = (speed: string): { valid: boolean; message?: string
       message: 'Speed must be a number',
     };
   }
-  if (speedNum < 0.7 || speedNum > 1.3) {
+  if (speedNum < SPEED_MIN || speedNum > SPEED_MAX) {
     return {
       valid: false,
       message: 'Speed must be between 0.7 and 1.3',
@@ -85,13 +103,13 @@ export const validatePauseDuration = (duration: string): { valid: boolean; messa
       message: 'Duration must be a number',
     };
   }
-  if (durationNum <= 0) {
+  if (durationNum <= PAUSE_MIN) {
     return {
       valid: false,
       message: 'Duration must be greater than 0',
     };
   }
-  if (durationNum > 300) {
+  if (durationNum > PAUSE_MAX) {
     return {
       valid: false,
       message: 'Duration must be less than 300 seconds',

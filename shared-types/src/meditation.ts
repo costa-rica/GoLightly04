@@ -1,5 +1,6 @@
 export type MeditationVisibility = "public" | "private";
 export type MeditationStatus = "pending" | "processing" | "complete" | "failed";
+export type SourceMode = "spreadsheet" | "script";
 
 export type MeditationElement = {
   id: number;
@@ -25,6 +26,8 @@ export type Meditation = {
   isOwned?: boolean;
   ownerUserId?: number;
   status?: MeditationStatus;
+  sourceMode?: SourceMode;
+  scriptSource?: string | null;
 };
 
 export type CreateMeditationRequest = {
@@ -33,6 +36,32 @@ export type CreateMeditationRequest = {
   visibility: MeditationVisibility;
   meditationArray: MeditationElement[];
 };
+
+export type CreateMeditationScriptRequest = {
+  title: string;
+  description?: string;
+  visibility: MeditationVisibility;
+  script: string;
+};
+
+export type TextJobInputData = {
+  text: string;
+  voice_id?: string;
+  speed?: number;
+};
+
+export type SoundJobInputData = {
+  sound_file: string;
+};
+
+export type PauseJobInputData = {
+  pause_duration: number;
+};
+
+export type ScriptParseError = { message: string; index: number };
+export type ScriptParseResult =
+  | { ok: true; elements: MeditationElement[] }
+  | { ok: false; errors: ScriptParseError[] };
 
 export type CreateMeditationResponse = {
   message: string;
