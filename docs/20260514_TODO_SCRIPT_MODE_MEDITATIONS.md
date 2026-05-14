@@ -67,31 +67,31 @@ Goal: numeric `speed` (and `pause_duration`) reach `JobQueue.inputData` from eve
 
 Goal: a parser in shared-types that converts a script string into `MeditationElement[]` or a list of indexed errors, with no silent fall-through of malformed markup.
 
-- [ ] Create `shared-types/src/scriptParser.ts` exporting `parseMeditationScript(script, soundLookup)` per V02 Step 1b.
-- [ ] Implementation is a left-to-right scanner. At every position, if the cursor matches a reserved start sequence (`<break`, `[`, `{speed=`, `{/speed}`), the whole construct must parse strictly or emit an indexed `ScriptParseError` and advance past the start sequence so the scanner does not loop. Otherwise, accumulate the character into the current text buffer.
-- [ ] Speed blocks use a stack so nested/unclosed blocks are detected. Speech text inside a speed block carries `speed: <number>` on the resulting `MeditationElement` (numeric, not string — must align with the Phase 2 contract).
-- [ ] Sound lookup is injected so the parser is environment-agnostic. Unknown bracket → `ScriptParseError("Unknown sound: <name>", index)`. The result `MeditationElement.sound_file` is the `SoundFile.filename` (not the bracket text).
-- [ ] Re-export `parseMeditationScript` and types from `shared-types/src/index.ts`.
-- [ ] Add `shared-types/tests/scriptParser.test.ts` with these required cases (every malformed input must be rejected, never silently emitted as speech):
-  - [ ] pure speech (no tokens)
-  - [ ] leading and trailing `<break time="1s" />`
-  - [ ] sound + pause + sound interleaved with speech
-  - [ ] `{speed=0.9}slow{/speed}` produces one text element with numeric speed `0.9`
-  - [ ] `<break time="3" />` (missing `s`) → error
-  - [ ] `<break time="3s">` (not self-closed) → error
-  - [ ] `<break time="abc s" />` → error
-  - [ ] `{speed=.9}hello{/speed}` (no integer part) → error
-  - [ ] `{speed=1.0}hello` (unclosed) → error at the opening index
-  - [ ] `{/speed}` with no matching open → error
-  - [ ] `[Unclosed sound` (no `]`) → error
-  - [ ] `[Made Up Sound]` with empty sound lookup → error
-  - [ ] speed out of range (`{speed=2.0}…{/speed}`) → error
-  - [ ] pause out of range (`<break time="999s" />`) → error
-  - [ ] empty/whitespace-only text between tokens is skipped (no zero-length speech elements)
-  - [ ] multi-line input and unicode characters survive round-trip
-  - [ ] 1-based ids are assigned to elements in source order
-- [ ] **Checks**: `npm test -w shared-types`, `npm run build -w shared-types`. All pass.
-- [ ] **Commit**: `feat: script-mode phase 3 — strict scanner parser` referencing this TODO.
+- [x] Create `shared-types/src/scriptParser.ts` exporting `parseMeditationScript(script, soundLookup)` per V02 Step 1b.
+- [x] Implementation is a left-to-right scanner. At every position, if the cursor matches a reserved start sequence (`<break`, `[`, `{speed=`, `{/speed}`), the whole construct must parse strictly or emit an indexed `ScriptParseError` and advance past the start sequence so the scanner does not loop. Otherwise, accumulate the character into the current text buffer.
+- [x] Speed blocks use a stack so nested/unclosed blocks are detected. Speech text inside a speed block carries `speed: <number>` on the resulting `MeditationElement` (numeric, not string — must align with the Phase 2 contract).
+- [x] Sound lookup is injected so the parser is environment-agnostic. Unknown bracket → `ScriptParseError("Unknown sound: <name>", index)`. The result `MeditationElement.sound_file` is the `SoundFile.filename` (not the bracket text).
+- [x] Re-export `parseMeditationScript` and types from `shared-types/src/index.ts`.
+- [x] Add `shared-types/tests/scriptParser.test.ts` with these required cases (every malformed input must be rejected, never silently emitted as speech):
+  - [x] pure speech (no tokens)
+  - [x] leading and trailing `<break time="1s" />`
+  - [x] sound + pause + sound interleaved with speech
+  - [x] `{speed=0.9}slow{/speed}` produces one text element with numeric speed `0.9`
+  - [x] `<break time="3" />` (missing `s`) → error
+  - [x] `<break time="3s">` (not self-closed) → error
+  - [x] `<break time="abc s" />` → error
+  - [x] `{speed=.9}hello{/speed}` (no integer part) → error
+  - [x] `{speed=1.0}hello` (unclosed) → error at the opening index
+  - [x] `{/speed}` with no matching open → error
+  - [x] `[Unclosed sound` (no `]`) → error
+  - [x] `[Made Up Sound]` with empty sound lookup → error
+  - [x] speed out of range (`{speed=2.0}…{/speed}`) → error
+  - [x] pause out of range (`<break time="999s" />`) → error
+  - [x] empty/whitespace-only text between tokens is skipped (no zero-length speech elements)
+  - [x] multi-line input and unicode characters survive round-trip
+  - [x] 1-based ids are assigned to elements in source order
+- [x] **Checks**: `npm test -w shared-types`, `npm run build -w shared-types`. All pass.
+- [x] **Commit**: `feat: script-mode phase 3 — strict scanner parser` referencing this TODO.
 
 ---
 

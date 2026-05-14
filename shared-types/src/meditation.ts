@@ -6,7 +6,7 @@ export type MeditationElement = {
   id: number;
   text?: string;
   voice_id?: string;
-  speed?: string;
+  speed?: string | number;
   pause_duration?: string;
   sound_file?: string;
 };
