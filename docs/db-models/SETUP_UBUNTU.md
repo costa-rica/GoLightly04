@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-05-14
+updated_at: 2026-05-15
 created_by: codex (gpt-5)
-modified_by: claude (opus-4-7)
+modified_by: codex (gpt-5)
 ---
 
 # Production Database Setup - Ubuntu
@@ -93,6 +93,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
 ```
+
+- Exit the PostgreSQL terminal with `\q` after the grants finish.
 
 ### 6. Configure each package's .env
 
