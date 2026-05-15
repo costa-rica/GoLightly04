@@ -156,16 +156,16 @@ export default function TableMeditation() {
       <button
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="flex w-full items-center justify-between rounded-2xl border border-calm-200/70 bg-white/80 px-4 py-3 text-left shadow-sm transition hover:border-primary-200"
+        className="flex w-full items-center justify-between rounded-2xl border border-calm-200/70 bg-white/80 px-4 py-3 text-left shadow-sm transition hover:border-primary-200 dark:border-calm-800 dark:bg-calm-900/80 dark:hover:border-primary-800"
         aria-expanded={isExpanded}
       >
         <div>
-          <h2 className="text-xl font-display font-semibold text-calm-900">
+          <h2 className="text-xl font-display font-semibold text-calm-900 dark:text-calm-50">
             Meditations
           </h2>
-          <p className="text-sm text-calm-500">Explore the community library</p>
+          <p className="text-sm text-calm-500 dark:text-calm-400">Explore the community library</p>
         </div>
-        <span className="text-calm-500">
+        <span className="text-calm-500 dark:text-calm-400">
           {isExpanded ? (
             <svg
               className="h-5 w-5"
@@ -199,16 +199,16 @@ export default function TableMeditation() {
       </button>
 
       {isExpanded && (
-        <div className="rounded-3xl border border-calm-200/70 bg-white p-4 shadow-sm md:p-6">
+        <div className="rounded-3xl border border-calm-200/70 bg-white p-4 shadow-sm dark:border-calm-800 dark:bg-calm-900 md:p-6">
           {loading && (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
-                  className="flex items-center justify-between rounded-2xl border border-calm-100 bg-calm-50 px-4 py-3 animate-pulse"
+                  className="flex animate-pulse items-center justify-between rounded-2xl border border-calm-100 bg-calm-50 px-4 py-3 dark:border-calm-800 dark:bg-calm-800"
                 >
-                  <div className="h-4 w-1/2 rounded-full bg-calm-200" />
-                  <div className="h-4 w-16 rounded-full bg-calm-200" />
+                  <div className="h-4 w-1/2 rounded-full bg-calm-200 dark:bg-calm-700" />
+                  <div className="h-4 w-16 rounded-full bg-calm-200 dark:bg-calm-700" />
                 </div>
               ))}
             </div>
@@ -231,10 +231,10 @@ export default function TableMeditation() {
             <>
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
-                <div className="max-h-[360px] min-w-[520px] overflow-y-auto rounded-2xl border border-calm-100">
+                <div className="max-h-[360px] min-w-[520px] overflow-y-auto rounded-2xl border border-calm-100 dark:border-calm-800">
                   <table className="w-full text-left text-xs md:text-sm">
-                    <thead className="sticky top-0 bg-white/90 backdrop-blur">
-                      <tr className="text-calm-500">
+                    <thead className="sticky top-0 bg-white/90 backdrop-blur dark:bg-calm-900/90">
+                      <tr className="text-calm-500 dark:text-calm-400">
                         <th className="px-4 py-3 font-semibold">Title</th>
                         <th className="px-4 py-3 font-semibold">Play</th>
                         {isAuthenticated && (
@@ -267,13 +267,13 @@ export default function TableMeditation() {
                         return (
                           <tr
                             key={meditation.id}
-                            className="border-t border-calm-100 text-calm-700"
+                            className="border-t border-calm-100 text-calm-700 dark:border-calm-800 dark:text-calm-300"
                           >
-                            <td className="px-4 py-3 font-medium text-calm-900">
+                            <td className="px-4 py-3 font-medium text-calm-900 dark:text-calm-100">
                               <button
                                 type="button"
                                 onClick={() => setSelectedMeditation(meditation)}
-                                className="text-left underline decoration-calm-300 underline-offset-2 transition hover:decoration-primary-500 hover:text-primary-700"
+                                className="text-left underline decoration-calm-300 underline-offset-2 transition hover:text-primary-700 hover:decoration-primary-500 dark:decoration-calm-600 dark:hover:text-primary-300"
                               >
                                 {meditation.title}
                               </button>
@@ -297,7 +297,7 @@ export default function TableMeditation() {
                                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
                                     meditation.isFavorite
                                       ? "border-amber-200 bg-amber-50 text-amber-500"
-                                      : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700"
+                                      : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
                                   }`}
                                   aria-label={
                                     meditation.isFavorite
@@ -309,7 +309,7 @@ export default function TableMeditation() {
                                 </button>
                               </td>
                             )}
-                            <td className="px-4 py-3 text-right text-calm-600">
+                            <td className="px-4 py-3 text-right text-calm-600 dark:text-calm-400">
                               {listenCount}
                             </td>
                           </tr>
@@ -323,7 +323,7 @@ export default function TableMeditation() {
               {/* Mobile Card View */}
               <div className="block md:hidden">
                 {visibleRows.length === 0 ? (
-                  <div className="rounded-2xl border border-calm-100 px-4 py-6 text-center text-sm text-calm-500">
+                  <div className="rounded-2xl border border-calm-100 px-4 py-6 text-center text-sm text-calm-500 dark:border-calm-800 dark:text-calm-400">
                     No meditations available yet.
                   </div>
                 ) : (
@@ -337,14 +337,14 @@ export default function TableMeditation() {
                       return (
                         <div
                           key={meditation.id}
-                          className="rounded-2xl border border-calm-100 bg-white p-4 space-y-3"
+                          className="space-y-3 rounded-2xl border border-calm-100 bg-white p-4 dark:border-calm-800 dark:bg-calm-950/60"
                         >
                           {/* Title Row */}
                           <div>
                             <button
                               type="button"
                               onClick={() => setSelectedMeditation(meditation)}
-                              className="text-left text-sm font-medium text-calm-900 underline decoration-calm-300 underline-offset-2 transition hover:decoration-primary-500 hover:text-primary-700"
+                              className="text-left text-sm font-medium text-calm-900 underline decoration-calm-300 underline-offset-2 transition hover:text-primary-700 hover:decoration-primary-500 dark:text-calm-100 dark:decoration-calm-600 dark:hover:text-primary-300"
                             >
                               {meditation.title}
                             </button>
@@ -369,7 +369,7 @@ export default function TableMeditation() {
                                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
                                     meditation.isFavorite
                                       ? "border-amber-200 bg-amber-50 text-amber-500"
-                                      : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700"
+                                      : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
                                   }`}
                                   aria-label={
                                     meditation.isFavorite
@@ -380,7 +380,7 @@ export default function TableMeditation() {
                                   ★
                                 </button>
                               )}
-                              <div className="flex items-center gap-1 text-xs text-calm-600">
+                              <div className="flex items-center gap-1 text-xs text-calm-600 dark:text-calm-400">
                                 <svg
                                   className="h-4 w-4"
                                   viewBox="0 0 24 24"

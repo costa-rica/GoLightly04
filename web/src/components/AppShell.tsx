@@ -55,21 +55,21 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-calm-50 text-calm-900 dark:bg-calm-950 dark:text-calm-100">
         <Navigation onLoginClick={() => setIsLoginOpen(true)} />
         <div className="pt-16 flex-1">{children}</div>
-        <footer className="px-4 py-6 text-xs text-slate-500">
+        <footer className="px-4 py-6 text-xs text-slate-500 dark:text-calm-400">
           <div className="mx-auto max-w-6xl">
             <div className="flex items-center gap-2">
               <a
-                className="hover:text-slate-700 transition-colors"
+                className="hover:text-slate-700 transition-colors dark:hover:text-calm-200"
                 href="mailto:nrodrig1@gmail.com"
               >
                 Contact Us
               </a>
-              <span className="text-slate-400">|</span>
+              <span className="text-slate-400 dark:text-calm-600">|</span>
               <a
-                className="hover:text-slate-700 transition-colors"
+                className="hover:text-slate-700 transition-colors dark:hover:text-calm-200"
                 href="https://formy.go-lightly.love"
                 rel="noreferrer"
                 target="_blank"

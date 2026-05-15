@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/features/authSlice";
 import { clearAuthStorage } from "@/lib/utils/auth";
 import Toast from "@/components/Toast";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type NavigationProps = {
   onLoginClick?: () => void;
@@ -65,7 +66,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
       return (
         <Link
           href="/"
-          className="text-sm font-semibold text-calm-700 hover:text-primary-700 transition"
+          className="text-sm font-semibold text-calm-700 transition hover:text-primary-700 dark:text-calm-200 dark:hover:text-primary-300"
           onClick={handleCloseMobile}
         >
           Home
@@ -78,7 +79,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
       return (
         <Link
           href="/admin"
-          className="text-sm font-semibold text-calm-700 hover:text-primary-700 transition"
+          className="text-sm font-semibold text-calm-700 transition hover:text-primary-700 dark:text-calm-200 dark:hover:text-primary-300"
           onClick={handleCloseMobile}
         >
           Admin
@@ -94,7 +95,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50">
-        <div className="bg-white/80 backdrop-blur border-b border-calm-200/70 shadow-sm">
+        <div className="border-b border-calm-200/70 bg-white/80 shadow-sm backdrop-blur dark:border-calm-800 dark:bg-calm-950/85">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-8">
             <Link href="/" className="flex items-center gap-3">
               <Image
@@ -104,36 +105,40 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
                 height={36}
                 className="rounded-full"
               />
-              <span className="font-display text-lg font-semibold text-calm-900">
+              <span className="font-display text-lg font-semibold text-calm-900 dark:text-calm-50">
                 Go Lightly
               </span>
             </Link>
 
             <div className="hidden items-center gap-3 md:flex">
               {navLinks}
+              <ThemeToggle />
               <button
                 type="button"
                 onClick={handleAuthClick}
-                className="rounded-full border border-calm-300 px-4 py-2 text-sm font-semibold text-calm-700 transition hover:border-primary-300 hover:text-primary-700"
+                className="rounded-full border border-calm-300 px-4 py-2 text-sm font-semibold text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
               >
                 {isAuthenticated ? "Logout" : "Login"}
               </button>
             </div>
 
-            <button
-              type="button"
-              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-calm-200 text-calm-700 transition hover:border-primary-300 hover:text-primary-700"
-              aria-label="Open navigation menu"
-              aria-expanded={isMobileOpen}
-              onClick={() => setIsMobileOpen(true)}
-            >
-              <span className="sr-only">Open menu</span>
-              <div className="flex flex-col gap-1">
-                <span className="h-0.5 w-5 rounded-full bg-current" />
-                <span className="h-0.5 w-5 rounded-full bg-current" />
-                <span className="h-0.5 w-5 rounded-full bg-current" />
-              </div>
-            </button>
+            <div className="flex items-center gap-2 md:hidden">
+              <ThemeToggle />
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-calm-200 text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200"
+                aria-label="Open navigation menu"
+                aria-expanded={isMobileOpen}
+                onClick={() => setIsMobileOpen(true)}
+              >
+                <span className="sr-only">Open menu</span>
+                <div className="flex flex-col gap-1">
+                  <span className="h-0.5 w-5 rounded-full bg-current" />
+                  <span className="h-0.5 w-5 rounded-full bg-current" />
+                  <span className="h-0.5 w-5 rounded-full bg-current" />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -152,7 +157,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
           onClick={handleCloseMobile}
         />
         <div
-          className={`absolute left-0 top-0 flex h-full w-3/4 max-w-xs flex-col gap-6 bg-white px-6 py-6 shadow-xl transition-transform ${
+          className={`absolute left-0 top-0 flex h-full w-3/4 max-w-xs flex-col gap-6 bg-white px-6 py-6 shadow-xl transition-transform dark:bg-calm-950 ${
             isMobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -169,7 +174,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
                 height={32}
                 className="rounded-full"
               />
-              <span className="font-display text-base font-semibold text-calm-900">
+              <span className="font-display text-base font-semibold text-calm-900 dark:text-calm-50">
                 Go Lightly
               </span>
             </Link>
@@ -177,7 +182,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
               type="button"
               aria-label="Close menu"
               onClick={handleCloseMobile}
-              className="rounded-full border border-calm-200 px-3 py-2 text-sm text-calm-600"
+              className="rounded-full border border-calm-200 px-3 py-2 text-sm text-calm-600 dark:border-calm-700 dark:text-calm-200"
             >
               Close
             </button>
@@ -188,7 +193,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
           <button
             type="button"
             onClick={handleAuthClick}
-            className="mt-auto rounded-full border border-calm-300 px-4 py-2 text-sm font-semibold text-calm-700 transition hover:border-primary-300 hover:text-primary-700"
+            className="mt-auto rounded-full border border-calm-300 px-4 py-2 text-sm font-semibold text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
           >
             {isAuthenticated ? "Logout" : "Login"}
           </button>
