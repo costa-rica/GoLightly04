@@ -12,5 +12,8 @@
   "scripts": {
     "build:shared": "npm run build -w @golightly/shared-types && npm run build -w @golightly/db-models",
     "typecheck:shared": "npm run typecheck -w @golightly/shared-types && npm run typecheck -w @golightly/db-models"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }
