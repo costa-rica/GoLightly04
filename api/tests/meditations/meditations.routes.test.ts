@@ -22,6 +22,10 @@ const jobQueueModel = {
   destroy: jest.fn(),
 };
 
+const soundFileModel = {
+  findAll: jest.fn(),
+};
+
 const contractUserMeditationModel = {
   findAll: jest.fn(),
   findOrCreate: jest.fn(),
@@ -33,6 +37,7 @@ jest.mock("../../src/lib/db", () => ({
     sequelize: sequelizeMock,
     Meditation: meditationModel,
     JobQueue: jobQueueModel,
+    SoundFile: soundFileModel,
     ContractUserMeditation: contractUserMeditationModel,
   }),
 }));
@@ -57,6 +62,7 @@ describe("meditations routes", () => {
     jest.clearAllMocks();
     process.env.PATH_PROJECT_RESOURCES = path.join(os.tmpdir(), "golightly04-meditations-tests");
     contractUserMeditationModel.findAll.mockResolvedValue([]);
+    soundFileModel.findAll.mockResolvedValue([]);
   });
 
   it("creates a meditation and queues jobs", async () => {

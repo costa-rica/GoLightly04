@@ -96,6 +96,15 @@ export type UpdateMeditationResponse = {
   meditation: Meditation;
 };
 
+export type RegenerateMeditationRequest = {
+  script: string;
+};
+
+export type RegenerateMeditationResponse = {
+  message: string;
+  meditation: Meditation;
+};
+
 export type StreamTokenResponse = {
   token: string;
 };

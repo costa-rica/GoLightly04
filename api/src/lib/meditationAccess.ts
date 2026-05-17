@@ -39,3 +39,19 @@ export function canAccessMeditation(
   const tokenPayload = readStreamToken(req);
   return !!tokenPayload && tokenPayload.userId === meditation.userId;
 }
+
+export function canAccessMeditationDetails(
+  meditation: { id: number; userId: number; visibility: string; status?: string },
+  req: Request,
+): boolean {
+  if (req.user?.isAdmin || req.user?.id === meditation.userId) {
+    return true;
+  }
+
+  const tokenPayload = readStreamToken(req);
+  if (tokenPayload?.meditationId === meditation.id) {
+    return true;
+  }
+
+  return meditation.visibility === "public" && meditation.status === "complete";
+}

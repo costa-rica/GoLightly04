@@ -6,22 +6,30 @@ import { Router } from "express";
 import {
   parseMeditationScript,
   SCRIPT_MAX_BYTES,
+  serializeMeditationElementsToScript,
   type MeditationElement,
+  type RegenerateMeditationRequest,
 } from "@golightly/shared-types";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
 import { optionalAuth, requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
-import { canAccessMeditation, isStreamStart, readStreamToken } from "../lib/meditationAccess";
+import { canAccessMeditationDetails, isStreamStart, readStreamToken } from "../lib/meditationAccess";
 import { issueStreamToken } from "../lib/authTokens";
 import { notifyWorker } from "../services/workerClient";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
 import { createMeditationFromElements } from "../services/meditations/createMeditationFromElements";
+import { regenerateMeditationFromScript } from "../services/meditations/regenerateMeditationFromScript";
+import { buildSoundFilenameToNameLookup } from "../services/meditations/soundLookup";
 
 function mapMeditationRecord(
   meditation: any,
-  options: { isFavorite?: boolean; isOwned?: boolean } = {},
+  options: {
+    isFavorite?: boolean;
+    isOwned?: boolean;
+    soundFilenameToName?: (filename: string) => string | null;
+  } = {},
 ) {
   return {
     id: meditation.id,
@@ -32,7 +40,12 @@ function mapMeditationRecord(
     filePath: meditation.filePath ?? undefined,
     visibility: meditation.visibility,
     sourceMode: meditation.sourceMode ?? "spreadsheet",
-    scriptSource: meditation.scriptSource ?? null,
+    scriptSource:
+      meditation.scriptSource ??
+      serializeMeditationElementsToScript(
+        meditation.meditationArray ?? [],
+        options.soundFilenameToName ?? (() => null),
+      ),
     createdAt: meditation.createdAt instanceof Date ? meditation.createdAt.toISOString() : meditation.createdAt,
     updatedAt: meditation.updatedAt instanceof Date ? meditation.updatedAt.toISOString() : meditation.updatedAt,
     listenCount: meditation.listenCount,
@@ -50,6 +63,12 @@ async function loadMeditationOrThrow(id: number) {
     throw new AppError(404, "NOT_FOUND", "Meditation not found");
   }
   return meditation;
+}
+
+async function loadSoundFilenameToNameLookup() {
+  const { SoundFile } = getDb();
+  const soundFiles = await SoundFile.findAll();
+  return buildSoundFilenameToNameLookup(soundFiles);
 }
 
 export function buildMeditationsRouter(): Router {
@@ -152,7 +171,7 @@ export function buildMeditationsRouter(): Router {
     "/all",
     optionalAuth,
     asyncHandler(async (req, res) => {
-      const { ContractUserMeditation, Meditation } = getDb();
+      const { ContractUserMeditation, Meditation, SoundFile } = getDb();
       const where = req.user
         ? {
             [Op.or]: [{ visibility: "public" }, { userId: req.user.id }],
@@ -163,6 +182,7 @@ export function buildMeditationsRouter(): Router {
         where,
         order: [["createdAt", "DESC"]],
       });
+      const soundFilenameToName = buildSoundFilenameToNameLookup(await SoundFile.findAll());
 
       let favorites = new Set<number>();
       if (req.user) {
@@ -177,6 +197,7 @@ export function buildMeditationsRouter(): Router {
           mapMeditationRecord(meditation, {
             isFavorite: favorites.has(meditation.id),
             isOwned: req.user?.id === meditation.userId,
+            soundFilenameToName,
           }),
         ),
       });
@@ -188,10 +209,16 @@ export function buildMeditationsRouter(): Router {
     optionalAuth,
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (!canAccessMeditation(meditation, req)) {
+      if (!canAccessMeditationDetails(meditation, req)) {
         throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
       }
-      res.json({ meditation: mapMeditationRecord(meditation, { isOwned: req.user?.id === meditation.userId }) });
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+      res.json({
+        meditation: mapMeditationRecord(meditation, {
+          isOwned: req.user?.id === meditation.userId,
+          soundFilenameToName,
+        }),
+      });
     }),
   );
 
@@ -200,7 +227,7 @@ export function buildMeditationsRouter(): Router {
     requireAuth,
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (!canAccessMeditation(meditation, req)) {
+      if (!canAccessMeditationDetails(meditation, req)) {
         throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
       }
       res.json({ token: issueStreamToken(meditation.id, req.user!.id) });
@@ -216,7 +243,7 @@ export function buildMeditationsRouter(): Router {
       if (tokenPayload && tokenPayload.meditationId !== meditation.id) {
         throw new AppError(401, "AUTH_FAILED", "Invalid stream token");
       }
-      if (!canAccessMeditation(meditation, req)) {
+      if (!canAccessMeditationDetails(meditation, req)) {
         throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
       }
       if (!meditation.filePath) {
@@ -319,10 +346,40 @@ export function buildMeditationsRouter(): Router {
         meditation.visibility = visibilityRaw;
       }
       await meditation.save();
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
 
       res.json({
         message: "Meditation updated",
-        meditation: mapMeditationRecord(meditation, { isOwned: true }),
+        meditation: mapMeditationRecord(meditation, { isOwned: true, soundFilenameToName }),
+      });
+    }),
+  );
+
+  router.put(
+    "/:id/script",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const body = req.body as RegenerateMeditationRequest;
+      const script = ensureString(body.script, "script");
+      if (Buffer.byteLength(script, "utf8") > SCRIPT_MAX_BYTES) {
+        throw new AppError(400, "VALIDATION_ERROR", `script must be ${SCRIPT_MAX_BYTES} bytes or less`);
+      }
+
+      const meditation = await loadMeditationOrThrow(Number(req.params.id));
+      if (req.user!.id !== meditation.userId) {
+        throw new AppError(403, "FORBIDDEN", "You do not own this meditation");
+      }
+
+      const updated = await regenerateMeditationFromScript({
+        meditationId: meditation.id,
+        script,
+      });
+      void notifyWorker(updated.id, "intake");
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+
+      res.json({
+        message: "Meditation regeneration started",
+        meditation: mapMeditationRecord(updated, { isOwned: true, soundFilenameToName }),
       });
     }),
   );

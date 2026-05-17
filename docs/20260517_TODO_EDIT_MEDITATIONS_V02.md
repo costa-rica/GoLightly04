@@ -89,24 +89,24 @@ Plan §Phase 3. Race-safety is critical here — re-read the phase before coding
 
 Plan §Phase 4.
 
-- [ ] Create `api/src/services/meditations/soundLookup.ts` exporting `buildSoundFilenameToNameLookup(soundFiles)`.
-- [ ] Update `mapMeditationRecord` in [api/src/routes/meditations.ts](../api/src/routes/meditations.ts) to accept optional `soundFilenameToName` and fall back to serializer when `scriptSource` is null.
-- [ ] Add `canAccessMeditationDetails(meditation, req)` to [api/src/lib/meditationAccess.ts](../api/src/lib/meditationAccess.ts). **Behavior:**
+- [x] Create `api/src/services/meditations/soundLookup.ts` exporting `buildSoundFilenameToNameLookup(soundFiles)`.
+- [x] Update `mapMeditationRecord` in [api/src/routes/meditations.ts](../api/src/routes/meditations.ts) to accept optional `soundFilenameToName` and fall back to serializer when `scriptSource` is null.
+- [x] Add `canAccessMeditationDetails(meditation, req)` to [api/src/lib/meditationAccess.ts](../api/src/lib/meditationAccess.ts). **Behavior:**
   - Owner → allowed at any status.
   - Admin → allowed at any status.
   - Public + complete → allowed for anyone (including anonymous, where applicable).
   - Stream-token holder for this meditation → allowed at any status. **This branch only matters at `GET /:id/stream`** (the token-issuance route receives no token); other callers can skip it.
   - Otherwise → denied.
-- [ ] Swap `canAccessMeditation` → `canAccessMeditationDetails` in `GET /:id`, `GET /:id/stream-token`, and `GET /:id/stream` handlers. Keep the existing `if (!meditation.filePath)` 409 in `/stream` as defense-in-depth, but the access helper runs first.
-- [ ] Add `PUT /:id/script` route: `requireAuth`, owner-only, validates length, calls `regenerateMeditationFromScript`, then `void notifyWorker(updated.id, "intake")`, then responds with mapped meditation.
-- [ ] Build SoundFile lookup once per request in `GET /all`, `GET /:id`, `PATCH /update/:id`, and `PUT /:id/script` handlers.
-- [ ] Add `RegenerateMeditationRequest` and `RegenerateMeditationResponse` to [shared-types/src/meditation.ts](../shared-types/src/meditation.ts) (and re-export via `index.ts`).
+- [x] Swap `canAccessMeditation` → `canAccessMeditationDetails` in `GET /:id`, `GET /:id/stream-token`, and `GET /:id/stream` handlers. Keep the existing `if (!meditation.filePath)` 409 in `/stream` as defense-in-depth, but the access helper runs first.
+- [x] Add `PUT /:id/script` route: `requireAuth`, owner-only, validates length, calls `regenerateMeditationFromScript`, then `void notifyWorker(updated.id, "intake")`, then responds with mapped meditation.
+- [x] Build SoundFile lookup once per request in `GET /all`, `GET /:id`, `PATCH /update/:id`, and `PUT /:id/script` handlers.
+- [x] Add `RegenerateMeditationRequest` and `RegenerateMeditationResponse` to [shared-types/src/meditation.ts](../shared-types/src/meditation.ts) (and re-export via `index.ts`).
 
 **Per-phase gate:**
-- [ ] `npm test -w @golightly/api` passes (existing tests still green)
-- [ ] `npm run typecheck -w @golightly/api` and `npm run typecheck -w @golightly/shared-types` pass
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 4
+- [x] `npm test -w @golightly/api` passes (existing tests still green)
+- [x] `npm run typecheck -w @golightly/api` and `npm run typecheck -w @golightly/shared-types` pass
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 4
 
 ---
 
