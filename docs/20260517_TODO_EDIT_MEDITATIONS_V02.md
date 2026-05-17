@@ -69,19 +69,19 @@ Plan §Phase 2.
 
 Plan §Phase 3. Race-safety is critical here — re-read the phase before coding.
 
-- [ ] Create `api/src/services/meditations/regenerateMeditationFromScript.ts`.
-- [ ] Implement fast-path status check (reject if not `complete` or `failed`).
-- [ ] Implement transaction with row lock, status recheck under lock, AND rejection if any `JobQueue` row has `status="processing"`.
-- [ ] Update meditation columns inside the transaction (re-sequence `meditationArray`, set `scriptSource`, `sourceMode="script"`, `filename=null`, `filePath=null`, `status="pending"`).
-- [ ] Call `replaceMeditationElements` inside the same transaction.
-- [ ] After commit, call `deleteMeditationAudioFiles(meditationId)` (best-effort).
-- [ ] Service does NOT call `notifyWorker` — that's the route's job.
+- [x] Create `api/src/services/meditations/regenerateMeditationFromScript.ts`.
+- [x] Implement fast-path status check (reject if not `complete` or `failed`).
+- [x] Implement transaction with row lock, status recheck under lock, AND rejection if any `JobQueue` row has `status="processing"`.
+- [x] Update meditation columns inside the transaction (re-sequence `meditationArray`, set `scriptSource`, `sourceMode="script"`, `filename=null`, `filePath=null`, `status="pending"`).
+- [x] Call `replaceMeditationElements` inside the same transaction.
+- [x] After commit, call `deleteMeditationAudioFiles(meditationId)` (best-effort).
+- [x] Service does NOT call `notifyWorker` — that's the route's job.
 
 **Per-phase gate:**
-- [ ] `npm test -w @golightly/api` passes
-- [ ] `npm run typecheck -w @golightly/api` passes
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 3
+- [x] `npm test -w @golightly/api` passes
+- [x] `npm run typecheck -w @golightly/api` passes
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 3
 
 ---
 
