@@ -3,6 +3,7 @@ import type { SoundFile } from "./sounds";
 import { PAUSE_MAX, PAUSE_MIN, SPEED_MAX, SPEED_MIN } from "./validation";
 
 type SoundLookup = (bracketText: string) => Pick<SoundFile, "filename"> | null;
+type SoundFilenameToNameLookup = (filename: string) => string | null;
 
 type SpeedFrame = {
   speed: number;
@@ -152,4 +153,40 @@ export function parseMeditationScript(
   }
 
   return { ok: true, elements };
+}
+
+/**
+ * Serializes meditation elements back to editable script syntax.
+ *
+ * `voice_id` has no representation in the script format. Spreadsheet-created
+ * meditations that used per-element voices will collapse to the default voice
+ * after a script edit/regeneration.
+ */
+export function serializeMeditationElementsToScript(
+  elements: MeditationElement[],
+  soundFilenameToName: SoundFilenameToNameLookup,
+): string {
+  return elements
+    .flatMap((element) => {
+      if (element.text) {
+        const speed = typeof element.speed === "number" && Number.isFinite(element.speed) ? element.speed : null;
+        return speed === null ? element.text : `{speed=${speed}}${element.text}{/speed}`;
+      }
+
+      if (element.pause_duration !== undefined) {
+        const pauseDuration = Number(element.pause_duration);
+        if (pauseDuration <= PAUSE_MIN || pauseDuration > PAUSE_MAX || !Number.isFinite(pauseDuration)) {
+          return [];
+        }
+        return `<break time="${pauseDuration}s"/>`;
+      }
+
+      if (element.sound_file) {
+        const name = soundFilenameToName(element.sound_file);
+        return name ? `[${name}]` : `[unknown sound: ${element.sound_file}]`;
+      }
+
+      return [];
+    })
+    .join("\n\n");
 }

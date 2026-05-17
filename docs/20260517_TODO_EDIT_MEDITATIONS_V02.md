@@ -34,15 +34,15 @@ v02 incorporates the Codex review of v01 ([20260517_TODO_EDIT_MEDITATIONS_ASSESS
 
 Plan §Phase 1.
 
-- [ ] Add `serializeMeditationElementsToScript(elements, soundFilenameToName)` to [shared-types/src/scriptParser.ts](../shared-types/src/scriptParser.ts).
-- [ ] JSDoc must document `voice_id` information loss.
-- [ ] Add unit tests (round-trip via parser): plain text, pause, sound (found + missing), speed-wrapped text, mixed-order, `voice_id` dropped. (Plan §Phase 8 → Serializer unit tests.)
+- [x] Add `serializeMeditationElementsToScript(elements, soundFilenameToName)` to [shared-types/src/scriptParser.ts](../shared-types/src/scriptParser.ts).
+- [x] JSDoc must document `voice_id` information loss.
+- [x] Add unit tests (round-trip via parser): plain text, pause, sound (found + missing), speed-wrapped text, mixed-order, `voice_id` dropped. (Plan §Phase 8 → Serializer unit tests.)
 
 **Per-phase gate:**
-- [ ] `npm test -w @golightly/shared-types` passes
-- [ ] `npm run typecheck -w @golightly/shared-types` passes
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 1
+- [x] `npm test -w @golightly/shared-types` passes
+- [x] `npm run typecheck -w @golightly/shared-types` passes
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 1
 
 ---
 

@@ -1,4 +1,5 @@
-import { parseMeditationScript } from "../src/scriptParser";
+import { parseMeditationScript, serializeMeditationElementsToScript } from "../src/scriptParser";
+import type { MeditationElement } from "../src/meditation";
 import type { SoundFile } from "../src/sounds";
 
 const sounds: SoundFile[] = [
@@ -16,6 +17,10 @@ const sounds: SoundFile[] = [
 
 function lookup(name: string) {
   return sounds.find((sound) => sound.name.toLowerCase() === name.toLowerCase()) ?? null;
+}
+
+function filenameToName(filename: string) {
+  return sounds.find((sound) => sound.filename === filename)?.name ?? null;
 }
 
 function expectError(script: string, expected: string) {
@@ -114,5 +119,90 @@ describe("parseMeditationScript", () => {
     if (result.ok) {
       expect(result.elements.map((element) => element.id)).toEqual([1, 2, 3, 4]);
     }
+  });
+});
+
+describe("serializeMeditationElementsToScript", () => {
+  function roundTrip(elements: MeditationElement[]) {
+    const script = serializeMeditationElementsToScript(elements, filenameToName);
+    return parseMeditationScript(script, lookup);
+  }
+
+  it("round-trips plain text", () => {
+    expect(roundTrip([{ id: 1, text: "Welcome to the practice." }])).toEqual({
+      ok: true,
+      elements: [{ id: 1, text: "Welcome to the practice." }],
+    });
+  });
+
+  it("round-trips pauses", () => {
+    expect(roundTrip([{ id: 1, pause_duration: "2.5" }])).toEqual({
+      ok: true,
+      elements: [{ id: 1, pause_duration: "2.5" }],
+    });
+  });
+
+  it("round-trips known sounds by name", () => {
+    expect(roundTrip([{ id: 1, sound_file: "rain.mp3" }])).toEqual({
+      ok: true,
+      elements: [{ id: 1, sound_file: "rain.mp3" }],
+    });
+  });
+
+  it("serializes missing sounds as an explicit parse error", () => {
+    const script = serializeMeditationElementsToScript([{ id: 1, sound_file: "missing.mp3" }], filenameToName);
+    expect(script).toBe("[unknown sound: missing.mp3]");
+
+    const result = parseMeditationScript(script, lookup);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors[0]?.message).toBe("Unknown sound: unknown sound: missing.mp3");
+    }
+  });
+
+  it("round-trips speed-wrapped text when speed is numeric", () => {
+    expect(roundTrip([{ id: 1, text: "slow breath", speed: 0.85 }])).toEqual({
+      ok: true,
+      elements: [{ id: 1, text: "slow breath", speed: 0.85 }],
+    });
+  });
+
+  it("round-trips mixed elements in order", () => {
+    expect(
+      roundTrip([
+        { id: 1, text: "Begin" },
+        { id: 2, pause_duration: "1" },
+        { id: 3, sound_file: "rain.mp3" },
+        { id: 4, text: "End", speed: 1.1 },
+      ]),
+    ).toEqual({
+      ok: true,
+      elements: [
+        { id: 1, text: "Begin" },
+        { id: 2, pause_duration: "1" },
+        { id: 3, sound_file: "rain.mp3" },
+        { id: 4, text: "End", speed: 1.1 },
+      ],
+    });
+  });
+
+  it("drops voice_id because script syntax has no voice representation", () => {
+    expect(roundTrip([{ id: 1, text: "Different voice", voice_id: "voice-1" }])).toEqual({
+      ok: true,
+      elements: [{ id: 1, text: "Different voice" }],
+    });
+  });
+
+  it("skips invalid pauses", () => {
+    expect(
+      serializeMeditationElementsToScript(
+        [
+          { id: 1, text: "Before" },
+          { id: 2, pause_duration: "999" },
+          { id: 3, text: "After" },
+        ],
+        filenameToName,
+      ),
+    ).toBe("Before\n\nAfter");
   });
 });
