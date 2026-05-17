@@ -166,19 +166,19 @@ Plan §Phase 5 (web portion) + §Phase 7.
 
 **Important:** The web codebase does **not** use Redux thunks. The slice [`web/src/store/features/meditationSlice.ts`](../web/src/store/features/meditationSlice.ts) is plain reducers (`updateMeditation`, `setMeditations`, etc.). API calls live in [`web/src/lib/api/meditations.ts`](../web/src/lib/api/meditations.ts) (see existing `updateMeditationObj`, `deleteMeditationObj`, `getAllMeditations`) and are invoked from components which then dispatch the matching reducer. Match this pattern — do not introduce thunks.
 
-- [ ] Add `regenerateMeditationScript(id, script)` helper to [`web/src/lib/api/meditations.ts`](../web/src/lib/api/meditations.ts). PUTs `/meditations/:id/script` and returns `{ meditation }`. Type the response using the new `RegenerateMeditationResponse` from shared-types.
-- [ ] Locate the list page / table (`grep -rn "ModalMeditationDetails\|MeditationCard\|TableMeditation" web/src`; `web/src/components/tables/TableMeditation.tsx` is the known table).
-- [ ] In the list/table, add a placeholder card render path for owned meditations where `status` is `pending` or `processing`: spinner, copy "Your meditation will be ready shortly…", no play button, hide favorite/share, keep delete.
-- [ ] Add a `failed` state render: "Generation failed. Edit or delete to try again." Details modal still opens.
-- [ ] Add polling in the list/table (`useEffect`): when any owned meditation is in-flight, `setInterval` every 5s to refetch `GET /all` and dispatch `setMeditations` (or whatever the slice uses); clear when none remain. Clean up on unmount.
-- [ ] **Polling cap (kept small):** stop polling after 5 minutes. Do not add a new UI element. The existing Refresh affordance on the list stays available so the user can re-trigger a fetch manually.
+- [x] Add `regenerateMeditationScript(id, script)` helper to [`web/src/lib/api/meditations.ts`](../web/src/lib/api/meditations.ts). PUTs `/meditations/:id/script` and returns `{ meditation }`. Type the response using the new `RegenerateMeditationResponse` from shared-types.
+- [x] Locate the list page / table (`grep -rn "ModalMeditationDetails\|MeditationCard\|TableMeditation" web/src`; `web/src/components/tables/TableMeditation.tsx` is the known table).
+- [x] In the list/table, add a placeholder card render path for owned meditations where `status` is `pending` or `processing`: spinner, copy "Your meditation will be ready shortly…", no play button, hide favorite/share, keep delete.
+- [x] Add a `failed` state render: "Generation failed. Edit or delete to try again." Details modal still opens.
+- [x] Add polling in the list/table (`useEffect`): when any owned meditation is in-flight, `setInterval` every 5s to refetch `GET /all` and dispatch `setMeditations` (or whatever the slice uses); clear when none remain. Clean up on unmount.
+- [x] **Polling cap (kept small):** stop polling after 5 minutes. Do not add a new UI element. The existing Refresh affordance on the list stays available so the user can re-trigger a fetch manually.
 
 **Per-phase gate:**
-- [ ] `npm run typecheck -w @golightly/web` passes
-- [ ] `npm run build -w @golightly/web` passes
+- [x] `npm run typecheck -w @golightly/web` passes
+- [x] `npm run build -w @golightly/web` passes
 - [ ] Manually verify in browser: create a meditation, see placeholder, polling refreshes to playable card when worker completes.
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 7
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 7
 
 ---
 

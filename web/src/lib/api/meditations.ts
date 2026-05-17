@@ -5,6 +5,7 @@ import type {
   DeleteMeditationResponse,
   FavoriteMeditationResponse,
   GetAllMeditationsResponse,
+  RegenerateMeditationResponse,
   StreamTokenResponse,
   UpdateMeditationRequest,
   UpdateMeditationResponse,
@@ -83,6 +84,17 @@ export const updateMeditationObj = async (
   const response = await apiClient.patch<UpdateMeditationResponse>(
     `/meditations/update/${id}`,
     data,
+  );
+  return response.data;
+};
+
+export const regenerateMeditationScript = async (
+  id: number,
+  script: string,
+): Promise<RegenerateMeditationResponse> => {
+  const response = await apiClient.put<RegenerateMeditationResponse>(
+    `/meditations/${id}/script`,
+    { script },
   );
   return response.data;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteMeditationObj,
   favoriteMeditation,
@@ -36,9 +36,12 @@ export default function TableMeditation() {
     message: string;
     variant: "success" | "error";
   } | null>(null);
+  const pollingStartedAtRef = useRef<number | null>(null);
 
-  const fetchMeditations = useCallback(async () => {
-    dispatch(setLoading(true));
+  const fetchMeditations = useCallback(async (opts: { silent?: boolean } = {}) => {
+    if (!opts.silent) {
+      dispatch(setLoading(true));
+    }
     dispatch(setError(null));
 
     try {
@@ -73,6 +76,37 @@ export default function TableMeditation() {
   const visibleRows = useMemo(() => {
     return Array.isArray(meditations) ? meditations : [];
   }, [meditations]);
+  const hasInFlight = useMemo(
+    () =>
+      visibleRows.some(
+        (meditation) =>
+          meditation.isOwned &&
+          (meditation.status === "pending" || meditation.status === "processing"),
+      ),
+    [visibleRows],
+  );
+
+  useEffect(() => {
+    if (!hasInFlight) {
+      pollingStartedAtRef.current = null;
+      return;
+    }
+
+    if (pollingStartedAtRef.current === null) {
+      pollingStartedAtRef.current = Date.now();
+    }
+
+    const interval = window.setInterval(() => {
+      const startedAt = pollingStartedAtRef.current ?? Date.now();
+      if (Date.now() - startedAt > 5 * 60 * 1000) {
+        window.clearInterval(interval);
+        return;
+      }
+      void fetchMeditations({ silent: true });
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [fetchMeditations, hasInFlight]);
 
   const handleToggleFavorite = async (
     meditationId: number,
@@ -219,7 +253,7 @@ export default function TableMeditation() {
               <p>{error}</p>
               <button
                 type="button"
-                onClick={fetchMeditations}
+                onClick={() => void fetchMeditations()}
                 className="mt-3 rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300"
               >
                 Retry
@@ -263,6 +297,10 @@ export default function TableMeditation() {
                           (meditation as { listenCount?: number }).listenCount ??
                           (meditation as { listens?: number }).listens ??
                           0;
+                        const isInFlight =
+                          meditation.isOwned &&
+                          (meditation.status === "pending" || meditation.status === "processing");
+                        const isFailed = meditation.isOwned && meditation.status === "failed";
 
                         return (
                           <tr
@@ -279,34 +317,49 @@ export default function TableMeditation() {
                               </button>
                             </td>
                             <td className="px-4 py-3">
-                              <AudioPlayer
-                                meditationId={meditation.id}
-                                title={meditation.title}
-                              />
+                              {isInFlight ? (
+                                <div className="flex items-center gap-2 text-xs text-calm-500 dark:text-calm-400">
+                                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-calm-200 border-t-primary-500" />
+                                  <span>Your meditation will be ready shortly…</span>
+                                </div>
+                              ) : isFailed ? (
+                                <span className="text-xs text-red-600 dark:text-red-300">
+                                  Generation failed. Edit or delete to try again.
+                                </span>
+                              ) : (
+                                <AudioPlayer
+                                  meditationId={meditation.id}
+                                  title={meditation.title}
+                                />
+                              )}
                             </td>
                             {isAuthenticated && (
                               <td className="px-4 py-3 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleToggleFavorite(
-                                      meditation.id,
-                                      meditation.isFavorite,
-                                    )
-                                  }
-                                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
-                                    meditation.isFavorite
-                                      ? "border-amber-200 bg-amber-50 text-amber-500"
-                                      : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
-                                  }`}
-                                  aria-label={
-                                    meditation.isFavorite
-                                      ? `Remove ${meditation.title} from favorites`
-                                      : `Add ${meditation.title} to favorites`
-                                  }
-                                >
-                                  ★
-                                </button>
+                                {isInFlight || isFailed ? (
+                                  <span className="text-xs text-calm-400">Pending</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleToggleFavorite(
+                                        meditation.id,
+                                        meditation.isFavorite,
+                                      )
+                                    }
+                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
+                                      meditation.isFavorite
+                                        ? "border-amber-200 bg-amber-50 text-amber-500"
+                                        : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
+                                    }`}
+                                    aria-label={
+                                      meditation.isFavorite
+                                        ? `Remove ${meditation.title} from favorites`
+                                        : `Add ${meditation.title} to favorites`
+                                    }
+                                  >
+                                    ★
+                                  </button>
+                                )}
                               </td>
                             )}
                             <td className="px-4 py-3 text-right text-calm-600 dark:text-calm-400">
@@ -333,6 +386,10 @@ export default function TableMeditation() {
                         (meditation as { listenCount?: number }).listenCount ??
                         (meditation as { listens?: number }).listens ??
                         0;
+                      const isInFlight =
+                        meditation.isOwned &&
+                        (meditation.status === "pending" || meditation.status === "processing");
+                      const isFailed = meditation.isOwned && meditation.status === "failed";
 
                       return (
                         <div
@@ -352,12 +409,23 @@ export default function TableMeditation() {
 
                           {/* Controls Row */}
                           <div className="flex items-center justify-between gap-3">
-                            <AudioPlayer
-                              meditationId={meditation.id}
-                              title={meditation.title}
-                            />
+                            {isInFlight ? (
+                              <div className="flex items-center gap-2 text-xs text-calm-500 dark:text-calm-400">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-calm-200 border-t-primary-500" />
+                                <span>Your meditation will be ready shortly…</span>
+                              </div>
+                            ) : isFailed ? (
+                              <span className="text-xs text-red-600 dark:text-red-300">
+                                Generation failed. Edit or delete to try again.
+                              </span>
+                            ) : (
+                              <AudioPlayer
+                                meditationId={meditation.id}
+                                title={meditation.title}
+                              />
+                            )}
                             <div className="flex items-center gap-3">
-                              {isAuthenticated && (
+                              {isAuthenticated && !isInFlight && !isFailed && (
                                 <button
                                   type="button"
                                   onClick={() =>
