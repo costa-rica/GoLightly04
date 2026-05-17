@@ -114,13 +114,13 @@ Plan §Phase 4.
 
 Plan §Phase 5 (API portion only — web portion is in Phase 7).
 
-- [ ] Update `GET /all` `where` clause in [api/src/routes/meditations.ts](../api/src/routes/meditations.ts): admin sees all; authenticated non-admin sees `(public AND complete) OR own`; anonymous sees `public AND complete`.
+- [x] Update `GET /all` `where` clause in [api/src/routes/meditations.ts](../api/src/routes/meditations.ts): admin sees all; authenticated non-admin sees `(public AND complete) OR own`; anonymous sees `public AND complete`.
 
 **Per-phase gate:**
-- [ ] `npm test -w @golightly/api` passes
-- [ ] `npm run typecheck -w @golightly/api` passes
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 5
+- [x] `npm test -w @golightly/api` passes
+- [x] `npm run typecheck -w @golightly/api` passes
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 5
 
 ---
 

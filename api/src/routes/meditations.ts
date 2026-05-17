@@ -172,11 +172,16 @@ export function buildMeditationsRouter(): Router {
     optionalAuth,
     asyncHandler(async (req, res) => {
       const { ContractUserMeditation, Meditation, SoundFile } = getDb();
-      const where = req.user
-        ? {
-            [Op.or]: [{ visibility: "public" }, { userId: req.user.id }],
-          }
-        : { visibility: "public" };
+      const where = req.user?.isAdmin
+        ? {}
+        : req.user
+          ? {
+              [Op.or]: [
+                { visibility: "public", status: "complete" },
+                { userId: req.user.id },
+              ],
+            }
+          : { visibility: "public", status: "complete" };
 
       const meditations = await Meditation.findAll({
         where,
