@@ -130,33 +130,33 @@ Plan §Phase 8 (API route tests).
 
 Add to [api/tests/meditations/meditations.routes.test.ts](../api/tests/meditations/meditations.routes.test.ts) (or split into a new file if it gets long):
 
-- [ ] `GET /:id` returns serialized script when `scriptSource` is null and round-trips through `parseMeditationScript`.
-- [ ] `GET /all` filter: anonymous, authenticated non-owner, owner, admin scenarios.
-- [ ] `GET /:id` access matrix:
+- [x] `GET /:id` returns serialized script when `scriptSource` is null and round-trips through `parseMeditationScript`.
+- [x] `GET /all` filter: anonymous, authenticated non-owner, owner, admin scenarios.
+- [x] `GET /:id` access matrix:
   - non-owner public complete → 200
   - non-owner public pending → 403
   - non-owner public processing → 403
   - owner public pending → 200
   - admin public pending → 200
   - anonymous public pending → 403
-- [ ] `GET /:id/stream-token` access matrix (route is `requireAuth`, so anonymous returns **401**, not 403):
+- [x] `GET /:id/stream-token` access matrix (route is `requireAuth`, so anonymous returns **401**, not 403):
   - authenticated non-owner public complete → 200 (token issued)
   - authenticated non-owner public pending → 403
   - owner public pending → 200
   - admin public pending → 200
   - anonymous public pending → **401**
-- [ ] `GET /:id/stream` access: non-owner public pending → 403 (not 409), confirming the access helper runs before the `filePath` check.
-- [ ] `PUT /:id/script` happy path: updates fields, destroys + recreates JobQueue rows, calls `deleteMeditationAudioFiles` mock, calls `notifyWorker` **after** cleanup.
-- [ ] `PUT /:id/script` non-owner → 403, no DB writes.
-- [ ] `PUT /:id/script` malformed script → 400 `SCRIPT_PARSE_ERROR` with errors.
-- [ ] Race guards: status `processing` → 409; status `pending` → 409; in-transaction recheck `processing` → 409; existing `JobQueue.processing` row → 409.
-- [ ] Oversize script → 400 `VALIDATION_ERROR`.
+- [x] `GET /:id/stream` access: non-owner public pending → 403 (not 409), confirming the access helper runs before the `filePath` check.
+- [x] `PUT /:id/script` happy path: updates fields, destroys + recreates JobQueue rows, calls `deleteMeditationAudioFiles` mock, calls `notifyWorker` **after** cleanup.
+- [x] `PUT /:id/script` non-owner → 403, no DB writes.
+- [x] `PUT /:id/script` malformed script → 400 `SCRIPT_PARSE_ERROR` with errors.
+- [x] Race guards: status `processing` → 409; status `pending` → 409; in-transaction recheck `processing` → 409; existing `JobQueue.processing` row → 409.
+- [x] Oversize script → 400 `VALIDATION_ERROR`.
 
 **Per-phase gate:**
-- [ ] `npm test -w @golightly/api` passes with all new tests green
-- [ ] `npm run typecheck -w @golightly/api` passes
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 6
+- [x] `npm test -w @golightly/api` passes with all new tests green
+- [x] `npm run typecheck -w @golightly/api` passes
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 6
 
 ---
 
