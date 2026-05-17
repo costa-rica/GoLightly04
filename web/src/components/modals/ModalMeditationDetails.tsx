@@ -11,6 +11,7 @@ type ModalMeditationDetailsProps = {
   onClose: () => void;
   onUpdate: (id: number, data: { title?: string; description?: string; visibility?: 'public' | 'private' }) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+  onRegenerateScript: (id: number, script: string) => Promise<void>;
 };
 
 export default function ModalMeditationDetails({
@@ -20,6 +21,7 @@ export default function ModalMeditationDetails({
   onClose,
   onUpdate,
   onDelete,
+  onRegenerateScript,
 }: ModalMeditationDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -28,14 +30,26 @@ export default function ModalMeditationDetails({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [script, setScript] = useState("");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
-  const isOwner = meditation && userId && meditation.ownerUserId === userId;
+  const isOwner = !!(meditation && userId && meditation.ownerUserId === userId);
+  const initialScript = meditation?.scriptSource ?? "";
+  const isScriptDirty = script !== initialScript;
+  const isProcessing =
+    meditation?.status === "pending" || meditation?.status === "processing";
+  const hasMultipleVoices =
+    meditation?.sourceMode === "spreadsheet" &&
+    meditation.meditationArray.some((element) => Boolean(element.voice_id));
 
   useEffect(() => {
     if (meditation) {
       setTitle(meditation.title || "");
       setDescription(meditation.description || "");
       setVisibility(meditation.visibility as 'public' | 'private' || 'public');
+      setScript(meditation.scriptSource ?? "");
+      setRegenerateError(null);
     }
     setIsEditing(false);
   }, [meditation, isOpen]);
@@ -97,6 +111,29 @@ export default function ModalMeditationDetails({
     }
   };
 
+  const handleRegenerate = async () => {
+    if (!meditation) return;
+    const confirmed = window.confirm(
+      "This will delete the existing audio and rebuild from your edited script. Continue?",
+    );
+    if (!confirmed) return;
+
+    setIsRegenerating(true);
+    setRegenerateError(null);
+    try {
+      await onRegenerateScript(meditation.id, script);
+      setIsEditing(false);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error?.message ||
+        "Unable to regenerate meditation. Please review the script and try again.";
+      setRegenerateError(message);
+      throw error;
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (!meditation) return;
 
@@ -118,7 +155,7 @@ export default function ModalMeditationDetails({
         className="fixed inset-0 z-50 flex items-center justify-center bg-calm-900/50 backdrop-blur-sm px-4"
         onClick={handleBackdropClick}
       >
-        <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+        <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
           <div className="flex items-start justify-between mb-6">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-calm-400">Details</p>
@@ -182,23 +219,69 @@ export default function ModalMeditationDetails({
                 <option value="private">Private</option>
               </select>
             </div>
+
+            <div>
+              <label htmlFor="meditation-script" className="block text-xs font-semibold text-calm-600 mb-2">
+                Script
+              </label>
+              <textarea
+                id="meditation-script"
+                value={script}
+                onChange={(e) => setScript(e.target.value)}
+                disabled={!isEditing || isRegenerating || isProcessing}
+                rows={12}
+                className="w-full resize-y rounded-xl border border-calm-200 bg-white px-4 py-3 font-mono text-sm text-calm-900 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-600"
+              />
+              <p className="mt-2 text-xs text-calm-500">
+                Edit and choose 'Save & Regenerate' to rebuild the audio. Regenerating replaces the existing audio and may take a few minutes.
+              </p>
+              {hasMultipleVoices && (
+                <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  This meditation originally used multiple voices. Saving the script will collapse it to the default voice.
+                </p>
+              )}
+              {isProcessing && (
+                <p className="mt-2 rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-700">
+                  This meditation is currently being generated.
+                </p>
+              )}
+              {regenerateError && (
+                <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                  {regenerateError}
+                </p>
+              )}
+            </div>
           </div>
 
           {isOwner && (
-            <div className="mt-6 flex items-center justify-end gap-3">
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300"
-                disabled={isUpdating || isDeleting}
+                disabled={isUpdating || isDeleting || isRegenerating}
               >
                 Delete
               </button>
               <button
                 type="button"
+                onClick={handleRegenerate}
+                className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700 transition hover:border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  !isScriptDirty ||
+                  isRegenerating ||
+                  isUpdating ||
+                  isDeleting ||
+                  isProcessing
+                }
+              >
+                {isRegenerating ? "Regenerating..." : "Save & Regenerate"}
+              </button>
+              <button
+                type="button"
                 onClick={handleUpdate}
                 className="rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-xs font-semibold text-primary-700 transition hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isEditing || isUpdating || isDeleting}
+                disabled={!isEditing || isUpdating || isDeleting || isRegenerating}
               >
                 {isUpdating ? "Updating..." : "Update"}
               </button>

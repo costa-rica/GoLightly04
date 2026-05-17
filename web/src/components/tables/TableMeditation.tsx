@@ -5,6 +5,7 @@ import {
   deleteMeditationObj,
   favoriteMeditation,
   getAllMeditations,
+  regenerateMeditationScript,
   updateMeditationObj,
 } from "@/lib/api/meditations";
 import AudioPlayer from "@/components/AudioPlayer";
@@ -178,6 +179,38 @@ export default function TableMeditation() {
       } else {
         setToast({
           message: "Unable to delete meditation. Please try again.",
+          variant: "error",
+        });
+      }
+      throw err;
+    }
+  };
+
+  const handleRegenerateScript = async (id: number, script: string) => {
+    try {
+      const response = await regenerateMeditationScript(id, script);
+      dispatch(updateMeditation(response.meditation));
+      setSelectedMeditation(response.meditation);
+      setToast({
+        message: "Meditation regeneration started.",
+        variant: "success",
+      });
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const code = err?.response?.data?.error?.code;
+      if (status === 409 || code === "MEDITATION_BUSY") {
+        setToast({
+          message: "This meditation is already being regenerated.",
+          variant: "error",
+        });
+      } else if (code === "SCRIPT_PARSE_ERROR") {
+        setToast({
+          message: "The script has a formatting issue. Please review it and try again.",
+          variant: "error",
+        });
+      } else {
+        setToast({
+          message: "Unable to regenerate meditation. Please try again.",
           variant: "error",
         });
       }
@@ -483,6 +516,7 @@ export default function TableMeditation() {
         onClose={() => setSelectedMeditation(null)}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
+        onRegenerateScript={handleRegenerateScript}
       />
       {toast && (
         <Toast

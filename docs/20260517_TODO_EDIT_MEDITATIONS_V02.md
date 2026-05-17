@@ -186,20 +186,20 @@ Plan §Phase 5 (web portion) + §Phase 7.
 
 Plan §Phase 6.
 
-- [ ] In [web/src/components/modals/ModalMeditationDetails.tsx](../web/src/components/modals/ModalMeditationDetails.tsx), add `script`, `isRegenerating`, `regenerateError` state. Seed `script` from `meditation.scriptSource ?? ""`.
-- [ ] Add `<textarea rows={12}>` below description (monospaced); disable when not editing, while regenerating, or while `isProcessing` (status pending/processing).
-- [ ] Add helper text under the textarea per plan §Phase 6.
-- [ ] Add the multi-voice warning note when `sourceMode === "spreadsheet"` and any element has a `voice_id`.
-- [ ] Add `onRegenerateScript: (id, script) => Promise<void>` prop and thread it from the list/table (caller invokes the new `regenerateMeditationScript` API helper, then dispatches `updateMeditation(response.meditation)`).
-- [ ] Add "Save & Regenerate" button (owner-only) with the disabled rules from the plan; confirm dialog with the wording from the plan; call `onRegenerateScript` on confirm.
-- [ ] "Update" button keeps its existing scope (title/description/visibility only).
+- [x] In [web/src/components/modals/ModalMeditationDetails.tsx](../web/src/components/modals/ModalMeditationDetails.tsx), add `script`, `isRegenerating`, `regenerateError` state. Seed `script` from `meditation.scriptSource ?? ""`.
+- [x] Add `<textarea rows={12}>` below description (monospaced); disable when not editing, while regenerating, or while `isProcessing` (status pending/processing).
+- [x] Add helper text under the textarea per plan §Phase 6.
+- [x] Add the multi-voice warning note when `sourceMode === "spreadsheet"` and any element has a `voice_id`.
+- [x] Add `onRegenerateScript: (id, script) => Promise<void>` prop and thread it from the list/table (caller invokes the new `regenerateMeditationScript` API helper, then dispatches `updateMeditation(response.meditation)`).
+- [x] Add "Save & Regenerate" button (owner-only) with the disabled rules from the plan; confirm dialog with the wording from the plan; call `onRegenerateScript` on confirm.
+- [x] "Update" button keeps its existing scope (title/description/visibility only).
 
 **Per-phase gate:**
-- [ ] `npm run typecheck -w @golightly/web` passes
-- [ ] `npm run build -w @golightly/web` passes
+- [x] `npm run typecheck -w @golightly/web` passes
+- [x] `npm run build -w @golightly/web` passes
 - [ ] Manually verify in browser: open spreadsheet-created meditation → script populated; edit + Save & Regenerate → placeholder appears, polling completes, modal shows updated script.
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 8
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 8
 
 ---
 
