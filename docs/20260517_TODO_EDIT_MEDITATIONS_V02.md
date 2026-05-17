@@ -210,8 +210,8 @@ Plan §Verification.
 Run through the 16-step manual checklist in V3 §Verification. Fix any regression before checking this phase off.
 
 - [ ] All 16 verification steps pass (record any deviations as follow-up issues).
-- [ ] `npm run typecheck:shared` (root) passes
-- [ ] `npm test -w @golightly/shared-types && npm test -w @golightly/api && npm test -w @golightly/worker-node` all pass
+- [x] `npm run typecheck:shared` (root) passes
+- [x] `npm test -w @golightly/shared-types && npm test -w @golightly/api && npm test -w @golightly/worker-node` all pass
 - [ ] No commit needed for this phase unless verification turned up a fix.
 
 ---
