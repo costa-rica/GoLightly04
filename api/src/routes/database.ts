@@ -5,6 +5,7 @@ import path from "path";
 import archiver from "archiver";
 import unzipper from "unzipper";
 import { Router } from "express";
+import type { Transaction } from "sequelize";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
@@ -61,6 +62,20 @@ function normalizeRestoreRow(row: Record<string, string>): Record<string, unknow
 
       return [key, value];
     }),
+  );
+}
+
+async function resetTableIdSequence(tableName: (typeof TABLE_ORDER)[number], transaction: Transaction): Promise<void> {
+  await getDb().sequelize.query(
+    `SELECT setval(
+      pg_get_serial_sequence($1, 'id'),
+      COALESCE((SELECT MAX("id") FROM "public"."${tableName}"), 1),
+      COALESCE((SELECT MAX("id") FROM "public"."${tableName}"), 0) > 0
+    )`,
+    {
+      bind: [`public.${tableName}`],
+      transaction,
+    },
   );
 }
 
@@ -199,6 +214,10 @@ export function buildDatabaseRouter(): Router {
               validate: false,
             });
           }
+        }
+
+        for (const tableName of TABLE_ORDER) {
+          await resetTableIdSequence(tableName, transaction);
         }
       });
 

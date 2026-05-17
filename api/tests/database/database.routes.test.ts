@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
+import archiver from "archiver";
 import request from "supertest";
 import { buildApp } from "../../src/app";
 import { issueAccessToken } from "../../src/lib/authTokens";
@@ -32,8 +33,28 @@ const contractUserMeditationsModel = {
 };
 
 const sequelizeMock = {
+  query: jest.fn(),
   transaction: jest.fn(async (callback: (transaction: object) => Promise<unknown>) => callback({})),
 };
+
+async function createRestoreZip(files: Record<string, string>): Promise<Buffer> {
+  const archive = archiver("zip", { zlib: { level: 9 } });
+  const chunks: Buffer[] = [];
+
+  archive.on("data", (chunk: Buffer) => chunks.push(chunk));
+
+  const finished = new Promise<Buffer>((resolve, reject) => {
+    archive.on("end", () => resolve(Buffer.concat(chunks)));
+    archive.on("error", reject);
+  });
+
+  for (const [filename, content] of Object.entries(files)) {
+    archive.append(content, { name: filename });
+  }
+
+  await archive.finalize();
+  return finished;
+}
 
 jest.mock("../../src/lib/db", () => ({
   getDb: () => ({
@@ -94,5 +115,31 @@ describe("database routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.filename).toBe("backup_test.zip");
+  });
+
+  it("resets table id sequences after replenishing rows with explicit ids", async () => {
+    const restoreZip = await createRestoreZip({
+      "jobs_queue.csv": [
+        "id,meditationId,sequence,type,inputData,status,filePath,attemptCount,lastError,lastAttemptedAt,createdAt,updatedAt",
+        "22,5,1,text,{},pending,,0,,,2026-05-17T14:13:33.919Z,2026-05-17T14:13:33.919Z",
+      ].join("\n"),
+    });
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", restoreZip, "restore.zip");
+
+    expect(response.status).toBe(200);
+    expect(jobQueueModel.bulkCreate).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ id: "22" })]),
+      expect.objectContaining({ validate: false }),
+    );
+    expect(sequelizeMock.query).toHaveBeenCalledWith(
+      expect.stringContaining("pg_get_serial_sequence"),
+      expect.objectContaining({
+        bind: ["public.jobs_queue"],
+      }),
+    );
   });
 });
