@@ -19,6 +19,7 @@ const meditationModel = {
 
 const jobQueueModel = {
   create: jest.fn(),
+  destroy: jest.fn(),
 };
 
 const contractUserMeditationModel = {

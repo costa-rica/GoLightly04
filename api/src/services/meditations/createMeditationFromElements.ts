@@ -1,4 +1,5 @@
 import type { Meditation, SourceMode, MeditationElement } from "@golightly/shared-types";
+import type { Transaction } from "sequelize";
 import { getDb } from "../../lib/db";
 import { AppError } from "../../lib/errors";
 import { getPrerecordedAudioPath } from "../../lib/projectPaths";
@@ -11,6 +12,55 @@ function deriveType(element: MeditationElement): "text" | "sound" | "pause" {
   throw new AppError(400, "VALIDATION_ERROR", "Unable to derive meditation element type");
 }
 
+export async function replaceMeditationElements(
+  opts: { meditationId: number; elements: MeditationElement[] },
+  transaction: Transaction,
+): Promise<void> {
+  const { JobQueue } = getDb();
+
+  await JobQueue.destroy({ where: { meditationId: opts.meditationId }, transaction });
+
+  for (const [index, element] of opts.elements.entries()) {
+    const type = deriveType(element);
+    const status: "pending" | "complete" = type === "text" ? "pending" : "complete";
+    let filePath: string | null = null;
+    let inputData = "";
+
+    if (type === "text") {
+      inputData = JSON.stringify({
+        text: element.text,
+        voice_id: element.voice_id,
+        speed: normalizeSpeed(element.speed),
+      });
+    } else if (type === "sound") {
+      if (!element.sound_file) {
+        throw new AppError(400, "VALIDATION_ERROR", "sound_file is required for sound elements");
+      }
+      filePath = getPrerecordedAudioPath(element.sound_file);
+      inputData = JSON.stringify({ sound_file: element.sound_file });
+    } else {
+      inputData = JSON.stringify({
+        pause_duration: normalizePauseDuration(element.pause_duration),
+      });
+    }
+
+    await JobQueue.create(
+      {
+        meditationId: opts.meditationId,
+        sequence: index + 1,
+        type,
+        inputData,
+        status,
+        filePath,
+        attemptCount: 0,
+        lastError: null,
+        lastAttemptedAt: null,
+      },
+      { transaction },
+    );
+  }
+}
+
 export async function createMeditationFromElements(opts: {
   userId: number;
   title: string;
@@ -20,7 +70,7 @@ export async function createMeditationFromElements(opts: {
   sourceMode: SourceMode;
   scriptSource: string | null;
 }): Promise<Meditation> {
-  const { sequelize, JobQueue, Meditation } = getDb();
+  const { sequelize, Meditation } = getDb();
   return sequelize.transaction(async (transaction) => {
     const createdMeditation = await Meditation.create(
       {
@@ -39,45 +89,7 @@ export async function createMeditationFromElements(opts: {
       { transaction },
     );
 
-    for (const [index, element] of opts.elements.entries()) {
-      const type = deriveType(element);
-      let status: "pending" | "complete" = type === "text" ? "pending" : "complete";
-      let filePath: string | null = null;
-      let inputData = "";
-
-      if (type === "text") {
-        inputData = JSON.stringify({
-          text: element.text,
-          voice_id: element.voice_id,
-          speed: normalizeSpeed(element.speed),
-        });
-      } else if (type === "sound") {
-        if (!element.sound_file) {
-          throw new AppError(400, "VALIDATION_ERROR", "sound_file is required for sound elements");
-        }
-        filePath = getPrerecordedAudioPath(element.sound_file);
-        inputData = JSON.stringify({ sound_file: element.sound_file });
-      } else {
-        inputData = JSON.stringify({
-          pause_duration: normalizePauseDuration(element.pause_duration),
-        });
-      }
-
-      await JobQueue.create(
-        {
-          meditationId: createdMeditation.id,
-          sequence: index + 1,
-          type,
-          inputData,
-          status,
-          filePath,
-          attemptCount: 0,
-          lastError: null,
-          lastAttemptedAt: null,
-        },
-        { transaction },
-      );
-    }
+    await replaceMeditationElements({ meditationId: createdMeditation.id, elements: opts.elements }, transaction);
 
     return createdMeditation as unknown as Meditation;
   });

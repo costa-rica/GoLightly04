@@ -155,6 +155,30 @@ describe("processMeditation", () => {
     );
   });
 
+  it.each([
+    ["voiceId", { text: "hello world", voiceId: "voice-camel" }, "voice-camel"],
+    ["voice_id", { text: "hello world", voice_id: "voice-snake" }, "voice-snake"],
+  ])("passes %s through to generateSpeech", async (_key, inputData, expectedVoiceId) => {
+    const meditation = createMeditation();
+    const firstJob = createJob({ inputData });
+
+    mockedMeditationFindByPk.mockResolvedValue(meditation);
+    currentJobs = [firstJob];
+    mockedJobFindAll
+      .mockResolvedValueOnce([firstJob])
+      .mockResolvedValueOnce([{ ...firstJob, status: "complete" }]);
+    mockedGenerateSpeech.mockResolvedValueOnce("/tmp/voice-key.mp3");
+
+    const { processMeditation } = await import("../../src/processor/processMeditation");
+    await processMeditation(1);
+
+    expect(mockedGenerateSpeech).toHaveBeenCalledWith(
+      expect.objectContaining({
+        voiceId: expectedVoiceId,
+      }),
+    );
+  });
+
   it("marks stranded work failed during reconciliation", async () => {
     const meditation = createMeditation({ id: 8, status: "processing" });
     mockedMeditationFindAll.mockResolvedValue([meditation]);

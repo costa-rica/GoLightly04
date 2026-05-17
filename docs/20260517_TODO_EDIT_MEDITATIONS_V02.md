@@ -50,18 +50,18 @@ Plan §Phase 1.
 
 Plan §Phase 2.
 
-- [ ] Create `api/src/services/meditations/meditationFileCleanup.ts` exporting `deleteMeditationAudioFiles(meditationId)`. Move `deleteMatchingFiles` out of [deleteMeditationCascade.ts](../api/src/services/meditations/deleteMeditationCascade.ts).
-- [ ] Update [deleteMeditationCascade.ts](../api/src/services/meditations/deleteMeditationCascade.ts) to call the new helper. Behavior unchanged.
-- [ ] Extract `replaceMeditationElements({ meditationId, elements }, transaction)` from [createMeditationFromElements.ts](../api/src/services/meditations/createMeditationFromElements.ts). Export it. `createMeditationFromElements` now calls it after creating the Meditation row.
-- [ ] Update [worker-node/src/processor/processMeditation.ts](../worker-node/src/processor/processMeditation.ts) to accept both `inputData.voiceId` and `inputData.voice_id`.
-- [ ] Add a worker test asserting both keys reach `generateSpeech`. (Plan §Phase 8 → Worker voice-key compatibility.)
+- [x] Create `api/src/services/meditations/meditationFileCleanup.ts` exporting `deleteMeditationAudioFiles(meditationId)`. Move `deleteMatchingFiles` out of [deleteMeditationCascade.ts](../api/src/services/meditations/deleteMeditationCascade.ts).
+- [x] Update [deleteMeditationCascade.ts](../api/src/services/meditations/deleteMeditationCascade.ts) to call the new helper. Behavior unchanged.
+- [x] Extract `replaceMeditationElements({ meditationId, elements }, transaction)` from [createMeditationFromElements.ts](../api/src/services/meditations/createMeditationFromElements.ts). Export it. `createMeditationFromElements` now calls it after creating the Meditation row.
+- [x] Update [worker-node/src/processor/processMeditation.ts](../worker-node/src/processor/processMeditation.ts) to accept both `inputData.voiceId` and `inputData.voice_id`.
+- [x] Add a worker test asserting both keys reach `generateSpeech`. (Plan §Phase 8 → Worker voice-key compatibility.)
 
 **Per-phase gate:**
-- [ ] `npm test -w @golightly/api` passes (no regressions in existing create/delete tests)
-- [ ] `npm test -w @golightly/worker-node` passes
-- [ ] `npm run typecheck -w @golightly/api` and `npm run typecheck -w @golightly/worker-node` pass
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 2
+- [x] `npm test -w @golightly/api` passes (no regressions in existing create/delete tests)
+- [x] `npm test -w @golightly/worker-node` passes
+- [x] `npm run typecheck -w @golightly/api` and `npm run typecheck -w @golightly/worker-node` pass
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 2
 
 ---
 

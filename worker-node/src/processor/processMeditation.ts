@@ -123,7 +123,11 @@ export async function processMeditation(
         jobId: claimedJob.id,
         sequence: claimedJob.sequence,
         voiceId:
-          typeof inputData.voiceId === "string" ? inputData.voiceId : undefined,
+          typeof inputData.voiceId === "string"
+            ? inputData.voiceId
+            : typeof inputData.voice_id === "string"
+              ? inputData.voice_id
+              : undefined,
         speed:
           typeof inputData.speed === "number" ? inputData.speed : undefined,
       });
