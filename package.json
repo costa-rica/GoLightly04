@@ -11,7 +11,22 @@
   ],
   "scripts": {
     "build:shared": "npm run build -w @golightly/shared-types && npm run build -w @golightly/db-models",
-    "typecheck:shared": "npm run typecheck -w @golightly/shared-types && npm run typecheck -w @golightly/db-models"
+    "typecheck:shared": "npm run typecheck -w @golightly/shared-types && npm run typecheck -w @golightly/db-models",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json --noEmit",
+    "backfill:durations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/backfill-meditation-durations.ts"
+  },
+  "dependencies": {
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@golightly/db-models": "*",
+    "@golightly/shared-types": "*",
+    "dotenv": "^17.4.2",
+    "fluent-ffmpeg": "^2.1.3"
+  },
+  "devDependencies": {
+    "@types/fluent-ffmpeg": "^2.1.28",
+    "@types/node": "^24.12.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "postcss": "^8.5.10"

@@ -22,6 +22,7 @@ export type Meditation = {
   createdAt: string;
   updatedAt: string;
   listenCount: number;
+  durationSeconds?: number | null;
   isFavorite?: boolean;
   isOwned?: boolean;
   ownerUserId?: number;

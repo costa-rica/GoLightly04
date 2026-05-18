@@ -33,6 +33,11 @@ export const formatDuration = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+export const formatDurationOrDash = (seconds: number | null | undefined): string => {
+  if (seconds === null || seconds === undefined) return "—";
+  return formatDuration(seconds);
+};
+
 /**
  * Formats pause duration string (e.g., "3.0" -> "3s")
  */

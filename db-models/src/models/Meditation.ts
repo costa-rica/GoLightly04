@@ -23,6 +23,7 @@ export class Meditation extends Model<
   declare scriptSource: string | null;
   declare status: CreationOptional<"pending" | "processing" | "complete" | "failed">;
   declare listenCount: CreationOptional<number>;
+  declare durationSeconds: CreationOptional<number | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -89,6 +90,11 @@ export function initMeditationModel(sequelize: Sequelize): typeof Meditation {
         allowNull: false,
         defaultValue: 0,
         field: "listen_count",
+      },
+      durationSeconds: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "duration_seconds",
       },
       createdAt: {
         type: DataTypes.DATE,

@@ -4,6 +4,7 @@ import path from "node:path";
 
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 
 import logger from "../config/logger";
 import { getDb } from "../lib/db";
@@ -13,6 +14,7 @@ import {
 } from "../lib/projectPaths";
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 function getTodayFolder(now = new Date()) {
   return now.toISOString().slice(0, 10).replaceAll("-", "");
@@ -58,6 +60,26 @@ function concatFiles(inputs: string[], output: string): Promise<void> {
       .on("end", resolve)
       .on("error", reject)
       .mergeToFile(output, os.tmpdir());
+  });
+}
+
+function probeDurationSeconds(filePath: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    ffmpeg.ffprobe(filePath, (err: Error | null, data: { format?: { duration?: number | string } }) => {
+      if (err) {
+        resolve(null);
+        return;
+      }
+
+      const raw = data?.format?.duration;
+      const duration = typeof raw === "number" ? raw : Number(raw);
+      if (!Number.isFinite(duration) || duration <= 0) {
+        resolve(null);
+        return;
+      }
+
+      resolve(Math.round(duration));
+    });
   });
 }
 
@@ -107,11 +129,18 @@ export async function concatenateMeditation(meditationId: number) {
     const filename = `meditation_${meditationId}.mp3`;
     const destination = path.join(outputFolder, filename);
     await concatFiles(normalizedFiles, destination);
+    const durationSeconds = await probeDurationSeconds(destination);
+    if (durationSeconds === null) {
+      logger.warn(
+        `ffprobe failed for meditation ${meditationId} at ${destination}; storing null duration`,
+      );
+    }
 
     await meditation.update({
       status: "complete",
       filename,
       filePath: destination,
+      durationSeconds,
     });
 
     return destination;

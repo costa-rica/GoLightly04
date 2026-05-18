@@ -49,6 +49,7 @@ function mapMeditationRecord(
     createdAt: meditation.createdAt instanceof Date ? meditation.createdAt.toISOString() : meditation.createdAt,
     updatedAt: meditation.updatedAt instanceof Date ? meditation.updatedAt.toISOString() : meditation.updatedAt,
     listenCount: meditation.listenCount,
+    durationSeconds: meditation.durationSeconds ?? null,
     status: meditation.status,
     isFavorite: options.isFavorite,
     isOwned: options.isOwned,

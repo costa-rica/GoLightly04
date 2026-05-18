@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Meditation } from "@/store/features/meditationSlice";
-import { formatDateTime } from "@/lib/utils/formatters";
+import { formatDateTime, formatDurationOrDash } from "@/lib/utils/formatters";
 
 import AdminTable from "./AdminTable";
 
@@ -31,6 +31,11 @@ export default function TableAdminMeditations({
       cell: ({ row }) => row.original.status ?? "pending",
     },
     { accessorKey: "listenCount", header: "Listen Count" },
+    {
+      accessorKey: "durationSeconds",
+      header: "Length",
+      cell: ({ row }) => formatDurationOrDash(row.original.durationSeconds),
+    },
     {
       accessorKey: "createdAt",
       header: "Created",

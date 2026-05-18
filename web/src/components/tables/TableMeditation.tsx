@@ -21,6 +21,7 @@ import {
   setMeditations,
   Meditation,
 } from "@/store/features/meditationSlice";
+import { formatDurationOrDash } from "@/lib/utils/formatters";
 
 export default function TableMeditation() {
   const dispatch = useAppDispatch();
@@ -304,6 +305,7 @@ export default function TableMeditation() {
                       <tr className="text-calm-500 dark:text-calm-400">
                         <th className="px-4 py-3 font-semibold">Title</th>
                         <th className="px-4 py-3 font-semibold">Play</th>
+                        <th className="px-4 py-3 font-semibold">Length</th>
                         {isAuthenticated && (
                           <th className="px-4 py-3 text-center font-semibold">
                             Favorite
@@ -318,7 +320,7 @@ export default function TableMeditation() {
                       {visibleRows.length === 0 && (
                         <tr>
                           <td
-                            colSpan={isAuthenticated ? 4 : 3}
+                            colSpan={isAuthenticated ? 5 : 4}
                             className="px-4 py-6 text-center text-calm-500"
                           >
                             No meditations available yet.
@@ -365,6 +367,9 @@ export default function TableMeditation() {
                                   title={meditation.title}
                                 />
                               )}
+                            </td>
+                            <td className="px-4 py-3 text-calm-600 dark:text-calm-400">
+                              {formatDurationOrDash(meditation.durationSeconds)}
                             </td>
                             {isAuthenticated && (
                               <td className="px-4 py-3 text-center">
@@ -482,6 +487,8 @@ export default function TableMeditation() {
                                 </button>
                               )}
                               <div className="flex items-center gap-1 text-xs text-calm-600 dark:text-calm-400">
+                                <span>{formatDurationOrDash(meditation.durationSeconds)}</span>
+                                <span aria-hidden="true">·</span>
                                 <svg
                                   className="h-4 w-4"
                                   viewBox="0 0 24 24"

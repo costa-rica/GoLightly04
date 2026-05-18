@@ -69,6 +69,7 @@ export async function regenerateMeditationFromScript(opts: {
         sourceMode: "script",
         filename: null,
         filePath: null,
+        durationSeconds: null,
         status: "pending",
       },
       { transaction },
