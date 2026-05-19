@@ -1,6 +1,6 @@
 ---
 created_at: 2026-05-15
-updated_at: 2026-05-15
+updated_at: 2026-05-19
 created_by: codex (gpt-5)
 modified_by: codex (gpt-5)
 ---
@@ -42,7 +42,7 @@ GoLightly04/
 ├── shared-types/   - shared request types, validation constants, script parser
 ├── web/            - Next.js frontend on port 3001
 ├── docs/           - active project docs and runbooks
-├── docs/archived/  - older plans and superseded docs
+├── docs/archive/   - older plans and superseded docs
 ├── package.json    - npm workspace root
 └── tsconfig.base.json
 ```
