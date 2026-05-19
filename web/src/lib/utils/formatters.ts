@@ -25,12 +25,11 @@ export const formatDateTime = (dateString: string): string => {
 };
 
 /**
- * Formats duration in seconds to minutes:seconds format
+ * Formats duration in seconds to rounded whole minutes.
  */
 export const formatDuration = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const mins = Math.round(seconds / 60);
+  return `${mins} mins`;
 };
 
 export const formatDurationOrDash = (seconds: number | null | undefined): string => {
