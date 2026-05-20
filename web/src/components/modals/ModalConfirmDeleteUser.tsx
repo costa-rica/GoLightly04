@@ -66,13 +66,13 @@ export default function ModalConfirmDeleteUser({
       className="fixed inset-0 z-50 flex items-center justify-center bg-calm-900/50 backdrop-blur-sm px-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-md rounded-2xl bg-overlay p-6 shadow-xl">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-calm-400">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
               Confirmation
             </p>
-            <h2 className="mt-2 text-xl font-display font-semibold text-calm-900">
+            <h2 className="mt-2 text-xl font-display font-semibold text-ink">
               Delete {user.email}
             </h2>
           </div>
@@ -80,32 +80,32 @@ export default function ModalConfirmDeleteUser({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="rounded-full border border-calm-200 px-3 py-1 text-xs font-semibold text-calm-500 transition hover:border-calm-300 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full border border-subtle px-3 py-1 text-xs font-semibold text-ink-muted transition hover:border-strong disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Close delete confirmation"
           >
             Close
           </button>
         </div>
 
-        <p className="mt-4 text-sm text-calm-600">
+        <p className="mt-4 text-sm text-ink-muted">
           This will permanently remove the user account.
         </p>
 
         {user.hasPublicMeditations && (
-          <div className="mt-4 rounded-lg border border-calm-200 bg-calm-50 p-4">
+          <div className="mt-4 rounded-lg border border-subtle bg-inset p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={savePublicMeditations}
                 onChange={(e) => setSavePublicMeditations(e.target.checked)}
                 disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-calm-300 text-primary-600 focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed"
+                className="mt-0.5 h-4 w-4 rounded border-strong text-primary-600 focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed"
               />
               <div>
-                <span className="text-sm font-semibold text-calm-900">
+                <span className="text-sm font-semibold text-ink">
                   Keep public meditations
                 </span>
-                <p className="mt-1 text-xs text-calm-600">
+                <p className="mt-1 text-xs text-ink-muted">
                   Convert user to benevolent account to preserve their public
                   meditations
                 </p>
@@ -118,7 +118,7 @@ export default function ModalConfirmDeleteUser({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-calm-200 px-4 py-2 text-xs font-semibold text-calm-600 transition hover:border-calm-300"
+            className="rounded-full border border-subtle px-4 py-2 text-xs font-semibold text-ink-muted transition hover:border-strong"
             disabled={isLoading}
           >
             Cancel
@@ -126,7 +126,7 @@ export default function ModalConfirmDeleteUser({
           <button
             type="button"
             onClick={handleConfirm}
-            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200"
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete user"}

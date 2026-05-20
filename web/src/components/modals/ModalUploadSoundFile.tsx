@@ -109,18 +109,18 @@ export default function ModalUploadSoundFile({
       className="fixed inset-0 z-50 flex items-center justify-center bg-calm-900/50 backdrop-blur-sm px-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-lg rounded-2xl bg-overlay p-6 shadow-xl">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-calm-400">Sound Files</p>
-            <h2 className="mt-2 text-xl font-display font-semibold text-calm-900">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Sound Files</p>
+            <h2 className="mt-2 text-xl font-display font-semibold text-ink">
               Upload Sound File
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-calm-200 px-3 py-1 text-xs font-semibold text-calm-500 transition hover:border-calm-300"
+            className="rounded-full border border-subtle px-3 py-1 text-xs font-semibold text-ink-muted transition hover:border-strong"
             aria-label="Close upload modal"
             disabled={isSubmitting}
           >
@@ -130,13 +130,13 @@ export default function ModalUploadSoundFile({
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200">
               {error}
             </div>
           )}
 
           <div>
-            <label className="text-sm font-semibold text-calm-700" htmlFor="sound-file">
+            <label className="text-sm font-semibold text-ink" htmlFor="sound-file">
               MP3 file
             </label>
             <input
@@ -148,14 +148,14 @@ export default function ModalUploadSoundFile({
                 setFile(nextFile);
                 setError(null);
               }}
-              className="mt-2 w-full rounded-2xl border border-calm-200 bg-white px-3 py-2 text-sm text-calm-700"
+              className="mt-2 w-full rounded-2xl border border-subtle bg-inset px-3 py-2 text-sm text-ink"
               disabled={isSubmitting}
             />
-            <p className="mt-2 text-xs text-calm-500">Max file size: 50MB.</p>
+            <p className="mt-2 text-xs text-ink-muted">Max file size: 50MB.</p>
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-calm-700" htmlFor="sound-name">
+            <label className="text-sm font-semibold text-ink" htmlFor="sound-name">
               Name (optional)
             </label>
             <input
@@ -163,14 +163,14 @@ export default function ModalUploadSoundFile({
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-calm-200 px-3 py-2 text-sm text-calm-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
+              className="mt-2 w-full rounded-2xl border border-subtle bg-inset px-3 py-2 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-500/30"
               placeholder="Soft rain"
               disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-calm-700" htmlFor="sound-description">
+            <label className="text-sm font-semibold text-ink" htmlFor="sound-description">
               Description (optional)
             </label>
             <textarea
@@ -178,18 +178,18 @@ export default function ModalUploadSoundFile({
               rows={3}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-calm-200 px-3 py-2 text-sm text-calm-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100"
+              className="mt-2 w-full rounded-2xl border border-subtle bg-inset px-3 py-2 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-500/30"
               placeholder="Gentle ambient soundscape."
               disabled={isSubmitting}
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between text-xs text-calm-500">
+            <div className="flex items-center justify-between text-xs text-ink-muted">
               <span>Upload progress</span>
               <span>{progress}%</span>
             </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-calm-100">
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-inset">
               <div
                 className="h-full rounded-full bg-primary-500 transition-all"
                 style={{ width: `${progress}%` }}
@@ -201,7 +201,7 @@ export default function ModalUploadSoundFile({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-calm-200 px-4 py-2 text-xs font-semibold text-calm-600 transition hover:border-calm-300"
+              className="rounded-full border border-subtle px-4 py-2 text-xs font-semibold text-ink-muted transition hover:border-strong"
               disabled={isSubmitting}
             >
               Cancel

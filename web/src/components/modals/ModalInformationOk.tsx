@@ -50,9 +50,9 @@ export default function ModalInformationOk({
   // Define styles based on variant
   const variantStyles = {
     information: {
-      border: "border-blue-200",
-      bg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      border: "border-blue-200 dark:border-blue-500/40",
+      bg: "bg-blue-50 dark:bg-blue-500/15",
+      iconColor: "text-blue-600 dark:text-blue-300",
       icon: (
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
@@ -65,9 +65,9 @@ export default function ModalInformationOk({
       ),
     },
     warning: {
-      border: "border-amber-200",
-      bg: "bg-amber-50",
-      iconColor: "text-amber-600",
+      border: "border-amber-200 dark:border-amber-500/40",
+      bg: "bg-amber-50 dark:bg-amber-500/15",
+      iconColor: "text-amber-600 dark:text-amber-300",
       icon: (
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
@@ -80,9 +80,9 @@ export default function ModalInformationOk({
       ),
     },
     error: {
-      border: "border-red-200",
-      bg: "bg-red-50",
-      iconColor: "text-red-600",
+      border: "border-red-200 dark:border-red-500/40",
+      bg: "bg-red-50 dark:bg-red-500/15",
+      iconColor: "text-red-600 dark:text-red-300",
       icon: (
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
@@ -105,12 +105,12 @@ export default function ModalInformationOk({
       className="fixed inset-0 z-50 flex items-center justify-center bg-calm-900/50 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-md rounded-lg bg-overlay p-6 shadow-xl">
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 text-calm-400 hover:text-calm-600 transition"
+          className="absolute right-4 top-4 text-ink-muted hover:text-ink transition"
           aria-label="Close modal"
         >
           <svg
@@ -137,10 +137,10 @@ export default function ModalInformationOk({
 
           {/* Text content */}
           <div className="flex-1 pt-1">
-            <h2 className="text-xl font-display font-bold text-calm-900">
+            <h2 className="text-xl font-display font-bold text-ink">
               {title}
             </h2>
-            <p className="mt-2 text-sm text-calm-600 leading-relaxed">
+            <p className="mt-2 text-sm text-ink-muted leading-relaxed">
               {message}
             </p>
           </div>

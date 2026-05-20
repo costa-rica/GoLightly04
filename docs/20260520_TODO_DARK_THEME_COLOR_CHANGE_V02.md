@@ -103,14 +103,14 @@ Sweep [admin/page.tsx](web/src/app/admin/page.tsx) in order. Each sub-step is sm
 
 ## Phase 5 — Shared modals reused by in-scope surfaces
 
-- [ ] Sweep [ModalUploadSoundFile.tsx](web/src/components/modals/ModalUploadSoundFile.tsx) — modal panel `bg-overlay`, dropzone `bg-inset border-subtle`.
-- [ ] Sweep [ModalConfirmDelete.tsx](web/src/components/modals/ModalConfirmDelete.tsx).
-- [ ] Sweep [ModalConfirmCascadeDelete.tsx](web/src/components/modals/ModalConfirmCascadeDelete.tsx).
-- [ ] Sweep [ModalConfirmDeleteUser.tsx](web/src/components/modals/ModalConfirmDeleteUser.tsx).
-- [ ] Sweep [ModalInformationOk.tsx](web/src/components/modals/ModalInformationOk.tsx).
+- [x] Sweep [ModalUploadSoundFile.tsx](web/src/components/modals/ModalUploadSoundFile.tsx) — modal panel `bg-overlay`, dropzone `bg-inset border-subtle`.
+- [x] Sweep [ModalConfirmDelete.tsx](web/src/components/modals/ModalConfirmDelete.tsx).
+- [x] Sweep [ModalConfirmCascadeDelete.tsx](web/src/components/modals/ModalConfirmCascadeDelete.tsx).
+- [x] Sweep [ModalConfirmDeleteUser.tsx](web/src/components/modals/ModalConfirmDeleteUser.tsx).
+- [x] Sweep [ModalInformationOk.tsx](web/src/components/modals/ModalInformationOk.tsx).
 - [ ] Open at least one of each modal type (upload, confirm-delete, info) from the admin and submit flows in dark mode and verify.
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 5.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 5.
 
 ## Phase 6 — Verification + screenshots
 
