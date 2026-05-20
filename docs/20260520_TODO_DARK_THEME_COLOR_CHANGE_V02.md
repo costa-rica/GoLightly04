@@ -127,6 +127,6 @@ Sweep [admin/page.tsx](web/src/app/admin/page.tsx) in order. Each sub-step is sm
 - [ ] Dev-server walkthrough in **light mode** — confirm visually unchanged from baseline for every surface above.
 - [ ] **Auth-modal smoke check** — open [ModalLogin.tsx](web/src/components/modals/ModalLogin.tsx) and [ModalRegister.tsx](web/src/components/modals/ModalRegister.tsx) in both themes; confirm they are identical to pre-sweep baseline (positive verification that the `.input-field` boundary held).
 - [ ] Existing dark-aware surfaces unchanged: home page (`/`), top navigation, meditation table on `/`.
-- [ ] Final `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Final `npm run lint` and `npm run typecheck` in `web/`.
 - [ ] Capture before/after screenshots in dark mode for the three named surfaces; attach to PR.
 - [ ] Commit referencing this file + Phase 6.

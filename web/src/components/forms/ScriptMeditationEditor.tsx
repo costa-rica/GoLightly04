@@ -360,7 +360,7 @@ export default function ScriptMeditationEditor() {
               type="button"
               onClick={handleSubmit}
               disabled={submitDisabled}
-              className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-calm-300"
+              className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-strong/60"
             >
               {hasPendingSoundValidation ? "Validating sounds..." : isSubmitting ? "Submitting..." : "Submit meditation"}
             </button>
