@@ -56,20 +56,21 @@ export function buildLogger(loggerEnv: LoggerEnv): Logger {
   );
 
   const loggerTransports: Array<transports.ConsoleTransportInstance | DailyRotateFile> = [];
-  const fileTransport = new DailyRotateFile({
-    dirname: loggerEnv.PATH_TO_LOGS,
-    filename: `${loggerEnv.NAME_APP}-%DATE%.log`,
-    datePattern: "YYYY-MM-DD",
-    maxSize: `${loggerEnv.LOG_MAX_SIZE}m`,
-    maxFiles: loggerEnv.LOG_MAX_FILES,
-  });
+  const createFileTransport = () =>
+    new DailyRotateFile({
+      dirname: loggerEnv.PATH_TO_LOGS,
+      filename: `${loggerEnv.NAME_APP}-%DATE%.log`,
+      datePattern: "YYYY-MM-DD",
+      maxSize: `${loggerEnv.LOG_MAX_SIZE}m`,
+      maxFiles: loggerEnv.LOG_MAX_FILES,
+    });
 
   if (loggerEnv.NODE_ENV === "development") {
     loggerTransports.push(new transports.Console());
   } else if (loggerEnv.NODE_ENV === "testing") {
-    loggerTransports.push(new transports.Console(), fileTransport);
+    loggerTransports.push(new transports.Console(), createFileTransport());
   } else {
-    loggerTransports.push(fileTransport);
+    loggerTransports.push(createFileTransport());
   }
 
   return createLogger({
