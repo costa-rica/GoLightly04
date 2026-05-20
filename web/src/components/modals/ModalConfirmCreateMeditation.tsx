@@ -94,11 +94,11 @@ export default function ModalConfirmCreateMeditation({
       className="fixed inset-0 z-50 flex items-center justify-center bg-calm-900/50 backdrop-blur-sm px-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg rounded-2xl bg-overlay p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-calm-400">Confirm Creation</p>
-            <h2 className="mt-2 text-xl font-display font-semibold text-calm-900">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Confirm Creation</p>
+            <h2 className="mt-2 text-xl font-display font-semibold text-ink">
               Create Meditation
             </h2>
           </div>
@@ -106,7 +106,7 @@ export default function ModalConfirmCreateMeditation({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-full border border-calm-200 px-3 py-1 text-xs font-semibold text-calm-500 transition hover:border-calm-300 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full border border-subtle px-3 py-1 text-xs font-semibold text-ink-muted transition hover:border-strong disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Close"
           >
             Close
@@ -114,8 +114,8 @@ export default function ModalConfirmCreateMeditation({
         </div>
 
         <div className="mt-6">
-          <p className="text-sm font-medium text-calm-500">Your meditation:</p>
-          <ul className="mt-2 space-y-1 text-xs text-calm-400">
+          <p className="text-sm font-medium text-ink-muted">Your meditation:</p>
+          <ul className="mt-2 space-y-1 rounded-2xl border border-subtle bg-raised p-3 text-xs text-ink-muted">
             {rows.map((row) => (
               <li key={row.id} className="flex items-start gap-2">
                 <span className="mt-1">•</span>
@@ -127,7 +127,7 @@ export default function ModalConfirmCreateMeditation({
 
         <div className="mt-6 space-y-4">
           <div>
-            <label className="text-sm font-semibold text-calm-700" htmlFor="modal-meditation-title">
+            <label className="text-sm font-semibold text-ink-muted" htmlFor="modal-meditation-title">
               Title
             </label>
             <input
@@ -137,8 +137,8 @@ export default function ModalConfirmCreateMeditation({
               onChange={(e) => onTitleChange(e.target.value)}
               onBlur={onTitleBlur}
               disabled={isSubmitting}
-              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm text-calm-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50 ${
-                errors.title ? "border-red-300" : "border-calm-200"
+              className={`mt-2 w-full rounded-2xl border bg-inset px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-primary-500/30 ${
+                errors.title ? "border-red-300" : "border-subtle"
               }`}
               placeholder="Evening clarity"
             />
@@ -146,7 +146,7 @@ export default function ModalConfirmCreateMeditation({
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-calm-700" htmlFor="modal-meditation-description">
+            <label className="text-sm font-semibold text-ink-muted" htmlFor="modal-meditation-description">
               Description (optional)
             </label>
             <textarea
@@ -155,12 +155,12 @@ export default function ModalConfirmCreateMeditation({
               value={description}
               onChange={(e) => onDescriptionChange(e.target.value)}
               disabled={isSubmitting}
-              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm text-calm-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50 ${
-                errors.description ? "border-red-300" : "border-calm-200"
+              className={`mt-2 w-full rounded-2xl border bg-inset px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-primary-500/30 ${
+                errors.description ? "border-red-300" : "border-subtle"
               }`}
               placeholder="Set an intention for the day with gentle pauses."
             />
-            <div className="mt-2 flex items-center justify-between text-xs text-calm-500">
+            <div className="mt-2 flex items-center justify-between text-xs text-ink-muted">
               <span>{errors.description || "Keep it concise and helpful."}</span>
               <span>
                 {description.length}/{maxDescriptionLength}
@@ -169,7 +169,7 @@ export default function ModalConfirmCreateMeditation({
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-calm-700" htmlFor="modal-meditation-visibility">
+            <label className="text-sm font-semibold text-ink-muted" htmlFor="modal-meditation-visibility">
               Visibility
             </label>
             <select
@@ -177,12 +177,12 @@ export default function ModalConfirmCreateMeditation({
               value={visibility}
               onChange={(e) => onVisibilityChange(e.target.value as "public" | "private")}
               disabled={isSubmitting}
-              className="mt-2 w-full rounded-2xl border border-calm-200 bg-white px-4 py-3 text-sm text-calm-900 outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-2 w-full rounded-2xl border border-subtle bg-inset px-4 py-3 text-sm text-ink outline-none transition focus:border-primary-300 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-primary-500/30"
             >
               <option value="public">Public</option>
               <option value="private">Private</option>
             </select>
-            <p className="mt-2 text-xs text-calm-500">
+            <p className="mt-2 text-xs text-ink-muted">
               Private meditations are only visible to you.
             </p>
           </div>
@@ -193,7 +193,7 @@ export default function ModalConfirmCreateMeditation({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-full border border-calm-200 px-4 py-2 text-xs font-semibold text-calm-600 transition hover:border-calm-300 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full border border-subtle px-4 py-2 text-xs font-semibold text-ink-muted transition hover:border-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>

@@ -57,11 +57,11 @@ Supersedes [20260520_TODO_DARK_THEME_COLOR_CHANGE.md](20260520_TODO_DARK_THEME_C
 
 ## Phase 3 — Meditation Details + Submit Confirmation
 
-- [ ] Sweep [ModalMeditationDetails.tsx](web/src/components/modals/ModalMeditationDetails.tsx): modal panel → `bg-overlay`, internal sub-panels → `bg-raised`, dt/dd label rows → `text-ink-muted` / `text-ink`, audio player container → `bg-inset border-subtle`.
-- [ ] Sweep [ModalConfirmCreateMeditation.tsx](web/src/components/modals/ModalConfirmCreateMeditation.tsx): modal panel → `bg-overlay`, inner cards → `bg-raised`.
+- [x] Sweep [ModalMeditationDetails.tsx](web/src/components/modals/ModalMeditationDetails.tsx): modal panel → `bg-overlay`, internal sub-panels → `bg-raised`, dt/dd label rows → `text-ink-muted` / `text-ink`, audio player container → `bg-inset border-subtle`.
+- [x] Sweep [ModalConfirmCreateMeditation.tsx](web/src/components/modals/ModalConfirmCreateMeditation.tsx): modal panel → `bg-overlay`, inner cards → `bg-raised`.
 - [ ] Verify modals visibly lift one step above the cards behind them in dark mode.
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 3.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 3.
 
 ## Phase 4a — AdminTable (shared shell)
 

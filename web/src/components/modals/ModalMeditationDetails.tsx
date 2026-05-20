@@ -155,11 +155,11 @@ export default function ModalMeditationDetails({
         className="fixed inset-0 z-50 flex items-center justify-center bg-calm-900/50 backdrop-blur-sm px-4"
         onClick={handleBackdropClick}
       >
-        <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+        <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-overlay p-6 shadow-xl">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-calm-400">Details</p>
-              <h2 className="mt-2 text-xl font-display font-semibold text-calm-900">
+              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Details</p>
+              <h2 className="mt-2 text-xl font-display font-semibold text-ink">
                 Meditation Details
               </h2>
             </div>
@@ -177,7 +177,7 @@ export default function ModalMeditationDetails({
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="meditation-title" className="block text-xs font-semibold text-calm-600 mb-2">
+              <label htmlFor="meditation-title" className="block text-xs font-semibold text-ink-muted mb-2">
                 Title
               </label>
               <input
@@ -186,12 +186,12 @@ export default function ModalMeditationDetails({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={!isEditing}
-                className="w-full rounded-xl border border-calm-200 bg-white px-4 py-2 text-sm text-calm-900 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-600"
+                className="w-full rounded-xl border border-subtle bg-inset px-4 py-2 text-sm text-ink transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted dark:focus:ring-primary-500/30"
               />
             </div>
 
             <div>
-              <label htmlFor="meditation-description" className="block text-xs font-semibold text-calm-600 mb-2">
+              <label htmlFor="meditation-description" className="block text-xs font-semibold text-ink-muted mb-2">
                 Description
               </label>
               <textarea
@@ -200,12 +200,12 @@ export default function ModalMeditationDetails({
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={!isEditing}
                 rows={3}
-                className="w-full rounded-xl border border-calm-200 bg-white px-4 py-2 text-sm text-calm-900 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-600 resize-none"
+                className="w-full rounded-xl border border-subtle bg-inset px-4 py-2 text-sm text-ink transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted resize-none dark:focus:ring-primary-500/30"
               />
             </div>
 
             <div>
-              <label htmlFor="meditation-visibility" className="block text-xs font-semibold text-calm-600 mb-2">
+              <label htmlFor="meditation-visibility" className="block text-xs font-semibold text-ink-muted mb-2">
                 Visibility
               </label>
               <select
@@ -213,7 +213,7 @@ export default function ModalMeditationDetails({
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
                 disabled={!isEditing}
-                className="w-full rounded-xl border border-calm-200 bg-white px-4 py-2 text-sm text-calm-900 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-600"
+                className="w-full rounded-xl border border-subtle bg-inset px-4 py-2 text-sm text-ink transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted dark:focus:ring-primary-500/30"
               >
                 <option value="public">Public</option>
                 <option value="private">Private</option>
@@ -221,7 +221,7 @@ export default function ModalMeditationDetails({
             </div>
 
             <div>
-              <label htmlFor="meditation-script" className="block text-xs font-semibold text-calm-600 mb-2">
+              <label htmlFor="meditation-script" className="block text-xs font-semibold text-ink-muted mb-2">
                 Script
               </label>
               <textarea
@@ -230,23 +230,23 @@ export default function ModalMeditationDetails({
                 onChange={(e) => setScript(e.target.value)}
                 disabled={!isEditing || isRegenerating || isProcessing}
                 rows={12}
-                className="w-full resize-y rounded-xl border border-calm-200 bg-white px-4 py-3 font-mono text-sm text-calm-900 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-600"
+                className="w-full resize-y rounded-xl border border-subtle bg-inset px-4 py-3 font-mono text-sm text-ink transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted dark:focus:ring-primary-500/30"
               />
-              <p className="mt-2 text-xs text-calm-500">
+              <p className="mt-2 text-xs text-ink-muted">
                 Edit and choose 'Save & Regenerate' to rebuild the audio. Regenerating replaces the existing audio and may take a few minutes.
               </p>
               {hasMultipleVoices && (
-                <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200">
                   This meditation originally used multiple voices. Saving the script will collapse it to the default voice.
                 </p>
               )}
               {isProcessing && (
-                <p className="mt-2 rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-700">
+                <p className="mt-2 rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/15 dark:text-primary-200">
                   This meditation is currently being generated.
                 </p>
               )}
               {regenerateError && (
-                <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200">
                   {regenerateError}
                 </p>
               )}
