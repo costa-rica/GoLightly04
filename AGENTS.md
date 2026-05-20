@@ -51,6 +51,11 @@ modified_by: claude (haiku-4.5)
 - Usually managed by the operator, not the AI coding agent.
 - Agents: these files are kept for reference only; do not review them when scanning the project to build context.
 
+## One-Shot Scripts
+
+- One-shot maintenance scripts under `scripts/` are exempt from `docs/LOGGING_NODE_JS_V08.md` and may use `console.*`.
+- The V08 logging spec applies to standard Node.js applications. These scripts are short-lived operational tools whose output is read interactively from the terminal rather than tailed from persisted service logs.
+
 ## Commit Message Guidance
 
 ### Guidelines
