@@ -47,13 +47,13 @@ Supersedes [20260520_TODO_DARK_THEME_COLOR_CHANGE.md](20260520_TODO_DARK_THEME_C
 
 ## Phase 2 — Create Meditation (Spreadsheet flow)
 
-- [ ] Sweep [CreateMeditationForm.tsx](web/src/components/forms/CreateMeditationForm.tsx) per the convention in plan V04 §3.
-- [ ] Column header row (line 372): convert `text-calm-600` labels → `text-ink-muted`, dividers → `border-subtle`.
-- [ ] Action popovers (lines 416–451): floating menu → `bg-overlay border-subtle`, item text → `text-ink`, hover bg → `hover:bg-inset`.
-- [ ] Inline error text already uses `text-red-500` — leave as-is, verify it reads on the dark surface.
+- [x] Sweep [CreateMeditationForm.tsx](web/src/components/forms/CreateMeditationForm.tsx) per the convention in plan V04 §3.
+- [x] Column header row (line 372): convert `text-calm-600` labels → `text-ink-muted`, dividers → `border-subtle`.
+- [x] Action popovers (lines 416–451): floating menu → `bg-overlay border-subtle`, item text → `text-ink`, hover bg → `hover:bg-inset`.
+- [x] Inline error text already uses `text-red-500` — leave as-is, verify it reads on the dark surface.
 - [ ] Verify in browser (Spreadsheet tab in dark mode).
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 2.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 2.
 
 ## Phase 3 — Meditation Details + Submit Confirmation
 

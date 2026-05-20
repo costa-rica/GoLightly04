@@ -311,18 +311,18 @@ export default function CreateMeditationForm() {
         type="button"
         onClick={handleToggle}
         disabled={isSubmitting}
-        className="flex w-full items-center justify-between rounded-2xl border border-calm-200/70 bg-white/80 px-4 py-3 text-left shadow-sm transition hover:border-primary-200"
+        className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm transition hover:border-strong"
         aria-expanded={isExpanded}
       >
         <div>
-          <h2 className="text-xl font-display font-semibold text-calm-900">
+          <h2 className="text-xl font-display font-semibold text-ink">
             Create New Meditation
           </h2>
-          <p className="text-sm text-calm-500">
+          <p className="text-sm text-ink-muted">
             Build a custom meditation sequence
           </p>
         </div>
-        <span className="text-calm-500">
+        <span className="text-ink-muted">
           {isExpanded ? (
             <svg
               className="h-5 w-5"
@@ -356,9 +356,9 @@ export default function CreateMeditationForm() {
       </button>
 
       {isExpanded && (
-        <div className="rounded-3xl border border-dashed border-calm-200 bg-white/70 p-6 shadow-sm">
+        <div className="rounded-3xl border border-dashed border-subtle bg-raised p-6 shadow-sm">
           <div>
-            <h3 className="text-lg font-display font-semibold text-calm-900 mb-4">
+            <h3 className="text-lg font-display font-semibold text-ink mb-4">
               Meditation Rows
             </h3>
 
@@ -369,21 +369,21 @@ export default function CreateMeditationForm() {
             {rows.length > 0 ? (
               <div className="mt-4 space-y-2">
                 {/* Header Row */}
-                <div className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 px-2 pb-2 border-b border-calm-200">
-                  <div className="text-xs font-semibold text-calm-600">#</div>
-                  <div className="text-xs font-semibold text-calm-600">
+                <div className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 px-2 pb-2 border-b border-subtle">
+                  <div className="text-xs font-semibold text-ink-muted">#</div>
+                  <div className="text-xs font-semibold text-ink-muted">
                     Type
                   </div>
-                  <div className="text-xs font-semibold text-calm-600">
+                  <div className="text-xs font-semibold text-ink-muted">
                     Text
                   </div>
-                  <div className="text-xs font-semibold text-calm-600">
+                  <div className="text-xs font-semibold text-ink-muted">
                     Speed
                   </div>
-                  <div className="text-xs font-semibold text-calm-600">
+                  <div className="text-xs font-semibold text-ink-muted">
                     Pause
                   </div>
-                  <div className="text-xs font-semibold text-calm-600">
+                  <div className="text-xs font-semibold text-ink-muted">
                     Sound File
                   </div>
                 </div>
@@ -404,7 +404,7 @@ export default function CreateMeditationForm() {
                           )
                         }
                         disabled={isSubmitting}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-calm-400 text-xs font-semibold text-white transition hover:bg-calm-500 disabled:cursor-not-allowed"
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-strong text-xs font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed"
                       >
                         {row.id}
                       </button>
@@ -416,7 +416,7 @@ export default function CreateMeditationForm() {
                             className="fixed inset-0 z-10"
                             onClick={() => setActiveRowMenu(null)}
                           />
-                          <div className="absolute top-8 left-0 z-20 bg-white border border-calm-300 rounded-lg shadow-lg py-1 min-w-[9rem]">
+                          <div className="absolute top-8 left-0 z-20 bg-overlay border border-subtle rounded-lg shadow-lg py-1 min-w-[9rem]">
                             <button
                               type="button"
                               onClick={() => {
@@ -424,7 +424,7 @@ export default function CreateMeditationForm() {
                                 setActiveRowMenu(null);
                               }}
                               disabled={index === 0}
-                              className="w-full px-3 py-2 text-left text-xs text-calm-700 hover:bg-calm-50 disabled:text-calm-300 disabled:cursor-not-allowed"
+                              className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-inset disabled:text-ink-muted/50 disabled:cursor-not-allowed"
                             >
                               Move Up
                             </button>
@@ -435,7 +435,7 @@ export default function CreateMeditationForm() {
                                 setActiveRowMenu(null);
                               }}
                               disabled={index === rows.length - 1}
-                              className="w-full px-3 py-2 text-left text-xs text-calm-700 hover:bg-calm-50 disabled:text-calm-300 disabled:cursor-not-allowed"
+                              className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-inset disabled:text-ink-muted/50 disabled:cursor-not-allowed"
                             >
                               Move Down
                             </button>
@@ -474,7 +474,7 @@ export default function CreateMeditationForm() {
                         }));
                       }}
                       disabled={isSubmitting}
-                      className="rounded border border-calm-200 bg-white px-2 py-1 text-xs text-calm-700 outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-100"
+                      className="rounded border border-subtle bg-inset px-2 py-1 text-xs text-ink outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-100 dark:focus:ring-primary-500/30"
                     >
                       <option value="text">Text</option>
                       <option value="pause">Pause</option>
@@ -493,10 +493,10 @@ export default function CreateMeditationForm() {
                           }
                         }}
                         disabled={row.type !== "text" || isSubmitting}
-                        className={`w-full rounded border px-2 py-1 text-xs text-calm-900 outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-400 disabled:cursor-not-allowed ${
+                        className={`w-full rounded border bg-inset px-2 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
                           rowErrors[row.id]?.text
                             ? "border-red-300"
-                            : "border-calm-200"
+                            : "border-subtle"
                         }`}
                         placeholder={
                           row.type === "text"
@@ -526,10 +526,10 @@ export default function CreateMeditationForm() {
                           }
                         }}
                         disabled={row.type !== "text" || isSubmitting}
-                        className={`w-full rounded border px-1 py-1 text-xs text-calm-900 outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-400 disabled:cursor-not-allowed ${
+                        className={`w-full rounded border bg-inset px-1 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
                           rowErrors[row.id]?.speed
                             ? "border-red-300"
-                            : "border-calm-200"
+                            : "border-subtle"
                         }`}
                         placeholder="1.0"
                       />
@@ -556,10 +556,10 @@ export default function CreateMeditationForm() {
                           }
                         }}
                         disabled={row.type !== "pause" || isSubmitting}
-                        className={`w-full rounded border px-1 py-1 text-xs text-calm-900 outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-400 disabled:cursor-not-allowed ${
+                        className={`w-full rounded border bg-inset px-1 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
                           rowErrors[row.id]?.pauseDuration
                             ? "border-red-300"
-                            : "border-calm-200"
+                            : "border-subtle"
                         }`}
                         placeholder="5"
                       />
@@ -583,10 +583,10 @@ export default function CreateMeditationForm() {
                         disabled={
                           row.type !== "sound" || soundsLoading || isSubmitting
                         }
-                        className={`w-full rounded border px-2 py-1 text-xs text-calm-900 outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-calm-50 disabled:text-calm-400 disabled:cursor-not-allowed ${
+                        className={`w-full rounded border bg-inset px-2 py-1 text-xs text-ink outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
                           rowErrors[row.id]?.soundFile
                             ? "border-red-300"
-                            : "border-calm-200"
+                            : "border-subtle"
                         }`}
                       >
                         <option value="">
@@ -614,7 +614,7 @@ export default function CreateMeditationForm() {
                       type="button"
                       onClick={handleAddRow}
                       disabled={isSubmitting}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-calm-300 bg-green-500 text-white transition hover:bg-green-600 hover:border-calm-400 disabled:cursor-not-allowed disabled:bg-green-300"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-strong bg-green-500 text-white transition hover:bg-green-600 hover:border-green-400 disabled:cursor-not-allowed disabled:bg-green-300"
                     >
                       <svg
                         className="h-4 w-4"
@@ -635,14 +635,14 @@ export default function CreateMeditationForm() {
               </div>
             ) : (
               <div className="mt-4 flex items-center justify-between">
-                <p className="text-sm text-calm-500">
+                <p className="text-sm text-ink-muted">
                   Add a row to begin building your sequence.
                 </p>
                 <button
                   type="button"
                   onClick={handleAddRow}
                   disabled={isSubmitting}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-calm-300 bg-green-500 text-white transition hover:bg-green-600 hover:border-calm-400 disabled:cursor-not-allowed disabled:bg-green-300"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-strong bg-green-500 text-white transition hover:bg-green-600 hover:border-green-400 disabled:cursor-not-allowed disabled:bg-green-300"
                 >
                   <svg
                     className="h-4 w-4"
