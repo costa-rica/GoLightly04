@@ -5,6 +5,7 @@ created_by: claude (opus-4.7)
 modified_by: claude (opus-4.7)
 ---
 
+
 # TODO V02: Node.js Logging V08 Rollout
 
 Supersedes [20260520_TODO_LOGGING_NODE_JS_V08.md](20260520_TODO_LOGGING_NODE_JS_V08.md).
@@ -147,7 +148,7 @@ Per the plan's rollout section:
 
 1. `docs:` — plan V02 + this TODO V02 (no code).
 2. `refactor(api):` — Phase 1 audit notes only; skip if zero-diff.
-3. `refactor(shared):` — Phase 2a, only if option 2a-i is chosen. **Must include the rebuilt `dist/` artifacts** (committed) **or** rely on the consumer workspaces re-running `build:shared` after pull; pick a policy and state it in the commit body.
+3. `refactor(shared):` — Phase 2a, only if option 2a-i is chosen. **Do not commit `dist/`** — it is ignored by [.gitignore](../.gitignore) (`dist/` on line 29) and forcing it in with `git add -f` would fight the repo's convention. Run `npm run build -w @golightly/shared-types` locally for verification, and add a line to the commit body telling consumers to run `npm run build:shared` after pulling so their `api`/`worker-node` typechecks resolve against the updated artifacts.
 4. `refactor(worker-node):` — Phases 2b + 2c + 3 in a single commit; the env shape, logger module, fixtures, and `server.ts` are coupled and must not ship in pieces.
 5. `chore(scripts):` or `docs(agents):` — Phase 4, depending on A/B.
 6. `docs:` — Phase 5 verification notes (optional, only if anything surprising surfaced).
@@ -161,3 +162,7 @@ Per the plan's rollout section:
   `WorkerEnv` and into a dedicated `readLoggerEnv()` helper inside the
   logger module; replaced bare `npm run dev` commands in Phase 5 with
   workspace-scoped equivalents.
+- 2026-05-20 — V02 follow-up (claude opus-4.7). Tightened the
+  Phase 2a / commit-grouping policy on `dist/`: it is `.gitignore`d
+  in this repo, so do not commit built artifacts — run the build
+  locally and tell consumers to run `build:shared` after pulling.
