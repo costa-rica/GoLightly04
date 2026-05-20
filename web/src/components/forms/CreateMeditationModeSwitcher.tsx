@@ -31,14 +31,14 @@ export default function CreateMeditationModeSwitcher() {
 
   return (
     <section className="space-y-4">
-      <div className="inline-flex rounded-full border border-calm-200 bg-white p-1 shadow-sm">
+      <div className="inline-flex rounded-full border border-subtle bg-raised p-1 shadow-sm">
         <button
           type="button"
           onClick={() => updateMode("script")}
           className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             mode === "script"
               ? "bg-primary-600 text-white shadow-sm"
-              : "text-calm-600 hover:bg-calm-50"
+              : "text-ink-muted hover:bg-inset"
           }`}
           aria-pressed={mode === "script"}
         >
@@ -50,7 +50,7 @@ export default function CreateMeditationModeSwitcher() {
           className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             mode === "spreadsheet"
               ? "bg-primary-600 text-white shadow-sm"
-              : "text-calm-600 hover:bg-calm-50"
+              : "text-ink-muted hover:bg-inset"
           }`}
           aria-pressed={mode === "spreadsheet"}
         >

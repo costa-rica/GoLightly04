@@ -80,31 +80,31 @@ function tokenizeForHighlight(script: string, soundMap: Map<string, SoundFile>, 
 
 function tokenClass(token: HighlightToken, hasError: boolean) {
   if (hasError) {
-    return "bg-red-50 text-red-700 underline decoration-red-500 decoration-2";
+    return "bg-red-50 text-red-700 underline decoration-red-500 decoration-2 dark:bg-red-500/15 dark:text-red-300";
   }
 
   if (token.type === "break") {
-    return "rounded bg-primary-50 text-primary-600";
+    return "rounded bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300";
   }
 
   if (token.type === "sound") {
     if (token.knownSound === undefined) {
-      return "text-calm-600 underline decoration-dashed";
+      return "text-ink-muted underline decoration-dashed";
     }
     return token.knownSound
-      ? "rounded bg-emerald-50 text-emerald-700"
-      : "rounded bg-red-50 text-red-700";
+      ? "rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+      : "rounded bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300";
   }
 
   if (token.type === "speed") {
-    return "text-amber-700";
+    return "text-amber-700 dark:text-amber-300";
   }
 
   if (token.type === "text") {
-    return token.inSpeed ? "text-amber-900" : "text-calm-900";
+    return token.inSpeed ? "text-amber-900 dark:text-amber-300" : "text-ink";
   }
 
-  return "text-calm-900";
+  return "text-ink";
 }
 
 export default function ScriptMeditationEditor() {
@@ -242,39 +242,39 @@ export default function ScriptMeditationEditor() {
         type="button"
         onClick={() => setIsExpanded((value) => !value)}
         disabled={isSubmitting}
-        className="flex w-full items-center justify-between rounded-2xl border border-calm-200/70 bg-white/80 px-4 py-3 text-left shadow-sm transition hover:border-primary-200"
+        className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm transition hover:border-strong"
         aria-expanded={isExpanded}
       >
         <div>
-          <h2 className="font-display text-xl font-semibold text-calm-900">Create New Meditation</h2>
-          <p className="text-sm text-calm-500">Write a guided script with pauses and sounds</p>
+          <h2 className="font-display text-xl font-semibold text-ink">Create New Meditation</h2>
+          <p className="text-sm text-ink-muted">Write a guided script with pauses and sounds</p>
         </div>
-        <span className="text-calm-500">{isExpanded ? "Collapse" : "Expand"}</span>
+        <span className="text-ink-muted">{isExpanded ? "Collapse" : "Expand"}</span>
       </button>
 
       {isExpanded && (
-        <div className="grid gap-5 rounded-2xl border border-calm-200/70 bg-white/90 p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <div className="grid gap-5 rounded-2xl border border-subtle bg-raised p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_16rem]">
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_10rem]">
               <label className="block">
-                <span className="text-sm font-medium text-calm-700">Title</span>
+                <span className="text-sm font-medium text-ink-muted">Title</span>
                 <input
                   value={title}
                   onChange={(event) => {
                     setTitle(event.target.value);
                     if (titleError) setTitleError(undefined);
                   }}
-                  className="mt-1 w-full rounded-xl border border-calm-200 px-3 py-2 text-sm outline-none transition focus:border-primary-400"
+                  className="mt-1 w-full rounded-xl border border-subtle bg-inset px-3 py-2 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-400"
                   placeholder="Morning reset"
                 />
                 {titleError && <span className="mt-1 block text-xs text-red-600">{titleError}</span>}
               </label>
               <label className="block">
-                <span className="text-sm font-medium text-calm-700">Visibility</span>
+                <span className="text-sm font-medium text-ink-muted">Visibility</span>
                 <select
                   value={visibility}
                   onChange={(event) => setVisibility(event.target.value as "public" | "private")}
-                  className="mt-1 w-full rounded-xl border border-calm-200 px-3 py-2 text-sm outline-none transition focus:border-primary-400"
+                  className="mt-1 w-full rounded-xl border border-subtle bg-inset px-3 py-2 text-sm text-ink outline-none transition focus:border-primary-400"
                 >
                   <option value="public">Public</option>
                   <option value="private">Private</option>
@@ -283,7 +283,7 @@ export default function ScriptMeditationEditor() {
             </div>
 
             <label className="block">
-              <span className="text-sm font-medium text-calm-700">Description</span>
+              <span className="text-sm font-medium text-ink-muted">Description</span>
               <textarea
                 value={description}
                 onChange={(event) => {
@@ -296,18 +296,18 @@ export default function ScriptMeditationEditor() {
                   );
                 }}
                 rows={2}
-                className="mt-1 w-full resize-none rounded-xl border border-calm-200 px-3 py-2 text-sm outline-none transition focus:border-primary-400"
+                className="mt-1 w-full resize-none rounded-xl border border-subtle bg-inset px-3 py-2 text-sm text-ink outline-none transition focus:border-primary-400"
               />
               {descriptionError && <span className="mt-1 block text-xs text-red-600">{descriptionError}</span>}
             </label>
 
             <div>
-              <span className="text-sm font-medium text-calm-700">Script</span>
-              <div className="relative mt-1 min-h-72 overflow-hidden rounded-xl border border-calm-200 bg-white text-sm leading-6 focus-within:border-primary-400">
+              <span className="text-sm font-medium text-ink-muted">Script</span>
+              <div className="relative mt-1 min-h-72 overflow-hidden rounded-xl border border-subtle bg-inset text-sm leading-6 focus-within:border-primary-400">
                 <pre
                   ref={preRef}
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-sm leading-6"
+                  className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words bg-inset p-4 font-mono text-sm leading-6"
                 >
                   {highlighted.tokens.map((token, index) => {
                     const hasError = parseErrors.some((error) => error.index === token.start);
@@ -325,12 +325,12 @@ export default function ScriptMeditationEditor() {
                   onScroll={handleScroll}
                   rows={12}
                   spellCheck
-                  className="relative z-10 min-h-72 w-full resize-y bg-transparent p-4 font-mono text-sm leading-6 text-transparent caret-calm-900 outline-none selection:bg-primary-100"
+                  className="relative z-10 min-h-72 w-full resize-y bg-transparent p-4 font-mono text-sm leading-6 text-transparent caret-ink outline-none selection:bg-primary-100 dark:selection:bg-primary-500/30"
                   placeholder={'Welcome. Close your eyes.\n<break time="2s" />\n[Tibetan Singing Bowl]'}
                 />
               </div>
               <div className="mt-2 min-h-5 space-y-1 text-xs">
-                {hasPendingSoundValidation && <p className="text-calm-500">Validating sounds...</p>}
+                {hasPendingSoundValidation && <p className="text-ink-muted">Validating sounds...</p>}
                 {parseErrors.map((error) => (
                   <p key={`${error.index}-${error.message}`} className="text-red-600">
                     Index {error.index}: {error.message}
@@ -341,16 +341,16 @@ export default function ScriptMeditationEditor() {
                 <button
                   type="button"
                   onClick={() => setShowSyntaxHelp((value) => !value)}
-                  className="rounded-lg border border-calm-200 px-3 py-1.5 text-xs font-medium text-calm-600 transition hover:border-primary-200 hover:text-primary-700"
+                  className="rounded-lg border border-subtle px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-300"
                   aria-expanded={showSyntaxHelp}
                 >
                   {showSyntaxHelp ? "Hide syntax examples" : "Show syntax examples"}
                 </button>
                 {showSyntaxHelp && (
-                  <ul className="mt-2 space-y-1 rounded-xl border border-calm-200 bg-calm-50 p-3 text-xs text-calm-700">
-                    <li>add pause: <code className="font-mono text-primary-700">{'<break time="2s" />'}</code></li>
-                    <li>add sound: <code className="font-mono text-emerald-700">[Tibetan Singing Bowl]</code></li>
-                    <li>add speed: <code className="font-mono text-amber-700">{"{speed=0.9}slow breath{/speed}"}</code></li>
+                  <ul className="mt-2 space-y-1 rounded-xl border border-subtle bg-inset p-3 text-xs text-ink-muted">
+                    <li>add pause: <code className="font-mono text-primary-700 dark:text-primary-300">{'<break time="2s" />'}</code></li>
+                    <li>add sound: <code className="font-mono text-emerald-700 dark:text-emerald-300">[Tibetan Singing Bowl]</code></li>
+                    <li>add speed: <code className="font-mono text-amber-700 dark:text-amber-300">{"{speed=0.9}slow breath{/speed}"}</code></li>
                   </ul>
                 )}
               </div>
@@ -366,18 +366,18 @@ export default function ScriptMeditationEditor() {
             </button>
           </div>
 
-          <aside className="space-y-3 border-t border-calm-100 pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-            <h3 className="text-sm font-medium text-calm-800">Sounds</h3>
+          <aside className="space-y-3 border-t border-subtle pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+            <h3 className="text-sm font-medium text-ink">Sounds</h3>
             {soundsError && <p className="text-xs text-red-600">{soundsError}</p>}
             <div className="max-h-72 space-y-2 overflow-auto pr-1">
-              {soundsLoading && <p className="text-xs text-calm-500">Loading sounds...</p>}
+              {soundsLoading && <p className="text-xs text-ink-muted">Loading sounds...</p>}
               {!soundsLoading &&
                 soundFiles.map((sound) => (
                   <button
                     key={sound.id}
                     type="button"
                     onClick={() => insertSound(sound.name)}
-                    className="block w-full rounded-lg border border-calm-200 px-3 py-2 text-left text-sm text-calm-700 transition hover:border-emerald-200 hover:bg-emerald-50"
+                    className="block w-full rounded-lg border border-subtle bg-inset px-3 py-2 text-left text-sm text-ink transition hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/15"
                   >
                     {sound.name}
                   </button>

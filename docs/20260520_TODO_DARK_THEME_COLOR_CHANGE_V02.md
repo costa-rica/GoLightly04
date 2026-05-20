@@ -33,17 +33,17 @@ Supersedes [20260520_TODO_DARK_THEME_COLOR_CHANGE.md](20260520_TODO_DARK_THEME_C
 
 ## Phase 1 — Create Meditation (Script flow)
 
-- [ ] Sweep [ScriptMeditationEditor.tsx](web/src/components/forms/ScriptMeditationEditor.tsx) per the convention in plan V04 §3:
+- [x] Sweep [ScriptMeditationEditor.tsx](web/src/components/forms/ScriptMeditationEditor.tsx) per the convention in plan V04 §3:
   - outer collapsible header (line 245) → `bg-raised border-subtle`
   - grid panel (line 256) → `bg-raised`
   - title / visibility / description / script inputs → `bg-inset text-ink border-subtle`
   - script textarea overlay (lines 306–328) — both the highlight layer and the transparent textarea need consistent backgrounds
   - sounds aside (line 369) — `border-subtle`, list rows → `bg-inset text-ink`
-- [ ] Sweep [CreateMeditationModeSwitcher.tsx](web/src/components/forms/CreateMeditationModeSwitcher.tsx) so the Script/Spreadsheet pill blends.
-- [ ] Add muted-dark variants for the syntax-highlight tokens: `text-primary-700` → also `dark:text-primary-300`; `text-emerald-700` → `dark:text-emerald-300`; `text-amber-700` → `dark:text-amber-300`.
+- [x] Sweep [CreateMeditationModeSwitcher.tsx](web/src/components/forms/CreateMeditationModeSwitcher.tsx) so the Script/Spreadsheet pill blends.
+- [x] Add muted-dark variants for the syntax-highlight tokens: `text-primary-700` → also `dark:text-primary-300`; `text-emerald-700` → `dark:text-emerald-300`; `text-amber-700` → `dark:text-amber-300`.
 - [ ] Verify in browser at `/` while signed in, dark mode toggled — compare against the screenshot the user shared.
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 1.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 1.
 
 ## Phase 2 — Create Meditation (Spreadsheet flow)
 
