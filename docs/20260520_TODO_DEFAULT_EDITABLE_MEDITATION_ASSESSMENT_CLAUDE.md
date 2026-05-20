@@ -1,0 +1,36 @@
+---
+created_at: 2026-05-20
+updated_at: 2026-05-20
+created_by: claude (opus-4.7)
+modified_by: claude (opus-4.7)
+---
+
+# Assessment: TODO Default Editable Meditation
+
+1. Migration step omits the Postgres enum type creation
+
+   - Risk: Phase 1's migration tasks say "Adds the `stage` column with default `library`" and "Backfills existing rows to `library`", but don't mention creating the underlying Postgres enum type. The existing `meditations.visibility` and `meditations.status` columns use `DataTypes.ENUM(...)` in Sequelize, which in Postgres requires a `CREATE TYPE ... AS ENUM` statement before the column can be added. The existing migration `db-models/migrations/20260518_add_duration_seconds.sql` is a plain `ALTER TABLE ... ADD COLUMN duration_seconds INTEGER` — it didn't need a type because it's a built-in type. The neighboring conventions don't show an enum-add migration to copy from.
+   - Why this materially matters: An implementer following the TODO literally will write something like `ALTER TABLE meditations ADD COLUMN stage TEXT NOT NULL DEFAULT 'library'`. That produces a TEXT column, not an enum, which contradicts the V08 plan's Sequelize enum declaration. At application startup Sequelize will either silently disagree with the DB schema (depending on `sync` settings) or throw on the first insert. Worse, the partial unique indexes in the migration depend on the `stage` column's values being a closed set — without an enum or check constraint at the DB layer, a typo elsewhere could insert `stage='templtae'` and pass the unique-index check.
+   - Relevant TODO sections: lines 20-24 specify the migration steps.
+   - Mitigation: Add explicit migration tasks in Phase 1: (a) `CREATE TYPE meditation_stage AS ENUM ('template', 'staged', 'library');` before the column add; (b) reference that type in the `ADD COLUMN` statement. Or, alternative if the team prefers TEXT + CHECK over PG enums for migration flexibility: `ADD COLUMN stage TEXT NOT NULL DEFAULT 'library' CHECK (stage IN ('template', 'staged', 'library'))` — but the choice must be pinned in the TODO so the Sequelize model declaration in `db-models/src/models/Meditation.ts` matches.
+
+2. Phase 1 verification never runs `typecheck` for the `db-models` package
+
+   - Risk: Phase 1 modifies `db-models/src/models/Meditation.ts` (adding the `declare stage: MeditationStage` declaration and the `init` config). The verification block lists `typecheck:shared`, `test -w @golightly/shared-types`, and `typecheck -w @golightly/api` but does not list `typecheck -w @golightly/db-models`. The api package compiles against the published `db-models` build output, so its typecheck will not surface mistakes in the model declaration itself unless `db-models` has been rebuilt first.
+   - Why this materially matters: If the implementer adds the `stage` declaration with a wrong type (e.g. forgets `CreationOptional`, or types it as `string`), the api package's typecheck will pass against the previously-built `db-models/dist` artifacts. The mismatch only surfaces at runtime, when `Meditation.create` either rejects the seed/staged insert or silently writes an unexpected value. Given Phase 1 already includes a backfill migration, a runtime mismatch here is hard to roll back cleanly.
+   - Relevant TODO sections: lines 28-33 (Phase 1 verification).
+   - Mitigation: Add `npm run typecheck -w @golightly/db-models` (or equivalent — verify the package's typecheck script name) to Phase 1 verification, before the api typecheck. Also add a `db-models` build step if the api package consumes the compiled artifacts.
+
+3. Staging-endpoint tests have no setup guidance for seeding the template
+
+   - Risk: Phase 4 includes "Add first Generate, subsequent Generate, concurrent Generate, busy Generate, and Save to Library tests" but does not say how the template row gets into the test DB. `GET /meditations/staging` falls back to the global template when the caller has no staged row, so every test for a fresh user depends on the template existing. The seed script lives in Phase 2 but it's an operational script, not a test fixture.
+   - Why this materially matters: Without a documented setup hook, implementers will either (a) call the seed script as a test setup step (couples the test suite to ElevenLabs / worker availability, slow and flaky); (b) hand-insert a partial template row (won't have `status='complete'` audio, so Play-related tests fail); or (c) skip the template-fallback branch of the staging tests entirely, leaving the most important new branch untested. The "fresh user receives template" outcome in V08 verification step 1 of the Staging flow section becomes unverifiable.
+   - Relevant TODO sections: lines 144-147 (Phase 4 tests).
+   - Mitigation: Add an explicit task: "Create a test fixture/helper that inserts a `stage='template'` Meditation row with `status='complete'`, a synthetic `filePath`, and parsed `meditationArray` reflecting the starter script, without invoking the worker or the real seed script. Use this fixture in all staging endpoint tests that exercise the template-fallback branch." Document where the fixture lives (e.g. `api/test/fixtures/seedTemplateMeditation.ts`) so other test files can reuse it.
+
+4. Frontend dirty-check spans incompatible state shapes without specifying the mapping
+
+   - Risk: Phase 5 says "Spreadsheet mode compares current rows to initial `meditationArray`" (line 165 / line 301 of V08). But `CreateMeditationForm.tsx` uses its own row state shape (with explicit `type: "text" | "pause" | "sound"` discriminators and form-friendly speed/duration string fields), while `meditationArray` returned from the API uses the `MeditationElement` shape (`{ id, text?, sound_file?, pause_duration? }`, where type is derived from which optional key is present). The two shapes are not directly comparable.
+   - Why this materially matters: An implementer doing a naive deep-equal between form rows and `meditationArray` will see them as always dirty (the shapes never match), so the Generate button shows the moment the form loads — defeating the "only show Generate on actual edits" requirement. Conversely, an implementer who deep-equals after a shape conversion may convert lossily (collapsing `speed: "1.0"` and `speed: 1` to the same form value, normalizing whitespace inconsistently), producing false negatives that hide Generate after a real edit. Both failure modes degrade the core UX the feature is trying to introduce.
+   - Relevant TODO sections: line 165 (spreadsheet dirty check); line 175 (script dirty check is OK because both sides are strings).
+   - Mitigation: Add an explicit task to define the dirty-check semantics: "Convert the initial `meditationArray` to the same row shape used by `CreateMeditationForm.tsx` on load (one canonical conversion helper), store both `initialRows` and `currentRows` in the same shape, and use a deep-equal on that shape for the dirty check. Define the conversion in `web/src/lib/meditationRowMapping.ts` (new file) and add a unit test verifying round-trip stability for the seeded template content." This also resolves the mode-switch task on line 176 — a single canonical row shape lets script ↔ spreadsheet mode swap via the same conversion in both directions.
