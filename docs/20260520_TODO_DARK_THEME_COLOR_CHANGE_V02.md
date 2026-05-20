@@ -92,14 +92,14 @@ Sweep [admin/page.tsx](web/src/app/admin/page.tsx) in order. Each sub-step is sm
 
 ## Phase 4c — Per-table components
 
-- [ ] Sweep [TableAdminUsers.tsx](web/src/components/tables/TableAdminUsers.tsx) — status pills, action buttons, inline calm/white classes.
-- [ ] Sweep [TableAdminSoundsFiles.tsx](web/src/components/tables/TableAdminSoundsFiles.tsx).
-- [ ] Sweep [TableAdminMeditations.tsx](web/src/components/tables/TableAdminMeditations.tsx).
-- [ ] Sweep [TableAdminQueuer.tsx](web/src/components/tables/TableAdminQueuer.tsx).
-- [ ] Sweep [TableAdminDatabase.tsx](web/src/components/tables/TableAdminDatabase.tsx).
+- [x] Sweep [TableAdminUsers.tsx](web/src/components/tables/TableAdminUsers.tsx) — status pills, action buttons, inline calm/white classes.
+- [x] Sweep [TableAdminSoundsFiles.tsx](web/src/components/tables/TableAdminSoundsFiles.tsx).
+- [x] Sweep [TableAdminMeditations.tsx](web/src/components/tables/TableAdminMeditations.tsx).
+- [x] Sweep [TableAdminQueuer.tsx](web/src/components/tables/TableAdminQueuer.tsx).
+- [x] Sweep [TableAdminDatabase.tsx](web/src/components/tables/TableAdminDatabase.tsx).
 - [ ] Verify all five tables in dark mode — cells now match the chrome.
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 4c.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 4c.
 
 ## Phase 5 — Shared modals reused by in-scope surfaces
 

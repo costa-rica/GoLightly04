@@ -28,7 +28,7 @@ export default function TableAdminSoundsFiles({
         <button
           type="button"
           onClick={() => onDelete(row.original)}
-          className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500"
+          className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500 dark:border-red-500/40 dark:text-red-300"
         >
           Delete
         </button>

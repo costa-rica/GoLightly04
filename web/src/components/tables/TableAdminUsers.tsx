@@ -47,12 +47,12 @@ export default function TableAdminUsers({
       enableSorting: false,
       cell: ({ row }) =>
         row.original.id === currentUserId ? (
-          <span className="text-xs text-calm-300">Current</span>
+          <span className="text-xs text-ink-muted/60">Current</span>
         ) : (
           <button
             type="button"
             onClick={() => onDelete(row.original)}
-            className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500"
+            className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500 dark:border-red-500/40 dark:text-red-300"
           >
             Delete
           </button>

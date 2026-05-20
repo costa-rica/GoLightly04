@@ -18,10 +18,10 @@ type TableAdminQueuerProps = {
 };
 
 const statusStyles: Record<QueueRecord["status"], string> = {
-  pending: "border-calm-200 bg-calm-50 text-calm-600",
-  processing: "border-blue-200 bg-blue-50 text-blue-600",
-  complete: "border-emerald-200 bg-emerald-50 text-emerald-600",
-  failed: "border-red-200 bg-red-50 text-red-600",
+  pending: "border-subtle bg-inset text-ink-muted",
+  processing: "border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/40 dark:bg-blue-500/15 dark:text-blue-300",
+  complete: "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300",
+  failed: "border-red-200 bg-red-50 text-red-600 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-300",
 };
 
 export default function TableAdminQueuer({
@@ -81,7 +81,7 @@ export default function TableAdminQueuer({
             <button
               type="button"
               onClick={() => onRequeue(row.original)}
-              className="rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700"
+              className="rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 dark:border-primary-500/40 dark:text-primary-300"
             >
               Requeue
             </button>
@@ -89,7 +89,7 @@ export default function TableAdminQueuer({
           <button
             type="button"
             onClick={() => onDelete(row.original)}
-            className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500"
+            className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500 dark:border-red-500/40 dark:text-red-300"
           >
             Delete meditation
           </button>
