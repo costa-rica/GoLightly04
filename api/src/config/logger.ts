@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
+import { normalizeNodeEnv } from "@golightly/shared-types";
 import { createLogger, format, transports, type Logger } from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
-import { normalizeNodeEnv } from "./env";
 
 export type LoggerEnv = {
   NODE_ENV: "development" | "testing" | "production";
