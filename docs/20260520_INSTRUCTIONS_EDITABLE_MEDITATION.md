@@ -55,18 +55,18 @@ set -a
 set +a
 ```
 
-Run the migrations with the boot/DDL role from `PG_USER`:
+Run the migrations with the boot/DDL role from `PG_USER` using the local Postgres connection:
 
 ```bash
-PGPASSWORD="$PG_PASSWORD" psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260518_add_duration_seconds.sql
-PGPASSWORD="$PG_PASSWORD" psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260520_add_meditation_stage.sql
+psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260518_add_duration_seconds.sql
+psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260520_add_meditation_stage.sql
 ```
 
 Verify the new schema:
 
 ```bash
-PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = 'meditations' AND column_name IN ('duration_seconds', 'stage');"
-PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT indexname FROM pg_indexes WHERE tablename = 'meditations' AND indexname IN ('meditations_one_template', 'meditations_one_staged_per_user');"
+psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = 'meditations' AND column_name IN ('duration_seconds', 'stage');"
+psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT indexname FROM pg_indexes WHERE tablename = 'meditations' AND indexname IN ('meditations_one_template', 'meditations_one_staged_per_user');"
 ```
 
 Expected results:
@@ -117,7 +117,7 @@ ss -ltnp | grep -E ':8001|:8002|:8003'
 Verify the template meditation exists and is complete:
 
 ```bash
-PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT id, stage, status, filename FROM meditations WHERE stage = 'template';"
+psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT id, stage, status, filename FROM meditations WHERE stage = 'template';"
 ```
 
 Expected production state:

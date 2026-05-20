@@ -48,17 +48,16 @@ export PG_HOST="localhost"
 export PG_PORT="5432"
 export PG_DATABASE="your_local_db"
 export PG_USER="your_local_boot_or_app_user"
-export PG_PASSWORD="your_local_password"
 ```
 
 Then check schema and template state:
 
 ```bash
-PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = 'meditations' AND column_name IN ('duration_seconds', 'stage');"
+psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = 'meditations' AND column_name IN ('duration_seconds', 'stage');"
 
-PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT id, stage, status, filename, file_path FROM meditations WHERE stage IN ('template', 'staged') ORDER BY stage, updated_at DESC;"
+psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT id, stage, status, filename, file_path FROM meditations WHERE stage IN ('template', 'staged') ORDER BY stage, updated_at DESC;"
 
-PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT id, name, filename FROM sound_files WHERE lower(trim(name)) = 'tibetan singing bowl';"
+psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -c "SELECT id, name, filename FROM sound_files WHERE lower(trim(name)) = 'tibetan singing bowl';"
 ```
 
 If the template query returns zero rows, run the seed.
@@ -66,8 +65,8 @@ If the template query returns zero rows, run the seed.
 ## Apply the local migrations if needed
 
 ```bash
-PGPASSWORD="$PG_PASSWORD" psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260518_add_duration_seconds.sql
-PGPASSWORD="$PG_PASSWORD" psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260520_add_meditation_stage.sql
+psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260518_add_duration_seconds.sql
+psql -v ON_ERROR_STOP=1 -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DATABASE" -f db-models/migrations/20260520_add_meditation_stage.sql
 ```
 
 ## Verify the required sound file

@@ -56,6 +56,12 @@ modified_by: claude (haiku-4.5)
 - One-shot maintenance scripts under `scripts/` are exempt from `docs/LOGGING_NODE_JS_V08.md` and may use `console.*`.
 - The V08 logging spec applies to standard Node.js applications. These scripts are short-lived operational tools whose output is read interactively from the terminal rather than tailed from persisted service logs.
 
+## Postgres Local Access
+
+- GoLightly dev/prod and Nick's Mac workstation use local Postgres access without password environment variables for the project database roles.
+- Generated runbooks for those environments should omit Postgres password variables and password shims, and should show direct `psql` commands using `PG_HOST`, `PG_PORT`, `PG_USER`, and `PG_DATABASE`.
+- Only document password-based Postgres access when a different environment explicitly requires it.
+
 ## Commit Message Guidance
 
 ### Guidelines
