@@ -65,16 +65,16 @@ Supersedes [20260520_TODO_DARK_THEME_COLOR_CHANGE.md](20260520_TODO_DARK_THEME_C
 
 ## Phase 4a — AdminTable (shared shell)
 
-- [ ] [AdminTable.tsx:68](web/src/components/tables/AdminTable.tsx:68) search input: `border-calm-200 bg-white text-calm-800` → `border-subtle bg-inset text-ink`.
-- [ ] [AdminTable.tsx:75](web/src/components/tables/AdminTable.tsx:75) and [:84](web/src/components/tables/AdminTable.tsx:84) pagination buttons: `border-calm-200` → `border-subtle`.
-- [ ] [AdminTable.tsx:92](web/src/components/tables/AdminTable.tsx:92) table container: `border-calm-100` → `border-subtle`.
-- [ ] [AdminTable.tsx:94](web/src/components/tables/AdminTable.tsx:94) sticky thead: `bg-white/90 backdrop-blur` → `bg-raised/90 backdrop-blur` (alpha kept; verified working in Phase 0).
-- [ ] [AdminTable.tsx:96](web/src/components/tables/AdminTable.tsx:96) header row and [:110](web/src/components/tables/AdminTable.tsx:110) sort indicator: `text-calm-500` / `text-calm-400` → `text-ink-muted`.
-- [ ] [AdminTable.tsx:130](web/src/components/tables/AdminTable.tsx:130) empty state: `text-calm-500` → `text-ink-muted`.
-- [ ] [AdminTable.tsx:137](web/src/components/tables/AdminTable.tsx:137) body row: `border-calm-100 text-calm-700` → `border-subtle text-ink-muted`.
+- [x] [AdminTable.tsx:68](web/src/components/tables/AdminTable.tsx:68) search input: `border-calm-200 bg-white text-calm-800` → `border-subtle bg-inset text-ink`.
+- [x] [AdminTable.tsx:75](web/src/components/tables/AdminTable.tsx:75) and [:84](web/src/components/tables/AdminTable.tsx:84) pagination buttons: `border-calm-200` → `border-subtle`.
+- [x] [AdminTable.tsx:92](web/src/components/tables/AdminTable.tsx:92) table container: `border-calm-100` → `border-subtle`.
+- [x] [AdminTable.tsx:94](web/src/components/tables/AdminTable.tsx:94) sticky thead: `bg-white/90 backdrop-blur` → `bg-raised/90 backdrop-blur` (alpha kept; verified working in Phase 0).
+- [x] [AdminTable.tsx:96](web/src/components/tables/AdminTable.tsx:96) header row and [:110](web/src/components/tables/AdminTable.tsx:110) sort indicator: `text-calm-500` / `text-calm-400` → `text-ink-muted`.
+- [x] [AdminTable.tsx:130](web/src/components/tables/AdminTable.tsx:130) empty state: `text-calm-500` → `text-ink-muted`.
+- [x] [AdminTable.tsx:137](web/src/components/tables/AdminTable.tsx:137) body row: `border-calm-100 text-calm-700` → `border-subtle text-ink-muted`.
 - [ ] Verify admin tables in dark mode — chrome (search/header/pagination/borders) is now themed even though the per-table files haven't been touched yet. **Scroll the table** and confirm the sticky header softens rows underneath (not opaque, not fully transparent).
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 4a.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 4a.
 
 ## Phase 4b — admin/page.tsx (page chrome)
 

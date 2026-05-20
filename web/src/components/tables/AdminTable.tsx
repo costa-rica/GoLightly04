@@ -65,14 +65,14 @@ export default function AdminTable<TData>({
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
           placeholder="Search table..."
-          className="w-full rounded-2xl border border-calm-200 bg-white px-4 py-2 text-sm text-calm-800 shadow-sm outline-none transition focus:border-primary-300 md:max-w-sm"
+          className="w-full rounded-2xl border border-subtle bg-inset px-4 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 md:max-w-sm"
         />
-        <div className="flex items-center gap-2 text-xs text-calm-500">
+        <div className="flex items-center gap-2 text-xs text-ink-muted">
           <button
             type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="rounded-full border border-calm-200 px-3 py-1 font-semibold disabled:opacity-40"
+            className="rounded-full border border-subtle px-3 py-1 font-semibold transition hover:border-strong disabled:opacity-40"
           >
             Prev
           </button>
@@ -81,7 +81,7 @@ export default function AdminTable<TData>({
             type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="rounded-full border border-calm-200 px-3 py-1 font-semibold disabled:opacity-40"
+            className="rounded-full border border-subtle px-3 py-1 font-semibold transition hover:border-strong disabled:opacity-40"
           >
             Next
           </button>
@@ -89,11 +89,11 @@ export default function AdminTable<TData>({
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[960px] overflow-hidden rounded-2xl border border-calm-100">
+        <div className="min-w-[960px] overflow-hidden rounded-2xl border border-subtle">
           <table className="w-full text-left text-xs md:text-sm">
-            <thead className="sticky top-0 bg-white/90 backdrop-blur">
+            <thead className="sticky top-0 bg-raised/90 backdrop-blur">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id} className="text-calm-500">
+                <tr key={headerGroup.id} className="text-ink-muted">
                   {headerGroup.headers.map((header) => (
                     <th key={header.id} className="px-4 py-3 font-semibold">
                       {header.isPlaceholder ? null : (
@@ -107,7 +107,7 @@ export default function AdminTable<TData>({
                             header.getContext(),
                           )}
                           {header.column.getCanSort() && (
-                            <span className="text-[10px] text-calm-400">
+                            <span className="text-[10px] text-ink-muted/70">
                               {header.column.getIsSorted() === "asc"
                                 ? "▲"
                                 : header.column.getIsSorted() === "desc"
@@ -127,14 +127,14 @@ export default function AdminTable<TData>({
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-6 text-center text-calm-500"
+                    className="px-4 py-6 text-center text-ink-muted"
                   >
                     {emptyMessage}
                   </td>
                 </tr>
               )}
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-t border-calm-100 text-calm-700">
+                <tr key={row.id} className="border-t border-subtle text-ink-muted">
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-3 align-top">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
