@@ -18,18 +18,18 @@ Supersedes [20260520_TODO_DARK_THEME_COLOR_CHANGE.md](20260520_TODO_DARK_THEME_C
 
 ## Phase 0 — Token foundation
 
-- [ ] Add the eight color tokens (`canvas`, `raised`, `inset`, `overlay`, `subtle`, `strong`, `ink`, `ink-muted`) to `theme.extend.colors` in [web/tailwind.config.js](web/tailwind.config.js), each set to `'rgb(var(--…) / <alpha-value>)'` per plan V04 §3.
-- [ ] Add the `:root` and `.dark` CSS-variable blocks to `@layer base` in [web/src/styles/globals.css](web/src/styles/globals.css) as **space-separated R G B triplets** (no commas, no `rgb()` wrapper) per plan V04 §3.
-- [ ] Confirm the existing `.card` and `.input-field` helpers in [globals.css](web/src/styles/globals.css) are left **unchanged**.
-- [ ] Run `git grep -nE "(bg|text|border)-(canvas|raised|inset|overlay|subtle|strong|ink|ink-muted)\b" web/src` and confirm zero pre-existing hits (collision check).
-- [ ] Drop a throwaway `<div className="bg-raised bg-raised/90 text-ink text-ink/80 border-subtle">` into [web/src/app/page.tsx](web/src/app/page.tsx), run `npm run dev` in `web/`, then:
-  - [ ] confirm `bg-raised` and `border-subtle` render in both themes
-  - [ ] **devtools-inspect `bg-raised/90`** in dark mode — computed `background-color` should be `rgba(23, 32, 51, 0.9)` (this is the functional check for the V04 wiring; if it's `rgba(0, 0, 0, 0)` or missing, the variable shape or Tailwind config is wrong and must be fixed before continuing)
-  - [ ] revert the throwaway div
-- [ ] Replace `bg-calm-50 text-calm-900 dark:bg-calm-950 dark:text-calm-100` on [AppShell.tsx:58](web/src/components/AppShell.tsx:58) with `bg-canvas text-ink`.
-- [ ] Verify the home page (`/`), navigation, and existing meditation table on `/` still look correct in both themes (the surfaces already styled for dark mode).
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 0.
+- [x] Add the eight color tokens (`canvas`, `raised`, `inset`, `overlay`, `subtle`, `strong`, `ink`, `ink-muted`) to `theme.extend.colors` in [web/tailwind.config.js](web/tailwind.config.js), each set to `'rgb(var(--…) / <alpha-value>)'` per plan V04 §3.
+- [x] Add the `:root` and `.dark` CSS-variable blocks to `@layer base` in [web/src/styles/globals.css](web/src/styles/globals.css) as **space-separated R G B triplets** (no commas, no `rgb()` wrapper) per plan V04 §3.
+- [x] Confirm the existing `.card` and `.input-field` helpers in [globals.css](web/src/styles/globals.css) are left **unchanged**.
+- [x] Run `git grep -nE "(bg|text|border)-(canvas|raised|inset|overlay|subtle|strong|ink|ink-muted)\b" web/src` and confirm zero pre-existing hits (collision check).
+- [x] Drop a throwaway `<div className="bg-raised bg-raised/90 text-ink text-ink/80 border-subtle">` into [web/src/app/page.tsx](web/src/app/page.tsx), run `npm run dev` in `web/`, then:
+  - [x] confirm `bg-raised` and `border-subtle` render in both themes
+  - [x] **devtools-inspect `bg-raised/90`** in dark mode — computed `background-color` should be `rgba(23, 32, 51, 0.9)` (this is the functional check for the V04 wiring; if it's `rgba(0, 0, 0, 0)` or missing, the variable shape or Tailwind config is wrong and must be fixed before continuing)
+  - [x] revert the throwaway div
+- [x] Replace `bg-calm-50 text-calm-900 dark:bg-calm-950 dark:text-calm-100` on [AppShell.tsx:58](web/src/components/AppShell.tsx:58) with `bg-canvas text-ink`.
+- [x] Verify the home page (`/`), navigation, and existing meditation table on `/` still look correct in both themes (the surfaces already styled for dark mode).
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 0.
 
 ## Phase 1 — Create Meditation (Script flow)
 

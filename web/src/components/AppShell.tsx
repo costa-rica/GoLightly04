@@ -55,7 +55,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col bg-calm-50 text-calm-900 dark:bg-calm-950 dark:text-calm-100">
+      <div className="min-h-screen flex flex-col bg-canvas text-ink">
         <Navigation onLoginClick={() => setIsLoginOpen(true)} />
         <div className="pt-16 flex-1">{children}</div>
         <footer className="px-4 py-6 text-xs text-slate-500 dark:text-calm-400">

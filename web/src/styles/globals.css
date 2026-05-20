@@ -3,6 +3,28 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --surface-canvas: 248 250 252;
+    --surface-raised: 255 255 255;
+    --surface-inset: 241 245 249;
+    --surface-overlay: 255 255 255;
+    --border-subtle: 226 232 240;
+    --border-strong: 203 213 225;
+    --text-ink: 15 23 42;
+    --text-ink-muted: 100 116 139;
+  }
+
+  .dark {
+    --surface-canvas: 13 20 34;
+    --surface-raised: 23 32 51;
+    --surface-inset: 17 26 43;
+    --surface-overlay: 29 39 64;
+    --border-subtle: 36 48 73;
+    --border-strong: 45 58 85;
+    --text-ink: 230 236 245;
+    --text-ink-muted: 167 178 197;
+  }
+
   * {
     @apply border-calm-200;
   }
