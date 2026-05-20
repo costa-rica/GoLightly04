@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 type Theme = "light" | "dark";
 
 const STORAGE_KEY = "golightly.theme";
+const DEFAULT_THEME: Theme = "light";
 
 function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
@@ -37,12 +38,7 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    const preferred =
-      stored === "light" || stored === "dark"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+    const preferred = stored === "light" || stored === "dark" ? stored : DEFAULT_THEME;
     setTheme(preferred);
     applyTheme(preferred);
   }, []);
