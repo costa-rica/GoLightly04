@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createMeditation } from "@/lib/api/meditations";
+import type { Meditation, MeditationElement } from "@golightly/shared-types";
+import {
+  generateStagedMeditation,
+  getAllMeditations,
+  saveStagedMeditationToLibrary,
+} from "@/lib/api/meditations";
 import { getSoundFiles } from "@/lib/api/sounds";
 import Toast from "@/components/Toast";
+import AudioPlayer from "@/components/AudioPlayer";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setMeditations } from "@/store/features/meditationSlice";
 import { showLoading, hideLoading } from "@/store/features/uiSlice";
-import { getAllMeditations } from "@/lib/api/meditations";
 import {
   validateMeditationTitle,
   validatePauseDuration,
@@ -15,7 +20,85 @@ import {
 } from "@/lib/utils/validation";
 import ModalConfirmCreateMeditation from "@/components/modals/ModalConfirmCreateMeditation";
 
-export default function CreateMeditationForm() {
+type CreateMeditationFormProps = {
+  stagingMeditation?: Meditation | null;
+  isStagingLoading?: boolean;
+  stagingError?: string | null;
+  onStagingChanged?: () => Promise<void>;
+  isActive?: boolean;
+};
+
+type Row = {
+  id: number;
+  type: "text" | "pause" | "sound";
+  text: string;
+  speed: string;
+  pauseDuration: string;
+  soundFile: string;
+};
+
+function elementToRow(element: MeditationElement, index: number): Row {
+  if (element.pause_duration !== undefined) {
+    return {
+      id: index + 1,
+      type: "pause",
+      text: "",
+      speed: "",
+      pauseDuration: String(element.pause_duration),
+      soundFile: "",
+    };
+  }
+  if (element.sound_file) {
+    return {
+      id: index + 1,
+      type: "sound",
+      text: "",
+      speed: "",
+      pauseDuration: "",
+      soundFile: element.sound_file,
+    };
+  }
+  return {
+    id: index + 1,
+    type: "text",
+    text: element.text ?? "",
+    speed: element.speed === undefined ? "" : String(element.speed),
+    pauseDuration: "",
+    soundFile: "",
+  };
+}
+
+function rowsToElements(rows: Row[]): MeditationElement[] {
+  return rows.map((row) => {
+    if (row.type === "text") {
+      return {
+        id: row.id,
+        text: row.text.trim(),
+        speed: row.speed.trim() || undefined,
+      };
+    }
+
+    if (row.type === "pause") {
+      return {
+        id: row.id,
+        pause_duration: row.pauseDuration.trim(),
+      };
+    }
+
+    return {
+      id: row.id,
+      sound_file: row.soundFile,
+    };
+  });
+}
+
+export default function CreateMeditationForm({
+  stagingMeditation = null,
+  isStagingLoading = false,
+  stagingError = null,
+  onStagingChanged,
+  isActive = true,
+}: CreateMeditationFormProps) {
   const dispatch = useAppDispatch();
   const { isAuthenticated, accessToken } = useAppSelector(
     (state) => state.auth,
@@ -28,14 +111,6 @@ export default function CreateMeditationForm() {
     title?: string;
     description?: string;
   }>({});
-  type Row = {
-    id: number;
-    type: "text" | "pause" | "sound";
-    text: string;
-    speed: string;
-    pauseDuration: string;
-    soundFile: string;
-  };
   type RowError = {
     text?: string;
     speed?: string;
@@ -58,6 +133,18 @@ export default function CreateMeditationForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeRowMenu, setActiveRowMenu] = useState<number | null>(null);
   const maxDescriptionLength = 300;
+  const isGenerating = ["pending", "processing"].includes(stagingMeditation?.status ?? "");
+  const initialElements = useMemo(
+    () => rowsToElements((stagingMeditation?.meditationArray ?? []).map(elementToRow)),
+    [stagingMeditation?.id, stagingMeditation?.updatedAt],
+  );
+  const isDirty = JSON.stringify(rowsToElements(rows)) !== JSON.stringify(initialElements);
+  const canSave =
+    isActive &&
+    stagingMeditation?.stage === "staged" &&
+    stagingMeditation.status === "complete" &&
+    !isDirty &&
+    !isSubmitting;
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -83,6 +170,16 @@ export default function CreateMeditationForm() {
 
     fetchSounds();
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!stagingMeditation) return;
+    setRows((stagingMeditation.meditationArray ?? []).map(elementToRow));
+    setTitle("");
+    setDescription("");
+    setVisibility("private");
+    setRowErrors({});
+    setIsExpanded(true);
+  }, [stagingMeditation?.id, stagingMeditation?.updatedAt]);
 
   const handleToggle = () => {
     setIsExpanded((prev) => {
@@ -159,13 +256,12 @@ export default function CreateMeditationForm() {
     }));
   };
 
-  const submitEnabled = useMemo(
-    () => !isSubmitting && rows.length > 0,
-    [isSubmitting, rows.length],
+  const generateEnabled = useMemo(
+    () => !isSubmitting && !isGenerating && rows.length > 0,
+    [isSubmitting, isGenerating, rows.length],
   );
 
-  const handleOpenModal = () => {
-    // Validate rows before opening modal
+  const validateRows = () => {
     const nextRowErrors: typeof rowErrors = {};
     rows.forEach((row) => {
       const rowError: RowError = {};
@@ -199,14 +295,49 @@ export default function CreateMeditationForm() {
       }
     });
     setRowErrors(nextRowErrors);
+    return Object.keys(nextRowErrors).length === 0;
+  };
 
-    // Only open modal if no row errors
-    if (Object.keys(nextRowErrors).length === 0) {
+  const handleOpenModal = () => {
+    if (validateRows()) {
       setIsModalOpen(true);
     }
   };
 
-  const handleSubmit = async () => {
+  const handleGenerate = async () => {
+    if (!validateRows() || !generateEnabled) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    dispatch(showLoading("Generating your meditation..."));
+    try {
+      await generateStagedMeditation({
+        mode: "spreadsheet",
+        elements: rowsToElements(rows),
+      });
+      await onStagingChanged?.();
+      setToast({
+        message: "Meditation generation started.",
+        variant: "success",
+      });
+    } catch (err: any) {
+      const code = err?.response?.data?.error?.code;
+      const message =
+        code === "MEDITATION_BUSY"
+          ? "Generation in progress - please wait"
+          : err?.response?.data?.error?.message || "Unable to generate meditation.";
+      setToast({ message, variant: "error" });
+      if (code === "MEDITATION_BUSY") {
+        await onStagingChanged?.();
+      }
+    } finally {
+      setIsSubmitting(false);
+      dispatch(hideLoading());
+    }
+  };
+
+  const handleSave = async () => {
     // Validate title and description
     const titleValidation = validateMeditationTitle(title);
     const nextErrors: { title?: string; description?: string } = {};
@@ -223,52 +354,36 @@ export default function CreateMeditationForm() {
     }
 
     setIsSubmitting(true);
-    dispatch(showLoading("Creating your meditation..."));
+    dispatch(showLoading("Saving your meditation..."));
     try {
-      await createMeditation({
+      await saveStagedMeditationToLibrary({
         title: title.trim(),
         description: description.trim() || undefined,
         visibility,
-        meditationArray: rows.map((row) => {
-          if (row.type === "text") {
-            return {
-              id: row.id,
-              text: row.text.trim(),
-              speed: row.speed.trim() || undefined,
-            };
-          }
-
-          if (row.type === "pause") {
-            return {
-              id: row.id,
-              pause_duration: row.pauseDuration.trim(),
-            };
-          }
-
-          return {
-            id: row.id,
-            sound_file: row.soundFile,
-          };
-        }),
       });
+      await onStagingChanged?.();
 
       const refresh = await getAllMeditations(accessToken);
       dispatch(setMeditations(refresh.meditations ?? []));
       setToast({
-        message: "Meditation submitted successfully.",
+        message: "Meditation saved to library.",
         variant: "success",
       });
       setTitle("");
       setDescription("");
-      setVisibility("public");
-      setRows([]);
+      setVisibility("private");
       setRowErrors({});
-      setIsExpanded(false);
       setIsModalOpen(false);
     } catch (err: any) {
+      const code = err?.response?.data?.error?.code;
       const message =
-        err?.response?.data?.error?.message || "Unable to submit meditation.";
+        code === "MEDITATION_BUSY"
+          ? "Generation in progress - please wait"
+          : err?.response?.data?.error?.message || "Unable to save meditation.";
       setToast({ message, variant: "error" });
+      if (code === "MEDITATION_BUSY") {
+        await onStagingChanged?.();
+      }
     } finally {
       setIsSubmitting(false);
       dispatch(hideLoading());
@@ -361,6 +476,21 @@ export default function CreateMeditationForm() {
             <h3 className="text-lg font-display font-semibold text-ink mb-4">
               Meditation Rows
             </h3>
+
+            {stagingError && (
+              <p className="mt-2 text-xs text-red-500">{stagingError}</p>
+            )}
+            {isStagingLoading && (
+              <p className="mt-2 text-xs text-ink-muted">Loading starter meditation...</p>
+            )}
+            {stagingMeditation?.filePath && stagingMeditation.status === "complete" && (
+              <div className="mb-4">
+                <AudioPlayer meditationId={stagingMeditation.id} title={stagingMeditation.title} />
+              </div>
+            )}
+            {isGenerating && (
+              <p className="mb-4 text-sm text-ink-muted">Generation in progress - please wait</p>
+            )}
 
             {soundsError && (
               <p className="mt-2 text-xs text-red-500">{soundsError}</p>
@@ -665,11 +795,11 @@ export default function CreateMeditationForm() {
           <div className="mt-8 flex items-center justify-end">
             <button
               type="button"
-              onClick={handleOpenModal}
-              disabled={!submitEnabled}
+              onClick={isDirty ? handleGenerate : handleOpenModal}
+              disabled={isDirty ? !generateEnabled : !canSave}
               className="rounded-full bg-primary-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-primary-200"
             >
-              Submit
+              {isSubmitting ? "Working..." : isDirty ? "Generate" : "Save to Library"}
             </button>
           </div>
         </div>
@@ -686,7 +816,7 @@ export default function CreateMeditationForm() {
         isSubmitting={isSubmitting}
         maxDescriptionLength={maxDescriptionLength}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={handleSubmit}
+        onConfirm={handleSave}
         onTitleChange={handleTitleChange}
         onDescriptionChange={handleDescriptionChange}
         onVisibilityChange={setVisibility}

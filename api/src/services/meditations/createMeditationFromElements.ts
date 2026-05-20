@@ -1,4 +1,4 @@
-import type { Meditation, SourceMode, MeditationElement } from "@golightly/shared-types";
+import type { Meditation, MeditationStage, SourceMode, MeditationElement } from "@golightly/shared-types";
 import type { Transaction } from "sequelize";
 import { getDb } from "../../lib/db";
 import { AppError } from "../../lib/errors";
@@ -69,6 +69,7 @@ export async function createMeditationFromElements(opts: {
   elements: MeditationElement[];
   sourceMode: SourceMode;
   scriptSource: string | null;
+  stage?: MeditationStage;
 }): Promise<Meditation> {
   const { sequelize, Meditation } = getDb();
   return sequelize.transaction(async (transaction) => {
@@ -78,6 +79,7 @@ export async function createMeditationFromElements(opts: {
         title: opts.title,
         description: opts.description,
         visibility: opts.visibility,
+        stage: opts.stage ?? "library",
         sourceMode: opts.sourceMode,
         scriptSource: opts.scriptSource,
         status: "pending",

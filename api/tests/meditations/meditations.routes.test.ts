@@ -236,7 +236,7 @@ describe("meditations routes", () => {
     await request(buildApp()).get("/meditations/all");
     expect(meditationModel.findAll).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        where: { visibility: "public", status: "complete" },
+        where: { stage: "library", visibility: "public", status: "complete" },
       }),
     );
 
@@ -247,11 +247,12 @@ describe("meditations routes", () => {
       { visibility: "public", status: "complete" },
       { userId: 10 },
     ]);
+    expect(authedWhere.stage).toBe("library");
 
     await request(buildApp()).get("/meditations/all").set("Authorization", `Bearer ${adminToken}`);
     expect(meditationModel.findAll).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        where: {},
+        where: { stage: "library" },
       }),
     );
   });

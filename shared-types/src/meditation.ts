@@ -1,6 +1,7 @@
 export type MeditationVisibility = "public" | "private";
 export type MeditationStatus = "pending" | "processing" | "complete" | "failed";
 export type SourceMode = "spreadsheet" | "script";
+export type MeditationStage = "template" | "staged" | "library";
 
 export type MeditationElement = {
   id: number;
@@ -27,6 +28,7 @@ export type Meditation = {
   isOwned?: boolean;
   ownerUserId?: number;
   status?: MeditationStatus;
+  stage: MeditationStage;
   sourceMode?: SourceMode;
   scriptSource?: string | null;
 };
@@ -108,4 +110,28 @@ export type RegenerateMeditationResponse = {
 
 export type StreamTokenResponse = {
   token: string;
+};
+
+export type GetStagingMeditationResponse = {
+  meditation: Meditation;
+};
+
+export type GenerateStagedMeditationRequest =
+  | { mode: "script"; script: string }
+  | { mode: "spreadsheet"; elements: MeditationElement[] };
+
+export type GenerateStagedMeditationResponse = {
+  message: string;
+  meditation: Meditation;
+};
+
+export type SaveStagedMeditationRequest = {
+  title: string;
+  description?: string;
+  visibility: MeditationVisibility;
+};
+
+export type SaveStagedMeditationResponse = {
+  message: string;
+  meditation: Meditation;
 };
