@@ -1,12 +1,12 @@
+import { normalizeNodeEnv, type RuntimeNodeEnv } from "@golightly/shared-types";
+
 type RawEnv = Record<string, string | undefined>;
 
 export interface WorkerEnv {
-  NODE_ENV: string;
+  NODE_ENV: RuntimeNodeEnv;
   PORT: number;
   NAME_APP: string;
   PATH_TO_LOGS: string;
-  LOG_MAX_SIZE: string;
-  LOG_MAX_FILES: string;
   PATH_PROJECT_RESOURCES: string;
   API_KEY_ELEVEN_LABS: string;
   DEFAULT_ELEVENLABS_VOICE_ID: string;
@@ -33,12 +33,10 @@ function requireEnv(name: (typeof REQUIRED)[number], env: RawEnv): string {
 
 export function loadEnv(env: RawEnv = process.env): WorkerEnv {
   const loaded = {
-    NODE_ENV: requireEnv("NODE_ENV", env),
+    NODE_ENV: normalizeNodeEnv(requireEnv("NODE_ENV", env)),
     PORT: Number(env.PORT ?? 4001),
     NAME_APP: requireEnv("NAME_APP", env),
     PATH_TO_LOGS: requireEnv("PATH_TO_LOGS", env),
-    LOG_MAX_SIZE: env.LOG_MAX_SIZE ?? "10m",
-    LOG_MAX_FILES: env.LOG_MAX_FILES ?? "14d",
     PATH_PROJECT_RESOURCES: requireEnv("PATH_PROJECT_RESOURCES", env),
     API_KEY_ELEVEN_LABS: requireEnv("API_KEY_ELEVEN_LABS", env),
     DEFAULT_ELEVENLABS_VOICE_ID: requireEnv("DEFAULT_ELEVENLABS_VOICE_ID", env),

@@ -14,8 +14,8 @@ The worker service receives `POST /process` requests from the API, generates Ele
 - `PORT`
 - `NAME_APP`
 - `PATH_TO_LOGS`
-- `LOG_MAX_SIZE`
-- `LOG_MAX_FILES`
+- `LOG_MAX_SIZE` — megabytes (integer)
+- `LOG_MAX_FILES` — retention count (integer)
 - `PATH_PROJECT_RESOURCES`
 - `API_KEY_ELEVEN_LABS`
 - `DEFAULT_ELEVENLABS_VOICE_ID`
