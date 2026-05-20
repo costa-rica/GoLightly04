@@ -80,15 +80,15 @@ Supersedes [20260520_TODO_DARK_THEME_COLOR_CHANGE.md](20260520_TODO_DARK_THEME_C
 
 Sweep [admin/page.tsx](web/src/app/admin/page.tsx) in order. Each sub-step is small; one commit at the end of 4b is fine, or split if any individual section is large.
 
-- [ ] Page header + tabs.
-- [ ] Users tab wrapper.
-- [ ] Sounds tab wrapper + upload area.
-- [ ] Meditations tab wrapper.
-- [ ] Queuer tab wrapper.
-- [ ] Database tab wrapper.
+- [x] Page header + tabs.
+- [x] Users tab wrapper.
+- [x] Sounds tab wrapper + upload area.
+- [x] Meditations tab wrapper.
+- [x] Queuer tab wrapper.
+- [x] Database tab wrapper.
 - [ ] Verify all five admin tabs in dark mode.
-- [ ] Run `npm run lint` and `npm run typecheck` in `web/`.
-- [ ] Commit referencing this file + Phase 4b.
+- [x] Run `npm run lint` and `npm run typecheck` in `web/`.
+- [x] Commit referencing this file + Phase 4b.
 
 ## Phase 4c — Per-table components
 
