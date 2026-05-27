@@ -6,6 +6,8 @@ TODO lists for new features or tasks live in `docs/` as markdown files.
 
 Filename format: `<YYYYMMDD>_TODO_<PROJECT_NAME>.md`, all caps with underscores between words. For camel-cased project names without acronyms (like `API`), split at word boundaries.
 
+- project name could also be a task within the project.
+
 Example: `20260418_TODO_NEWS_NEXUS_12.md`
 
 ## Structure
