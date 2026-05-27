@@ -6,23 +6,8 @@ import { AppError } from "../lib/errors";
 import { requireAdmin } from "../middleware/auth";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
 import { notifyWorker } from "../services/workerClient";
-
-async function getOrCreateBenevolentUser() {
-  const { User } = getDb();
-  const email = "benevolent.system@golightly.local";
-  const [user] = await User.findOrCreate({
-    where: { email },
-    defaults: {
-      email,
-      password: null,
-      authProvider: "local",
-      isEmailVerified: true,
-      emailVerifiedAt: new Date(),
-      isAdmin: false,
-    },
-  });
-  return user;
-}
+import { getOrCreateBenevolentUser } from "../services/users/getOrCreateBenevolentUser";
+import { assertAdminMeditationMutable } from "../services/meditations/assertAdminMeditationMutable";
 
 export function buildAdminRouter(): Router {
   const router = Router();
@@ -67,6 +52,9 @@ export function buildAdminRouter(): Router {
       }
 
       const meditations = await Meditation.findAll({ where: { userId: id } });
+      if (meditations.some((meditation) => (meditation.stage ?? "library") === "template")) {
+        throw new AppError(409, "PROTECTED_USER", "Cannot delete a user that owns the template meditation");
+      }
       if (savePublicMeditationsAsBenevolentUser) {
         const benevolentUser = await getOrCreateBenevolentUser();
         await Meditation.update(
@@ -100,6 +88,12 @@ export function buildAdminRouter(): Router {
     "/meditations/:id",
     asyncHandler(async (req, res) => {
       const meditationId = Number(req.params.id);
+      const { Meditation } = getDb();
+      const meditation = await Meditation.findByPk(meditationId);
+      if (!meditation) {
+        throw new AppError(404, "NOT_FOUND", "Meditation not found");
+      }
+      assertAdminMeditationMutable(meditation, "delete");
       await deleteMeditationCascade(meditationId);
       res.json({ message: "Meditation deleted", meditationId });
     }),
@@ -137,6 +131,12 @@ export function buildAdminRouter(): Router {
       if (!job) {
         throw new AppError(404, "NOT_FOUND", "Queue record not found");
       }
+      const { Meditation } = getDb();
+      const meditation = await Meditation.findByPk(job.meditationId);
+      if (!meditation) {
+        throw new AppError(404, "NOT_FOUND", "Meditation not found");
+      }
+      assertAdminMeditationMutable(meditation, "queue-delete");
       await deleteMeditationCascade(job.meditationId);
       res.json({ message: "Queue record deleted", queueId: id });
     }),
@@ -151,6 +151,7 @@ export function buildAdminRouter(): Router {
       if (!meditation) {
         throw new AppError(404, "NOT_FOUND", "Meditation not found");
       }
+      assertAdminMeditationMutable(meditation, "requeue");
       const retryableCount = await JobQueue.count({
         where: {
           meditationId,

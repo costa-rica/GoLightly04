@@ -7,6 +7,7 @@ import {
   parseMeditationScript,
   SCRIPT_MAX_BYTES,
   serializeMeditationElementsToScript,
+  type GenerateStagedMeditationRequest,
   type MeditationElement,
   type RegenerateMeditationRequest,
 } from "@golightly/shared-types";
@@ -15,13 +16,17 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
 import { optionalAuth, requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
-import { canAccessMeditationDetails, isStreamStart, readStreamToken } from "../lib/meditationAccess";
+import { isStreamStart, readStreamToken } from "../lib/meditationAccess";
 import { issueStreamToken } from "../lib/authTokens";
 import { notifyWorker } from "../services/workerClient";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
 import { createMeditationFromElements } from "../services/meditations/createMeditationFromElements";
 import { regenerateMeditationFromScript } from "../services/meditations/regenerateMeditationFromScript";
 import { buildSoundFilenameToNameLookup } from "../services/meditations/soundLookup";
+import { validateMeditationMetadata } from "../services/meditations/validateMeditationMetadata";
+import { createOrRegenerateStagedMeditation } from "../services/meditations/createOrRegenerateStagedMeditation";
+import { saveStagedToLibrary } from "../services/meditations/saveStagedToLibrary";
+import { assertMeditationAccess } from "../services/meditations/assertMeditationAccess";
 
 function mapMeditationRecord(
   meditation: any,
@@ -39,6 +44,7 @@ function mapMeditationRecord(
     filename: meditation.filename ?? "",
     filePath: meditation.filePath ?? undefined,
     visibility: meditation.visibility,
+    stage: meditation.stage ?? "library",
     sourceMode: meditation.sourceMode ?? "spreadsheet",
     scriptSource:
       meditation.scriptSource ??
@@ -80,16 +86,7 @@ export function buildMeditationsRouter(): Router {
     requireAuth,
     asyncHandler(async (req, res) => {
       requireBodyFields(req.body, ["title", "visibility", "meditationArray"]);
-      const title = ensureString(req.body.title, "title");
-      const visibilityRaw = ensureString(req.body.visibility, "visibility");
-      if (visibilityRaw !== "public" && visibilityRaw !== "private") {
-        throw new AppError(400, "VALIDATION_ERROR", "visibility must be public or private");
-      }
-      const visibility: "public" | "private" = visibilityRaw;
-      const description =
-        typeof req.body.description === "string" && req.body.description.trim()
-          ? req.body.description.trim()
-          : null;
+      const { title, description, visibility } = validateMeditationMetadata(req.body);
       if (!Array.isArray(req.body.meditationArray) || req.body.meditationArray.length === 0) {
         throw new AppError(400, "VALIDATION_ERROR", "meditationArray must contain at least one element");
       }
@@ -120,16 +117,7 @@ export function buildMeditationsRouter(): Router {
     requireAuth,
     asyncHandler(async (req, res) => {
       requireBodyFields(req.body, ["title", "visibility", "script"]);
-      const title = ensureString(req.body.title, "title");
-      const visibilityRaw = ensureString(req.body.visibility, "visibility");
-      if (visibilityRaw !== "public" && visibilityRaw !== "private") {
-        throw new AppError(400, "VALIDATION_ERROR", "visibility must be public or private");
-      }
-      const visibility: "public" | "private" = visibilityRaw;
-      const description =
-        typeof req.body.description === "string" && req.body.description.trim()
-          ? req.body.description.trim()
-          : null;
+      const { title, description, visibility } = validateMeditationMetadata(req.body);
       const script = ensureString(req.body.script, "script");
       if (Buffer.byteLength(script, "utf8") > SCRIPT_MAX_BYTES) {
         throw new AppError(400, "VALIDATION_ERROR", `script must be ${SCRIPT_MAX_BYTES} bytes or less`);
@@ -169,20 +157,79 @@ export function buildMeditationsRouter(): Router {
   );
 
   router.get(
+    "/staging",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const { Meditation, SoundFile } = getDb();
+      const meditation = await Meditation.findOne({
+        where: { userId: req.user!.id, stage: "staged" },
+        order: [["updatedAt", "DESC"]],
+      }) ?? await Meditation.findOne({
+        where: { stage: "template" },
+        order: [["createdAt", "ASC"]],
+      });
+      if (!meditation) {
+        throw new AppError(404, "NOT_FOUND", "Default meditation template not found");
+      }
+      const soundFilenameToName = buildSoundFilenameToNameLookup(await SoundFile.findAll());
+      res.json({
+        meditation: mapMeditationRecord(meditation, {
+          isOwned: req.user!.id === meditation.userId,
+          soundFilenameToName,
+        }),
+      });
+    }),
+  );
+
+  router.post(
+    "/staging/generate",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const meditation = await createOrRegenerateStagedMeditation({
+        userId: req.user!.id,
+        payload: req.body as GenerateStagedMeditationRequest,
+      });
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+      res.status(201).json({
+        message: "Staged meditation generation started",
+        meditation: mapMeditationRecord(meditation, { isOwned: true, soundFilenameToName }),
+      });
+    }),
+  );
+
+  router.post(
+    "/staging/save-to-library",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const meditation = await saveStagedToLibrary({
+        userId: req.user!.id,
+        metadata: req.body,
+      });
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+      res.json({
+        message: "Meditation saved to library",
+        meditation: mapMeditationRecord(meditation, { isOwned: true, soundFilenameToName }),
+      });
+    }),
+  );
+
+  router.get(
     "/all",
     optionalAuth,
     asyncHandler(async (req, res) => {
       const { ContractUserMeditation, Meditation, SoundFile } = getDb();
+      const stageClause = { stage: "library" };
       const where = req.user?.isAdmin
-        ? {}
+        ? stageClause
         : req.user
           ? {
+              ...stageClause,
               [Op.or]: [
                 { visibility: "public", status: "complete" },
                 { userId: req.user.id },
               ],
             }
-          : { visibility: "public", status: "complete" };
+          : { ...stageClause, visibility: "public", status: "complete" };
 
       const meditations = await Meditation.findAll({
         where,
@@ -215,9 +262,7 @@ export function buildMeditationsRouter(): Router {
     optionalAuth,
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (!canAccessMeditationDetails(meditation, req)) {
-        throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
-      }
+      assertMeditationAccess(meditation, req.user, "read");
       const soundFilenameToName = await loadSoundFilenameToNameLookup();
       res.json({
         meditation: mapMeditationRecord(meditation, {
@@ -233,9 +278,7 @@ export function buildMeditationsRouter(): Router {
     requireAuth,
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (!canAccessMeditationDetails(meditation, req)) {
-        throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
-      }
+      assertMeditationAccess(meditation, req.user, "stream");
       res.json({ token: issueStreamToken(meditation.id, req.user!.id) });
     }),
   );
@@ -249,9 +292,11 @@ export function buildMeditationsRouter(): Router {
       if (tokenPayload && tokenPayload.meditationId !== meditation.id) {
         throw new AppError(401, "AUTH_FAILED", "Invalid stream token");
       }
-      if (!canAccessMeditationDetails(meditation, req)) {
-        throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
-      }
+      assertMeditationAccess(
+        meditation,
+        req.user ?? (tokenPayload ? { id: tokenPayload.userId, isAdmin: false } : undefined),
+        "stream",
+      );
       if (!meditation.filePath) {
         throw new AppError(409, "MEDITATION_NOT_READY", "Meditation audio is not ready");
       }
@@ -299,7 +344,8 @@ export function buildMeditationsRouter(): Router {
     asyncHandler(async (req, res) => {
       const meditationId = Number(req.params.meditationId);
       const shouldFavorite = req.params.trueOrFalse === "true";
-      await loadMeditationOrThrow(meditationId);
+      const meditation = await loadMeditationOrThrow(meditationId);
+      assertMeditationAccess(meditation, req.user, "favorite");
       const { ContractUserMeditation } = getDb();
 
       if (shouldFavorite) {
@@ -331,9 +377,7 @@ export function buildMeditationsRouter(): Router {
     requireAuth,
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (req.user!.id !== meditation.userId) {
-        throw new AppError(403, "FORBIDDEN", "You do not own this meditation");
-      }
+      assertMeditationAccess(meditation, req.user, "mutate");
 
       if (req.body.title !== undefined) {
         meditation.title = ensureString(req.body.title, "title");
@@ -372,9 +416,7 @@ export function buildMeditationsRouter(): Router {
       }
 
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (req.user!.id !== meditation.userId) {
-        throw new AppError(403, "FORBIDDEN", "You do not own this meditation");
-      }
+      assertMeditationAccess(meditation, req.user, "mutate");
 
       const updated = await regenerateMeditationFromScript({
         meditationId: meditation.id,
@@ -395,9 +437,7 @@ export function buildMeditationsRouter(): Router {
     requireAuth,
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
-      if (req.user!.id !== meditation.userId && !req.user!.isAdmin) {
-        throw new AppError(403, "FORBIDDEN", "You cannot delete this meditation");
-      }
+      assertMeditationAccess(meditation, req.user, "mutate");
 
       await deleteMeditationCascade(meditation.id);
       res.json({

@@ -4,8 +4,13 @@ import type {
   CreateMeditationScriptRequest,
   DeleteMeditationResponse,
   FavoriteMeditationResponse,
+  GenerateStagedMeditationRequest,
+  GenerateStagedMeditationResponse,
   GetAllMeditationsResponse,
+  GetStagingMeditationResponse,
   RegenerateMeditationResponse,
+  SaveStagedMeditationRequest,
+  SaveStagedMeditationResponse,
   StreamTokenResponse,
   UpdateMeditationRequest,
   UpdateMeditationResponse,
@@ -46,6 +51,31 @@ export const createMeditationScript = async (
 ): Promise<CreateMeditationResponse> => {
   const response = await apiClient.post<CreateMeditationResponse>(
     "/meditations/create/script",
+    data,
+  );
+  return response.data;
+};
+
+export const getStagingMeditation = async (): Promise<GetStagingMeditationResponse> => {
+  const response = await apiClient.get<GetStagingMeditationResponse>("/meditations/staging");
+  return response.data;
+};
+
+export const generateStagedMeditation = async (
+  data: GenerateStagedMeditationRequest,
+): Promise<GenerateStagedMeditationResponse> => {
+  const response = await apiClient.post<GenerateStagedMeditationResponse>(
+    "/meditations/staging/generate",
+    data,
+  );
+  return response.data;
+};
+
+export const saveStagedMeditationToLibrary = async (
+  data: SaveStagedMeditationRequest,
+): Promise<SaveStagedMeditationResponse> => {
+  const response = await apiClient.post<SaveStagedMeditationResponse>(
+    "/meditations/staging/save-to-library",
     data,
   );
   return response.data;

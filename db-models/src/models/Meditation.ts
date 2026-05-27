@@ -19,6 +19,7 @@ export class Meditation extends Model<
   declare filename: string | null;
   declare filePath: string | null;
   declare visibility: CreationOptional<"public" | "private">;
+  declare stage: CreationOptional<"template" | "staged" | "library">;
   declare sourceMode: CreationOptional<"spreadsheet" | "script">;
   declare scriptSource: string | null;
   declare status: CreationOptional<"pending" | "processing" | "complete" | "failed">;
@@ -68,6 +69,11 @@ export function initMeditationModel(sequelize: Sequelize): typeof Meditation {
         type: DataTypes.ENUM("public", "private"),
         allowNull: false,
         defaultValue: "public",
+      },
+      stage: {
+        type: DataTypes.ENUM("template", "staged", "library"),
+        allowNull: false,
+        defaultValue: "library",
       },
       sourceMode: {
         type: DataTypes.STRING(16),

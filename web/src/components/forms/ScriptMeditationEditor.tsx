@@ -4,10 +4,16 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   DESCRIPTION_MAX,
   parseMeditationScript,
+  type Meditation,
   type ScriptParseError,
 } from "@golightly/shared-types";
 import Toast from "@/components/Toast";
-import { createMeditationScript, getAllMeditations } from "@/lib/api/meditations";
+import AudioPlayer from "@/components/AudioPlayer";
+import {
+  generateStagedMeditation,
+  getAllMeditations,
+  saveStagedMeditationToLibrary,
+} from "@/lib/api/meditations";
 import { getSoundFiles, type SoundFile } from "@/lib/api/sounds";
 import { validateMeditationTitle } from "@/lib/utils/validation";
 import { hideLoading, showLoading } from "@/store/features/uiSlice";
@@ -107,7 +113,21 @@ function tokenClass(token: HighlightToken, hasError: boolean) {
   return "text-ink";
 }
 
-export default function ScriptMeditationEditor() {
+type ScriptMeditationEditorProps = {
+  stagingMeditation?: Meditation | null;
+  isStagingLoading?: boolean;
+  stagingError?: string | null;
+  onStagingChanged?: () => Promise<void>;
+  isActive?: boolean;
+};
+
+export default function ScriptMeditationEditor({
+  stagingMeditation = null,
+  isStagingLoading = false,
+  stagingError = null,
+  onStagingChanged,
+  isActive = true,
+}: ScriptMeditationEditorProps) {
   const dispatch = useAppDispatch();
   const { isAuthenticated, accessToken } = useAppSelector((state) => state.auth);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -126,6 +146,23 @@ export default function ScriptMeditationEditor() {
   const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
+  const isGenerating = ["pending", "processing"].includes(stagingMeditation?.status ?? "");
+  const isDirty = script !== (stagingMeditation?.scriptSource ?? "");
+  const canSave =
+    isActive &&
+    stagingMeditation?.stage === "staged" &&
+    stagingMeditation.status === "complete" &&
+    !isDirty &&
+    !isSubmitting;
+
+  useEffect(() => {
+    if (!stagingMeditation) return;
+    setScript(stagingMeditation.scriptSource ?? "");
+    setTitle(stagingMeditation.stage === "staged" ? "" : "");
+    setDescription("");
+    setVisibility("private");
+    setIsExpanded(true);
+  }, [stagingMeditation?.id, stagingMeditation?.updatedAt]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -165,9 +202,9 @@ export default function ScriptMeditationEditor() {
     [script, soundMap, soundsLoading],
   );
 
-  const submitDisabled =
+  const generateDisabled =
     isSubmitting ||
-    !title.trim() ||
+    isGenerating ||
     !script.trim() ||
     parseErrors.length > 0 ||
     hasPendingSoundValidation ||
@@ -192,40 +229,74 @@ export default function ScriptMeditationEditor() {
     });
   };
 
-  const handleSubmit = async () => {
-    const titleValidation = validateMeditationTitle(title);
-    setTitleError(titleValidation.valid ? undefined : titleValidation.message);
-    if (!titleValidation.valid || submitDisabled) {
+  const handleGenerate = async () => {
+    if (generateDisabled) {
       return;
     }
 
     setIsSubmitting(true);
-    dispatch(showLoading("Creating your meditation..."));
+    dispatch(showLoading("Generating your meditation..."));
     try {
-      await createMeditationScript({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        visibility,
-        script,
-      });
-      const refresh = await getAllMeditations(accessToken);
-      dispatch(setMeditations(refresh.meditations ?? []));
-      setToast({ message: "Meditation submitted successfully.", variant: "success" });
-      setTitle("");
-      setDescription("");
-      setVisibility("public");
-      setScript("");
-      setParseErrors([]);
-      setIsExpanded(false);
+      await generateStagedMeditation({ mode: "script", script });
+      await onStagingChanged?.();
+      setToast({ message: "Meditation generation started.", variant: "success" });
     } catch (error: any) {
       const details = error?.response?.data?.error?.details;
       if (Array.isArray(details)) {
         setParseErrors(details);
       }
+      const code = error?.response?.data?.error?.code;
       setToast({
-        message: error?.response?.data?.error?.message || "Unable to submit meditation.",
+        message:
+          code === "MEDITATION_BUSY"
+            ? "Generation in progress - please wait"
+            : error?.response?.data?.error?.message || "Unable to generate meditation.",
         variant: "error",
       });
+      if (code === "MEDITATION_BUSY") {
+        await onStagingChanged?.();
+      }
+    } finally {
+      setIsSubmitting(false);
+      dispatch(hideLoading());
+    }
+  };
+
+  const handleSave = async () => {
+    const titleValidation = validateMeditationTitle(title);
+    setTitleError(titleValidation.valid ? undefined : titleValidation.message);
+    if (!titleValidation.valid || !canSave || !!descriptionError) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    dispatch(showLoading("Saving your meditation..."));
+    try {
+      await saveStagedMeditationToLibrary({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        visibility,
+      });
+      await onStagingChanged?.();
+      const refresh = await getAllMeditations(accessToken);
+      dispatch(setMeditations(refresh.meditations ?? []));
+      setToast({ message: "Meditation saved to library.", variant: "success" });
+      setTitle("");
+      setDescription("");
+      setVisibility("private");
+      setParseErrors([]);
+    } catch (error: any) {
+      const code = error?.response?.data?.error?.code;
+      setToast({
+        message:
+          code === "MEDITATION_BUSY"
+            ? "Generation in progress - please wait"
+            : error?.response?.data?.error?.message || "Unable to save meditation.",
+        variant: "error",
+      });
+      if (code === "MEDITATION_BUSY") {
+        await onStagingChanged?.();
+      }
     } finally {
       setIsSubmitting(false);
       dispatch(hideLoading());
@@ -255,6 +326,14 @@ export default function ScriptMeditationEditor() {
       {isExpanded && (
         <div className="grid gap-5 rounded-2xl border border-subtle bg-raised p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_16rem]">
           <div className="space-y-4">
+            {stagingError && <p className="text-sm text-red-600">{stagingError}</p>}
+            {isStagingLoading && <p className="text-sm text-ink-muted">Loading starter meditation...</p>}
+            {stagingMeditation?.filePath && stagingMeditation.status === "complete" && (
+              <AudioPlayer meditationId={stagingMeditation.id} title={stagingMeditation.title} />
+            )}
+            {isGenerating && (
+              <p className="text-sm text-ink-muted">Generation in progress - please wait</p>
+            )}
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_10rem]">
               <label className="block">
                 <span className="text-sm font-medium text-ink-muted">Title</span>
@@ -358,11 +437,19 @@ export default function ScriptMeditationEditor() {
 
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={submitDisabled}
+              onClick={isDirty ? handleGenerate : handleSave}
+              disabled={isDirty ? generateDisabled : !canSave}
               className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-strong/60"
             >
-              {hasPendingSoundValidation ? "Validating sounds..." : isSubmitting ? "Submitting..." : "Submit meditation"}
+              {hasPendingSoundValidation
+                ? "Validating sounds..."
+                : isSubmitting
+                  ? "Working..."
+                  : isDirty
+                    ? "Generate"
+                    : canSave
+                      ? "Save to Library"
+                      : "Generate"}
             </button>
           </div>
 
