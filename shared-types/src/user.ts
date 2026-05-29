@@ -5,6 +5,8 @@ export type User = {
   email: string;
   isAdmin: boolean;
   authProvider: AuthProvider;
+  showScriptModeForCreatingMeditations: boolean;
+  hasPublicMeditations?: boolean;
 };
 
 export type RegisterRequest = {
@@ -56,5 +58,17 @@ export type GoogleAuthRequest = {
 export type GoogleAuthResponse = {
   message: string;
   accessToken: string;
+  user: User;
+};
+
+export type UpdateUserPreferencesRequest = {
+  showScriptModeForCreatingMeditations: boolean;
+};
+
+export type UserProfileResponse = {
+  user: User;
+};
+
+export type UpdateUserPreferencesResponse = {
   user: User;
 };

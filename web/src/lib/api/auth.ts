@@ -9,6 +9,9 @@ import type {
   RegisterResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  UpdateUserPreferencesRequest,
+  UpdateUserPreferencesResponse,
+  UserProfileResponse,
   VerifyEmailResponse,
 } from "@golightly/shared-types";
 
@@ -25,6 +28,21 @@ export const register = async (
 
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await apiClient.post<LoginResponse>("/users/login", data);
+  return response.data;
+};
+
+export const getProfile = async (): Promise<UserProfileResponse> => {
+  const response = await apiClient.get<UserProfileResponse>("/users/me");
+  return response.data;
+};
+
+export const updateUserPreferences = async (
+  data: UpdateUserPreferencesRequest,
+): Promise<UpdateUserPreferencesResponse> => {
+  const response = await apiClient.patch<UpdateUserPreferencesResponse>(
+    "/users/me/preferences",
+    data,
+  );
   return response.data;
 };
 
