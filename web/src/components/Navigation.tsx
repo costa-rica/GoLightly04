@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/features/authSlice";
+import { setApiAuthToken } from "@/lib/api/client";
 import { clearAuthStorage } from "@/lib/utils/auth";
 import Toast from "@/components/Toast";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -54,6 +55,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
   const handleAuthClick = () => {
     if (isAuthenticated) {
       dispatch(logout());
+      setApiAuthToken(null);
       clearAuthStorage();
       setToastMessage("You have been logged out.");
       router.push("/");

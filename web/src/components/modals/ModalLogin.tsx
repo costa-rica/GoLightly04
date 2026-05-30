@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type MouseEvent } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { login as loginAction } from "@/store/features/authSlice";
 import { login, googleAuth } from "@/lib/api/auth";
+import { setApiAuthToken } from "@/lib/api/client";
 import { validateEmail, validatePassword } from "@/lib/utils/validation";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { logger } from "@/lib/logger";
@@ -81,6 +82,7 @@ export default function ModalLogin({
 
     try {
       const response = await login({ email: normalizedEmail, password });
+      setApiAuthToken(response.accessToken);
 
       // Update Redux state
       dispatch(
@@ -141,6 +143,7 @@ export default function ModalLogin({
     try {
       logger.info("Sending Google auth request to API");
       const response = await googleAuth({ idToken: credentialResponse.credential });
+      setApiAuthToken(response.accessToken);
 
       logger.info("Google authentication successful", {
         userId: response.user.id,
