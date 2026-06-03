@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/features/authSlice";
+import { setApiAuthToken } from "@/lib/api/client";
 import { clearAuthStorage } from "@/lib/utils/auth";
 import Toast from "@/components/Toast";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -13,6 +14,24 @@ import ThemeToggle from "@/components/ThemeToggle";
 type NavigationProps = {
   onLoginClick?: () => void;
 };
+
+function ProfileIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
 
 export default function Navigation({ onLoginClick }: NavigationProps) {
   const dispatch = useAppDispatch();
@@ -36,6 +55,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
   const handleAuthClick = () => {
     if (isAuthenticated) {
       dispatch(logout());
+      setApiAuthToken(null);
       clearAuthStorage();
       setToastMessage("You have been logged out.");
       router.push("/");
@@ -113,6 +133,15 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
             <div className="hidden items-center gap-3 md:flex">
               {navLinks}
               <ThemeToggle />
+              {isAuthenticated && (
+                <Link
+                  href="/profile"
+                  aria-label="Open profile"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-calm-300 text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
+                >
+                  <ProfileIcon />
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleAuthClick}
@@ -188,7 +217,18 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
             </button>
           </div>
 
-          {navLinks && <nav className="flex flex-col gap-4">{navLinks}</nav>}
+          <nav className="flex flex-col gap-4">
+            {navLinks}
+            {isAuthenticated && (
+              <Link
+                href="/profile"
+                className="text-sm font-semibold text-calm-700 transition hover:text-primary-700 dark:text-calm-200 dark:hover:text-primary-300"
+                onClick={handleCloseMobile}
+              >
+                Profile
+              </Link>
+            )}
+          </nav>
 
           <button
             type="button"

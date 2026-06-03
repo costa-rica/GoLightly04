@@ -13,6 +13,15 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000, // 30 seconds
 });
 
+export const setApiAuthToken = (token: string | null): void => {
+  if (token) {
+    apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
+    return;
+  }
+
+  delete apiClient.defaults.headers.common.Authorization;
+};
+
 // Request interceptor - Add JWT token to requests
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -24,8 +33,11 @@ apiClient.interceptors.request.use(
       hasAuth: !!config.headers?.Authorization,
     });
 
-    // Get token from localStorage (Redux persist stores it there)
-    if (typeof window !== 'undefined') {
+    // Prefer the token set immediately after login, then fall back to
+    // localStorage for refreshed sessions. Redux persist writes asynchronously,
+    // so relying only on localStorage can make the first protected request after
+    // login go out without Authorization.
+    if (typeof window !== 'undefined' && !config.headers?.Authorization) {
       try {
         const persistedState = localStorage.getItem('persist:root');
         if (persistedState) {
@@ -79,6 +91,7 @@ apiClient.interceptors.response.use(
         case 401:
           // Unauthorized - token expired or invalid
           logger.warn('Unauthorized request - clearing auth state');
+          setApiAuthToken(null);
           // Clear auth state from localStorage
           if (typeof window !== 'undefined') {
             try {

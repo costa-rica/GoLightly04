@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-05-14
+updated_at: 2026-05-29
 created_by: codex (gpt-5)
-modified_by: codex (gpt-5)
+modified_by: codex (gpt-5.5)
 ---
 
 # Users API
@@ -105,10 +105,13 @@ curl -X POST http://localhost:3000/users/login \
     "email": "user@example.com",
     "isAdmin": false,
     "authProvider": "local",
+    "showScriptModeForCreatingMeditations": false,
     "hasPublicMeditations": false
   }
 }
 ```
+
+User payloads include `showScriptModeForCreatingMeditations`, which defaults to `false`. They may include `hasPublicMeditations` when the API computes the public meditation flag.
 
 ### Error Responses
 
@@ -208,6 +211,132 @@ curl -X POST http://localhost:3000/users/forgot-password \
     "code": "INTERNAL_ERROR",
     "message": "Internal server error",
     "status": 500
+  }
+}
+```
+
+## GET /users/me
+
+Returns the currently authenticated user's profile.
+
+Requires bearer authentication.
+
+### Sample Request
+
+```bash
+curl http://localhost:3000/users/me \
+  -H "Authorization: Bearer jwt-access-token"
+```
+
+### Sample Response
+
+```json
+{
+  "user": {
+    "id": 5,
+    "email": "user@example.com",
+    "isAdmin": false,
+    "authProvider": "local",
+    "showScriptModeForCreatingMeditations": false,
+    "hasPublicMeditations": false
+  }
+}
+```
+
+### Error Responses
+
+#### Authentication required (401)
+
+```json
+{
+  "error": {
+    "code": "AUTH_REQUIRED",
+    "message": "Authentication required",
+    "status": 401
+  }
+}
+```
+
+#### User not found (404)
+
+```json
+{
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "User not found",
+    "status": 404
+  }
+}
+```
+
+## PATCH /users/me/preferences
+
+Updates the currently authenticated user's preferences.
+
+Requires bearer authentication. The `showScriptModeForCreatingMeditations` preference defaults to `false` for new and existing users after migration.
+
+### Parameters
+
+- `showScriptModeForCreatingMeditations` (boolean, required): Enables the script-mode option in the create meditation UI.
+
+### Sample Request
+
+```bash
+curl -X PATCH http://localhost:3000/users/me/preferences \
+  -H "Authorization: Bearer jwt-access-token" \
+  -H "Content-Type: application/json" \
+  -d '{"showScriptModeForCreatingMeditations":true}'
+```
+
+### Sample Response
+
+```json
+{
+  "user": {
+    "id": 5,
+    "email": "user@example.com",
+    "isAdmin": false,
+    "authProvider": "local",
+    "showScriptModeForCreatingMeditations": true,
+    "hasPublicMeditations": false
+  }
+}
+```
+
+### Error Responses
+
+#### Validation error (400)
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "showScriptModeForCreatingMeditations must be a boolean",
+    "status": 400
+  }
+}
+```
+
+#### Authentication required (401)
+
+```json
+{
+  "error": {
+    "code": "AUTH_REQUIRED",
+    "message": "Authentication required",
+    "status": 401
+  }
+}
+```
+
+#### User not found (404)
+
+```json
+{
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "User not found",
+    "status": 404
   }
 }
 ```
@@ -388,10 +517,13 @@ curl -X POST http://localhost:3000/users/google-auth \
     "email": "google@example.com",
     "isAdmin": false,
     "authProvider": "google",
+    "showScriptModeForCreatingMeditations": false,
     "hasPublicMeditations": false
   }
 }
 ```
+
+User payloads include `showScriptModeForCreatingMeditations`, which defaults to `false`. They may include `hasPublicMeditations` when the API computes the public meditation flag.
 
 ### Error Responses
 

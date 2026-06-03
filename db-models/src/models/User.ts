@@ -15,6 +15,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   declare isEmailVerified: CreationOptional<boolean>;
   declare emailVerifiedAt: Date | null;
   declare isAdmin: CreationOptional<boolean>;
+  declare showScriptModeForCreatingMeditations: CreationOptional<boolean>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -58,6 +59,12 @@ export function initUserModel(sequelize: Sequelize): typeof User {
         allowNull: false,
         defaultValue: false,
         field: "is_admin",
+      },
+      showScriptModeForCreatingMeditations: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        field: "show_script_mode_for_creating_meditations",
       },
       createdAt: {
         type: DataTypes.DATE,

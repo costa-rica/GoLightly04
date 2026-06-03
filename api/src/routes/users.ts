@@ -1,6 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
+import type { UpdateUserPreferencesRequest } from "@golightly/shared-types";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
@@ -12,6 +13,7 @@ import {
   type ResetPasswordTokenPayload,
   type VerificationTokenPayload,
 } from "../lib/authTokens";
+import { requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../services/email";
 import { readApiEnv } from "../config/env";
@@ -27,12 +29,22 @@ async function hasPublicMeditations(userId: number): Promise<boolean> {
   return count > 0;
 }
 
-function mapUser(user: { id: number; email: string; isAdmin: boolean; authProvider?: "local" | "google" | "both" }, publicFlag?: boolean) {
+function mapUser(
+  user: {
+    id: number;
+    email: string;
+    isAdmin: boolean;
+    authProvider?: "local" | "google" | "both";
+    showScriptModeForCreatingMeditations?: boolean;
+  },
+  publicFlag?: boolean,
+) {
   return {
     id: user.id,
     email: user.email,
     isAdmin: user.isAdmin,
     authProvider: user.authProvider ?? "local",
+    showScriptModeForCreatingMeditations: user.showScriptModeForCreatingMeditations ?? false,
     hasPublicMeditations: publicFlag ?? false,
   };
 }
@@ -103,6 +115,55 @@ export function buildUsersRouter(): Router {
       res.json({
         message: "Login successful",
         accessToken,
+        user: mapUser(user, await hasPublicMeditations(user.id)),
+      });
+    }),
+  );
+
+  router.get(
+    "/me",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const { User } = getDb();
+      const user = await User.findOne({ where: { id: req.user!.id } });
+
+      if (!user) {
+        throw new AppError(404, "USER_NOT_FOUND", "User not found");
+      }
+
+      res.json({
+        user: mapUser(user, await hasPublicMeditations(user.id)),
+      });
+    }),
+  );
+
+  router.patch(
+    "/me/preferences",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      requireBodyFields<UpdateUserPreferencesRequest>(req.body, [
+        "showScriptModeForCreatingMeditations",
+      ]);
+
+      if (typeof req.body.showScriptModeForCreatingMeditations !== "boolean") {
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "showScriptModeForCreatingMeditations must be a boolean",
+        );
+      }
+
+      const { User } = getDb();
+      const user = await User.findOne({ where: { id: req.user!.id } });
+
+      if (!user) {
+        throw new AppError(404, "USER_NOT_FOUND", "User not found");
+      }
+
+      user.showScriptModeForCreatingMeditations = req.body.showScriptModeForCreatingMeditations;
+      await user.save();
+
+      res.json({
         user: mapUser(user, await hasPublicMeditations(user.id)),
       });
     }),
