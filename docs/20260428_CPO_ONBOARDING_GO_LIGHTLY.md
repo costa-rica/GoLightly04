@@ -40,7 +40,7 @@ Template form: *Today users either accept over-guided app content or build audio
 - **Bet 1 — The silence preference is shared.** The founder experiences existing apps as too guidance-heavy. We are betting this is a real, addressable segment and not a minority preference. We do not yet have external validation. (Stated by founder in conversation, 2026-04-28.)
 - **Bet 2 — Practitioners are a meaningful acquisition channel.** A practitioner who publishes meditations on Go Lightly may bring their audience. This network effect is assumed but untested. (Stated by founder in conversation, 2026-04-28.)
 - **Bet 3 — TTS quality is good enough.** ElevenLabs-generated narration must feel appropriate for meditation — calm, natural, not robotic. If users find AI voice jarring in a meditative context, the core creation loop breaks.
-- **Bet 4 — ElevenLabs cost scales acceptably.** Current API allocation is unknown at volume. If per-meditation TTS cost is high, the $2–$6/month price point may not cover variable costs. This is the founder's stated primary financial risk. (Conversation, 2026-04-28.)
+- **Bet 4 — ElevenLabs cost scales acceptably.** Current API allocation is unknown at volume. If per-meditation TTS cost is high, the tentative $6/month paywall may not cover variable costs. This is the founder's stated primary financial risk. (Conversation, 2026-04-28.)
 - **Bet 5 — Content marketing is a sufficient acquisition channel.** The growth plan relies on blog, Medium, Reddit, and short-form video. This requires consistent execution with no paid budget — a significant operational bet for a solo founder.
 
 ---
@@ -69,19 +69,16 @@ Template form: *Today users either accept over-guided app content or build audio
 
 Pre-revenue as of 2026-04-28. No Stripe integration exists; any user can sign up for free.
 
-**Intended model (from `docs/20260422nickDescription.md` and founder conversation):**
+**Tentative model (updated from `docs/20260422nickDescription.md`):**
 
-| Tier | Price | Access |
+| Plan | Price | Access |
 |---|---|---|
-| Free | $0 | Listen to public meditations; limited meditation creation |
-| Lifetime | $30 | 200 spots only; full creation access permanently |
-| Monthly — Create | $2/month | Unlimited meditation creation |
-| Monthly — Private | $2/month | Private (non-public) meditations |
-| Monthly — AI | $2/month | AI-assisted meditation generation |
+| Free access | $0 | Listen to public meditations; limited meditation creation |
+| Monthly paywall | $6/month | Paid creation features, including private meditations and AI-assisted meditation generation when available |
 
-The monthly tiers are additive; a fully subscribed user pays $6/month. **Note: this pricing model is explicitly under discussion and not finalized.** (Founder, conversation 2026-04-28.)
+This pricing model remains tentative and should be validated against user willingness to pay and generation costs.
 
-Key open question: whether ElevenLabs API costs fit inside the $2–$6/month margin at any realistic usage level. This has not been modeled.
+Key open question: whether ElevenLabs API costs fit inside the $6/month margin at any realistic usage level. This has not been modeled.
 
 ---
 
@@ -137,7 +134,7 @@ Stripe integration and paywall enforcement. This is the prerequisite for any rev
 - **Solo founder execution risk.** The roadmap includes product (Stripe, AI agent), content marketing across multiple channels, and community building — all on one person. Scope and priority discipline will be critical.
 - **TTS voice quality in context.** AI-generated voices may not feel meditative to users. This is a product risk that can only be assessed through user testing.
 - **Practitioner acquisition is unvalidated.** The "bring your audience" hypothesis for coaches and therapists has not been tested. If practitioners don't adopt, the network-effect multiplier doesn't exist.
-- **Pricing model is unsettled.** The $2/month stacking model is explicitly under discussion. Until it's locked, revenue modeling is speculative.
+- **Pricing model is tentative.** The current plan is a flat $6/month paywall. Until it is validated against user demand and generation costs, revenue modeling is speculative.
 - **No retention mechanism identified.** The platform creates meditations; there is no social layer, discovery feed, or follower system described that would bring users back repeatedly.
 
 ---
@@ -146,7 +143,7 @@ Stripe integration and paywall enforcement. This is the prerequisite for any rev
 
 - What is the cost of a single average meditation generation via ElevenLabs today? At what user volume does that become a margin problem?
 - Have any non-founder users created a meditation? What was the drop-off point in the creation flow?
-- Is the free tier intended to be a permanent conversion funnel, or will it eventually be limited to drive upgrades?
+- Is free access intended to be a permanent conversion funnel, or will it eventually be limited to drive upgrades?
 - How will practitioners discover Go Lightly before the content marketing engine exists? Is there a direct outreach plan?
 - What does a "private meditation" mean for practitioners — is there a client-sharing or access-control feature planned, or just preventing public listing?
 - At what point does the solo-founder constraint become the binding constraint on growth? Is there a trigger (e.g., revenue threshold, user count) at which you'd seek help?
