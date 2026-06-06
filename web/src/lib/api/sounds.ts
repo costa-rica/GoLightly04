@@ -2,6 +2,8 @@ import type {
   DeleteSoundFileResponse,
   GetSoundFilesResponse,
   SoundFile,
+  UpdateSoundFileRequest,
+  UpdateSoundFileResponse,
   UploadSoundFileResponse,
 } from "@golightly/shared-types";
 
@@ -49,6 +51,17 @@ export const deleteSoundFile = async (
 ): Promise<DeleteSoundFileResponse> => {
   const response = await apiClient.delete<DeleteSoundFileResponse>(
     `/sounds/sound_file/${id}`,
+  );
+  return response.data;
+};
+
+export const updateSoundFile = async (
+  id: number,
+  payload: UpdateSoundFileRequest,
+): Promise<UpdateSoundFileResponse> => {
+  const response = await apiClient.patch<UpdateSoundFileResponse>(
+    `/sounds/sound_file/${id}`,
+    payload,
   );
   return response.data;
 };

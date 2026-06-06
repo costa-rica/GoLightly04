@@ -8,6 +8,7 @@ import TableAdminMeditations from "@/components/tables/TableAdminMeditations";
 import TableAdminQueuer from "@/components/tables/TableAdminQueuer";
 import TableAdminDatabase from "@/components/tables/TableAdminDatabase";
 import ModalUploadSoundFile from "@/components/modals/ModalUploadSoundFile";
+import ModalEditSoundFile from "@/components/modals/ModalEditSoundFile";
 import ModalConfirmDelete from "@/components/modals/ModalConfirmDelete";
 import ModalConfirmCascadeDelete from "@/components/modals/ModalConfirmCascadeDelete";
 import ModalConfirmDeleteUser from "@/components/modals/ModalConfirmDeleteUser";
@@ -58,6 +59,9 @@ export default function AdminPage() {
   const [soundsLoading, setSoundsLoading] = useState(false);
   const [soundsError, setSoundsError] = useState<string | null>(null);
   const [soundDeleteTarget, setSoundDeleteTarget] = useState<SoundFile | null>(
+    null,
+  );
+  const [soundEditTarget, setSoundEditTarget] = useState<SoundFile | null>(
     null,
   );
   const [isSoundDeleting, setIsSoundDeleting] = useState(false);
@@ -383,7 +387,7 @@ export default function AdminPage() {
   return (
     <ProtectedRoute requireAdmin>
       <main className="min-h-screen bg-canvas">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-10 md:px-8 md:py-16">
+        <div className="mx-auto flex w-full max-w-app flex-col gap-10 px-4 py-10 md:px-8 md:py-16">
           <header className="rounded-3xl border border-subtle bg-raised p-8 shadow-sm backdrop-blur">
             <p className="text-xs uppercase tracking-[0.25em] text-ink-muted">
               Admin
@@ -577,6 +581,7 @@ export default function AdminPage() {
                 {!soundsLoading && !soundsError && (
                   <TableAdminSoundsFiles
                     soundFiles={soundFiles}
+                    onEdit={(target) => setSoundEditTarget(target)}
                     onDelete={(target) => setSoundDeleteTarget(target)}
                   />
                 )}
@@ -923,6 +928,14 @@ export default function AdminPage() {
         onUploaded={() => {
           fetchSoundFiles();
           setToast({ message: "Sound file uploaded.", variant: "success" });
+        }}
+      />
+      <ModalEditSoundFile
+        soundFile={soundEditTarget}
+        onClose={() => setSoundEditTarget(null)}
+        onSaved={() => {
+          fetchSoundFiles();
+          setToast({ message: "Sound file updated.", variant: "success" });
         }}
       />
       <ModalConfirmDelete

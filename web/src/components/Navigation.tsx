@@ -116,7 +116,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
     <>
       <header className="fixed inset-x-0 top-0 z-50">
         <div className="border-b border-calm-200/70 bg-white/80 shadow-sm backdrop-blur dark:border-calm-800 dark:bg-calm-950/85">
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-8">
+          <div className="mx-auto flex h-16 max-w-app items-center justify-between px-4 md:px-8">
             <Link href="/" className="flex items-center gap-3">
               <Image
                 src="/images/golightlyLogo02.png"
