@@ -597,11 +597,6 @@ export default function CreateMeditationForm({
             {isStagingLoading && (
               <p className="mt-2 text-xs text-ink-muted">Loading starter meditation...</p>
             )}
-            {stagingMeditation?.filePath && stagingMeditation.status === "complete" && (
-              <div className="mb-4">
-                <AudioPlayer meditationId={stagingMeditation.id} title={stagingMeditation.title} />
-              </div>
-            )}
             {isGenerating && (
               <p className="mb-4 text-sm text-ink-muted">Generation in progress - please wait</p>
             )}
@@ -911,7 +906,10 @@ export default function CreateMeditationForm({
             )}
           </div>
 
-          <div className="mt-8 flex items-center justify-end">
+          <div className="mt-8 flex items-center justify-end gap-3">
+            {stagingMeditation?.filePath && stagingMeditation.status === "complete" && (
+              <AudioPlayer meditationId={stagingMeditation.id} title={stagingMeditation.title} />
+            )}
             <button
               type="button"
               onClick={isDirty ? handleGenerate : handleOpenModal}
