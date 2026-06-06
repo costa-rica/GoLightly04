@@ -1,0 +1,2 @@
+ALTER TABLE sound_files
+ADD COLUMN IF NOT EXISTS duration_seconds INTEGER NULL;

@@ -57,6 +57,11 @@ module.exports = {
           900: '#0f172a',
           950: '#020617',
         },
+        buildBlock: {
+          text: '#4F46E5',
+          pause: '#D97706',
+          sound: '#0D9488',
+        },
         canvas: 'rgb(var(--surface-canvas) / <alpha-value>)',
         raised: 'rgb(var(--surface-raised) / <alpha-value>)',
         inset: 'rgb(var(--surface-inset) / <alpha-value>)',
@@ -69,6 +74,18 @@ module.exports = {
       fontFamily: {
         sans: ['"Avenir Next"', 'Avenir', '"Segoe UI"', 'sans-serif'],
         display: ['"Trebuchet MS"', '"Avenir Next"', '"Segoe UI"', 'sans-serif'],
+      },
+      maxWidth: {
+        app: '1382px',
+      },
+      keyframes: {
+        'build-pop': {
+          '0%': { opacity: '0', transform: 'scale(0.92)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'build-pop': 'build-pop 240ms ease-out',
       },
     },
   },

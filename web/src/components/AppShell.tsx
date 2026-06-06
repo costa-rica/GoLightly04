@@ -59,7 +59,7 @@ export default function AppShell({ children }: AppShellProps) {
         <Navigation onLoginClick={() => setIsLoginOpen(true)} />
         <div className="pt-16 flex-1">{children}</div>
         <footer className="px-4 py-6 text-xs text-slate-500 dark:text-calm-400">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-app">
             <div className="flex items-center gap-2">
               <a
                 className="hover:text-slate-700 transition-colors dark:hover:text-calm-200"

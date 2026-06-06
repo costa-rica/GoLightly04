@@ -15,6 +15,7 @@ export class SoundFile extends Model<
   declare name: string;
   declare description: string | null;
   declare filename: string;
+  declare durationSeconds: CreationOptional<number | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -41,6 +42,11 @@ export function initSoundFileModel(sequelize: Sequelize): typeof SoundFile {
       filename: {
         type: DataTypes.TEXT,
         allowNull: false,
+      },
+      durationSeconds: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "duration_seconds",
       },
       createdAt: {
         type: DataTypes.DATE,

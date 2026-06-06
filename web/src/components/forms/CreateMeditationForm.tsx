@@ -7,7 +7,7 @@ import {
   getAllMeditations,
   saveStagedMeditationToLibrary,
 } from "@/lib/api/meditations";
-import { getSoundFiles } from "@/lib/api/sounds";
+import { getSoundFiles, type SoundFile } from "@/lib/api/sounds";
 import Toast from "@/components/Toast";
 import AudioPlayer from "@/components/AudioPlayer";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -36,6 +36,117 @@ type Row = {
   pauseDuration: string;
   soundFile: string;
 };
+
+const CHARS_PER_SECOND = 12;
+
+type RowEstimate = {
+  seconds: number | null;
+  unknown: boolean;
+};
+
+const buildBlockClasses = {
+  text: "bg-buildBlock-text",
+  pause: "bg-buildBlock-pause",
+  sound: "bg-buildBlock-sound",
+} as const;
+
+function formatDuration(seconds: number): string {
+  const safeSeconds = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function estimateRow(row: Row, soundMap: Map<string, SoundFile>): RowEstimate {
+  if (row.type === "text") {
+    return {
+      seconds: Math.round(row.text.length / CHARS_PER_SECOND),
+      unknown: false,
+    };
+  }
+
+  if (row.type === "pause") {
+    const parsed = Number(row.pauseDuration);
+    return {
+      seconds: Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0,
+      unknown: false,
+    };
+  }
+
+  const soundFile = soundMap.get(row.soundFile);
+  const seconds = soundFile?.duration_seconds;
+  if (seconds === null || seconds === undefined) {
+    return { seconds: null, unknown: true };
+  }
+
+  return { seconds, unknown: false };
+}
+
+function getRowTypeLabel(type: Row["type"]): string {
+  if (type === "pause") return "Pause";
+  if (type === "sound") return "Sound File";
+  return "Text";
+}
+
+function MeditationBuildStack({
+  rows,
+  soundMap,
+}: {
+  rows: Row[];
+  soundMap: Map<string, SoundFile>;
+}) {
+  const estimates = rows.map((row) => ({
+    row,
+    estimate: estimateRow(row, soundMap),
+  }));
+  const hasUnknown = estimates.some(({ estimate }) => estimate.unknown);
+  const knownTotal = estimates.reduce(
+    (total, { estimate }) => total + (estimate.seconds ?? 0),
+    0,
+  );
+  const totalLabel = hasUnknown
+    ? `~${formatDuration(knownTotal)}*`
+    : formatDuration(knownTotal);
+
+  return (
+    <aside className="hidden w-56 shrink-0 flex-col lg:flex">
+      <div className="sticky top-6">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+            Build
+          </p>
+          <p className="text-xs font-semibold text-ink-muted">{totalLabel}</p>
+        </div>
+        <div className="space-y-2">
+          {estimates.map(({ row, estimate }) => (
+            <div
+              key={row.id}
+              className={`${buildBlockClasses[row.type]} flex h-14 origin-top items-center justify-between rounded-lg px-3 text-white shadow-sm transition duration-300 ease-out motion-safe:animate-build-pop motion-reduce:transform-none motion-reduce:transition-none`}
+            >
+              <span className="text-xs font-semibold">{getRowTypeLabel(row.type)}</span>
+              <span className="text-xs font-bold">
+                {estimate.unknown || estimate.seconds === null
+                  ? "?"
+                  : formatDuration(estimate.seconds)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 rounded-lg border border-subtle bg-inset px-3 py-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-ink">
+            <span>Total</span>
+            <span>{totalLabel}</span>
+          </div>
+          {hasUnknown && (
+            <p className="mt-2 text-xs text-ink-muted">
+              * one or more sounds have no known duration
+            </p>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
 
 function elementToRow(element: MeditationElement, index: number): Row {
   if (element.pause_duration !== undefined) {
@@ -120,9 +231,7 @@ export default function CreateMeditationForm({
 
   const [rows, setRows] = useState<Row[]>([]);
   const [rowErrors, setRowErrors] = useState<Record<number, RowError>>({});
-  const [soundFiles, setSoundFiles] = useState<
-    Array<{ name: string; filename: string }>
-  >([]);
+  const [soundFiles, setSoundFiles] = useState<SoundFile[]>([]);
   const [soundsLoading, setSoundsLoading] = useState(false);
   const [soundsError, setSoundsError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,6 +254,16 @@ export default function CreateMeditationForm({
     stagingMeditation.status === "complete" &&
     !isDirty &&
     !isSubmitting;
+  const soundMap = useMemo(
+    () =>
+      new Map(
+        soundFiles.flatMap((sound) => [
+          [sound.filename, sound] as const,
+          [sound.name, sound] as const,
+        ]),
+      ),
+    [soundFiles],
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -153,12 +272,7 @@ export default function CreateMeditationForm({
       setSoundsError(null);
       try {
         const response = await getSoundFiles();
-        setSoundFiles(
-          response.soundFiles.map((sound) => ({
-            name: sound.name,
-            filename: sound.filename,
-          })),
-        );
+        setSoundFiles(response.soundFiles ?? []);
       } catch (err: any) {
         const message =
           err?.response?.data?.error?.message || "Unable to load sound files.";
@@ -483,11 +597,6 @@ export default function CreateMeditationForm({
             {isStagingLoading && (
               <p className="mt-2 text-xs text-ink-muted">Loading starter meditation...</p>
             )}
-            {stagingMeditation?.filePath && stagingMeditation.status === "complete" && (
-              <div className="mb-4">
-                <AudioPlayer meditationId={stagingMeditation.id} title={stagingMeditation.title} />
-              </div>
-            )}
             {isGenerating && (
               <p className="mb-4 text-sm text-ink-muted">Generation in progress - please wait</p>
             )}
@@ -497,271 +606,276 @@ export default function CreateMeditationForm({
             )}
 
             {rows.length > 0 ? (
-              <div className="mt-4 space-y-2">
-                {/* Header Row */}
-                <div className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 px-2 pb-2 border-b border-subtle">
-                  <div className="text-xs font-semibold text-ink-muted">#</div>
-                  <div className="text-xs font-semibold text-ink-muted">
-                    Type
-                  </div>
-                  <div className="text-xs font-semibold text-ink-muted">
-                    Text
-                  </div>
-                  <div className="text-xs font-semibold text-ink-muted">
-                    Speed
-                  </div>
-                  <div className="text-xs font-semibold text-ink-muted">
-                    Pause
-                  </div>
-                  <div className="text-xs font-semibold text-ink-muted">
-                    Sound File
-                  </div>
-                </div>
+              <div className="mt-4 lg:flex lg:items-start lg:gap-6">
+                <div className="min-w-0 flex-1 overflow-x-auto">
+                  <div className="min-w-[46rem] space-y-2">
+                    {/* Header Row */}
+                    <div className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 px-2 pb-2 border-b border-subtle">
+                      <div className="text-xs font-semibold text-ink-muted">#</div>
+                      <div className="text-xs font-semibold text-ink-muted">
+                        Type
+                      </div>
+                      <div className="text-xs font-semibold text-ink-muted">
+                        Text
+                      </div>
+                      <div className="text-xs font-semibold text-ink-muted">
+                        Speed
+                      </div>
+                      <div className="text-xs font-semibold text-ink-muted">
+                        Pause
+                      </div>
+                      <div className="text-xs font-semibold text-ink-muted">
+                        Sound File
+                      </div>
+                    </div>
 
-                {/* Data Rows */}
-                {rows.map((row, index) => (
-                  <div
-                    key={row.id}
-                    className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 items-start relative"
-                  >
-                    {/* Row Number - Clickable */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveRowMenu(
-                            activeRowMenu === row.id ? null : row.id,
-                          )
-                        }
-                        disabled={isSubmitting}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-strong text-xs font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed"
+                    {/* Data Rows */}
+                    {rows.map((row, index) => (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 items-start relative"
                       >
-                        {row.id}
-                      </button>
+                        {/* Row Number - Clickable */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveRowMenu(
+                                activeRowMenu === row.id ? null : row.id,
+                              )
+                            }
+                            disabled={isSubmitting}
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-strong text-xs font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed"
+                          >
+                            {row.id}
+                          </button>
 
-                      {/* Actions Popup */}
-                      {activeRowMenu === row.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setActiveRowMenu(null)}
+                          {/* Actions Popup */}
+                          {activeRowMenu === row.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setActiveRowMenu(null)}
+                              />
+                              <div className="absolute top-8 left-0 z-20 bg-overlay border border-subtle rounded-lg shadow-lg py-1 min-w-[9rem]">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    moveRow(row.id, "up");
+                                    setActiveRowMenu(null);
+                                  }}
+                                  disabled={index === 0}
+                                  className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-inset disabled:text-ink-muted/50 disabled:cursor-not-allowed"
+                                >
+                                  Move Up
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    moveRow(row.id, "down");
+                                    setActiveRowMenu(null);
+                                  }}
+                                  disabled={index === rows.length - 1}
+                                  className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-inset disabled:text-ink-muted/50 disabled:cursor-not-allowed"
+                                >
+                                  Move Down
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleDeleteRow(row.id);
+                                    setActiveRowMenu(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50"
+                                >
+                                  Delete Row
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Type Select */}
+                        <select
+                          value={row.type}
+                          onChange={(event) => {
+                            updateRow(row.id, {
+                              type: event.target.value as
+                                | "text"
+                                | "pause"
+                                | "sound",
+                              text: "",
+                              speed: "",
+                              pauseDuration: "",
+                              soundFile: "",
+                            });
+                            setRowErrors((prev) => ({
+                              ...prev,
+                              [row.id]: {},
+                            }));
+                          }}
+                          disabled={isSubmitting}
+                          className="rounded border border-subtle bg-inset px-2 py-1 text-xs text-ink outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-100 dark:focus:ring-primary-500/30"
+                        >
+                          <option value="text">Text</option>
+                          <option value="pause">Pause</option>
+                          <option value="sound">Sound File</option>
+                        </select>
+
+                        {/* Text Column */}
+                        <div className="flex flex-col">
+                          <textarea
+                            rows={2}
+                            value={row.text}
+                            onChange={(event) => {
+                              updateRow(row.id, { text: event.target.value });
+                              if (rowErrors[row.id]?.text) {
+                                clearRowError(row.id, "text");
+                              }
+                            }}
+                            disabled={row.type !== "text" || isSubmitting}
+                            className={`w-full rounded border bg-inset px-2 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
+                              rowErrors[row.id]?.text
+                                ? "border-red-300"
+                                : "border-subtle"
+                            }`}
+                            placeholder={
+                              row.type === "text"
+                                ? "Begin with a calming phrase..."
+                                : ""
+                            }
                           />
-                          <div className="absolute top-8 left-0 z-20 bg-overlay border border-subtle rounded-lg shadow-lg py-1 min-w-[9rem]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                moveRow(row.id, "up");
-                                setActiveRowMenu(null);
-                              }}
-                              disabled={index === 0}
-                              className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-inset disabled:text-ink-muted/50 disabled:cursor-not-allowed"
-                            >
-                              Move Up
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                moveRow(row.id, "down");
-                                setActiveRowMenu(null);
-                              }}
-                              disabled={index === rows.length - 1}
-                              className="w-full px-3 py-2 text-left text-xs text-ink hover:bg-inset disabled:text-ink-muted/50 disabled:cursor-not-allowed"
-                            >
-                              Move Down
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleDeleteRow(row.id);
-                                setActiveRowMenu(null);
-                              }}
-                              className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50"
-                            >
-                              Delete Row
-                            </button>
-                          </div>
-                        </>
-                      )}
+                          {rowErrors[row.id]?.text && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {rowErrors[row.id]?.text}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Speed Column */}
+                        <div className="flex flex-col">
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0.7"
+                            max="1.3"
+                            value={row.speed}
+                            onChange={(event) => {
+                              updateRow(row.id, { speed: event.target.value });
+                              if (rowErrors[row.id]?.speed) {
+                                clearRowError(row.id, "speed");
+                              }
+                            }}
+                            disabled={row.type !== "text" || isSubmitting}
+                            className={`w-full rounded border bg-inset px-1 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
+                              rowErrors[row.id]?.speed
+                                ? "border-red-300"
+                                : "border-subtle"
+                            }`}
+                            placeholder="1.0"
+                          />
+                          {rowErrors[row.id]?.speed && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {rowErrors[row.id]?.speed}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Pause Column */}
+                        <div className="flex flex-col">
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            value={row.pauseDuration}
+                            onChange={(event) => {
+                              updateRow(row.id, {
+                                pauseDuration: event.target.value,
+                              });
+                              if (rowErrors[row.id]?.pauseDuration) {
+                                clearRowError(row.id, "pauseDuration");
+                              }
+                            }}
+                            disabled={row.type !== "pause" || isSubmitting}
+                            className={`w-full rounded border bg-inset px-1 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
+                              rowErrors[row.id]?.pauseDuration
+                                ? "border-red-300"
+                                : "border-subtle"
+                            }`}
+                            placeholder="5"
+                          />
+                          {rowErrors[row.id]?.pauseDuration && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {rowErrors[row.id]?.pauseDuration}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Sound File Column */}
+                        <div className="flex flex-col">
+                          <select
+                            value={row.soundFile}
+                            onChange={(event) => {
+                              updateRow(row.id, { soundFile: event.target.value });
+                              if (rowErrors[row.id]?.soundFile) {
+                                clearRowError(row.id, "soundFile");
+                              }
+                            }}
+                            disabled={
+                              row.type !== "sound" || soundsLoading || isSubmitting
+                            }
+                            className={`w-full rounded border bg-inset px-2 py-1 text-xs text-ink outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
+                              rowErrors[row.id]?.soundFile
+                                ? "border-red-300"
+                                : "border-subtle"
+                            }`}
+                          >
+                            <option value="">
+                              {soundsLoading ? "Loading..." : "Select..."}
+                            </option>
+                            {soundFiles.map((sound) => (
+                              <option key={sound.filename} value={sound.filename}>
+                                {sound.name}
+                              </option>
+                            ))}
+                          </select>
+                          {rowErrors[row.id]?.soundFile && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {rowErrors[row.id]?.soundFile}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Add Row Button - Aligned to right of Sound File column */}
+                    <div className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 items-start">
+                      <div className="col-start-6 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleAddRow}
+                          disabled={isSubmitting}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-strong bg-green-500 text-white transition hover:bg-green-600 hover:border-green-400 disabled:cursor-not-allowed disabled:bg-green-300"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 5v14m-7-7h14"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Type Select */}
-                    <select
-                      value={row.type}
-                      onChange={(event) => {
-                        updateRow(row.id, {
-                          type: event.target.value as
-                            | "text"
-                            | "pause"
-                            | "sound",
-                          text: "",
-                          speed: "",
-                          pauseDuration: "",
-                          soundFile: "",
-                        });
-                        setRowErrors((prev) => ({
-                          ...prev,
-                          [row.id]: {},
-                        }));
-                      }}
-                      disabled={isSubmitting}
-                      className="rounded border border-subtle bg-inset px-2 py-1 text-xs text-ink outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-100 dark:focus:ring-primary-500/30"
-                    >
-                      <option value="text">Text</option>
-                      <option value="pause">Pause</option>
-                      <option value="sound">Sound File</option>
-                    </select>
-
-                    {/* Text Column */}
-                    <div className="flex flex-col">
-                      <textarea
-                        rows={2}
-                        value={row.text}
-                        onChange={(event) => {
-                          updateRow(row.id, { text: event.target.value });
-                          if (rowErrors[row.id]?.text) {
-                            clearRowError(row.id, "text");
-                          }
-                        }}
-                        disabled={row.type !== "text" || isSubmitting}
-                        className={`w-full rounded border bg-inset px-2 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
-                          rowErrors[row.id]?.text
-                            ? "border-red-300"
-                            : "border-subtle"
-                        }`}
-                        placeholder={
-                          row.type === "text"
-                            ? "Begin with a calming phrase..."
-                            : ""
-                        }
-                      />
-                      {rowErrors[row.id]?.text && (
-                        <p className="mt-1 text-xs text-red-500">
-                          {rowErrors[row.id]?.text}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Speed Column */}
-                    <div className="flex flex-col">
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0.7"
-                        max="1.3"
-                        value={row.speed}
-                        onChange={(event) => {
-                          updateRow(row.id, { speed: event.target.value });
-                          if (rowErrors[row.id]?.speed) {
-                            clearRowError(row.id, "speed");
-                          }
-                        }}
-                        disabled={row.type !== "text" || isSubmitting}
-                        className={`w-full rounded border bg-inset px-1 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
-                          rowErrors[row.id]?.speed
-                            ? "border-red-300"
-                            : "border-subtle"
-                        }`}
-                        placeholder="1.0"
-                      />
-                      {rowErrors[row.id]?.speed && (
-                        <p className="mt-1 text-xs text-red-500">
-                          {rowErrors[row.id]?.speed}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Pause Column */}
-                    <div className="flex flex-col">
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        value={row.pauseDuration}
-                        onChange={(event) => {
-                          updateRow(row.id, {
-                            pauseDuration: event.target.value,
-                          });
-                          if (rowErrors[row.id]?.pauseDuration) {
-                            clearRowError(row.id, "pauseDuration");
-                          }
-                        }}
-                        disabled={row.type !== "pause" || isSubmitting}
-                        className={`w-full rounded border bg-inset px-1 py-1 text-xs text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
-                          rowErrors[row.id]?.pauseDuration
-                            ? "border-red-300"
-                            : "border-subtle"
-                        }`}
-                        placeholder="5"
-                      />
-                      {rowErrors[row.id]?.pauseDuration && (
-                        <p className="mt-1 text-xs text-red-500">
-                          {rowErrors[row.id]?.pauseDuration}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Sound File Column */}
-                    <div className="flex flex-col">
-                      <select
-                        value={row.soundFile}
-                        onChange={(event) => {
-                          updateRow(row.id, { soundFile: event.target.value });
-                          if (rowErrors[row.id]?.soundFile) {
-                            clearRowError(row.id, "soundFile");
-                          }
-                        }}
-                        disabled={
-                          row.type !== "sound" || soundsLoading || isSubmitting
-                        }
-                        className={`w-full rounded border bg-inset px-2 py-1 text-xs text-ink outline-none transition focus:border-primary-300 focus:ring-1 focus:ring-primary-100 disabled:bg-inset/70 disabled:text-ink-muted/60 disabled:cursor-not-allowed dark:focus:ring-primary-500/30 ${
-                          rowErrors[row.id]?.soundFile
-                            ? "border-red-300"
-                            : "border-subtle"
-                        }`}
-                      >
-                        <option value="">
-                          {soundsLoading ? "Loading..." : "Select..."}
-                        </option>
-                        {soundFiles.map((sound) => (
-                          <option key={sound.filename} value={sound.filename}>
-                            {sound.name}
-                          </option>
-                        ))}
-                      </select>
-                      {rowErrors[row.id]?.soundFile && (
-                        <p className="mt-1 text-xs text-red-500">
-                          {rowErrors[row.id]?.soundFile}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Add Row Button - Aligned to right of Sound File column */}
-                <div className="grid grid-cols-[2.5rem_5rem_1fr_3rem_3rem_8rem] gap-2 items-start">
-                  <div className="col-start-6 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleAddRow}
-                      disabled={isSubmitting}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-strong bg-green-500 text-white transition hover:bg-green-600 hover:border-green-400 disabled:cursor-not-allowed disabled:bg-green-300"
-                    >
-                      <svg
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 5v14m-7-7h14"
-                        />
-                      </svg>
-                    </button>
                   </div>
                 </div>
+                <MeditationBuildStack rows={rows} soundMap={soundMap} />
               </div>
             ) : (
               <div className="mt-4 flex items-center justify-between">
@@ -792,7 +906,10 @@ export default function CreateMeditationForm({
             )}
           </div>
 
-          <div className="mt-8 flex items-center justify-end">
+          <div className="mt-8 flex items-center justify-end gap-3">
+            {stagingMeditation?.filePath && stagingMeditation.status === "complete" && (
+              <AudioPlayer meditationId={stagingMeditation.id} title={stagingMeditation.title} />
+            )}
             <button
               type="button"
               onClick={isDirty ? handleGenerate : handleOpenModal}
