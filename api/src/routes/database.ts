@@ -2,17 +2,24 @@ import fs from "fs";
 import fsPromises from "fs/promises";
 import os from "os";
 import path from "path";
-import archiver from "archiver";
-import unzipper from "unzipper";
 import { Router } from "express";
 import type { Transaction } from "sequelize";
+import type { ManifestFile } from "@golightly/shared-types";
+import { readApiEnv } from "../config/env";
+import { logger } from "../config/logger";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
 import { requireAdmin } from "../middleware/auth";
-import { upload } from "../middleware/upload";
-import { parseCsv, toCsv } from "../lib/csv";
-import { getBackupsPath } from "../lib/projectPaths";
+import { uploadLarge } from "../middleware/upload";
+import { parseCsv } from "../lib/csv";
+import { getFullBackupsPath } from "../lib/projectPaths";
+import { safeExtractZip } from "../lib/safeExtractZip";
+import { safeRestoreResources } from "../lib/safeRestoreResources";
+import {
+  requestWorkerBackup,
+  WorkerConflictError,
+} from "../services/workerClient";
 
 const TABLE_ORDER = [
   "users",
@@ -79,17 +86,55 @@ async function resetTableIdSequence(tableName: (typeof TABLE_ORDER)[number], tra
   );
 }
 
-async function zipDirectory(sourceDir: string, destinationZip: string): Promise<void> {
-  await fsPromises.mkdir(path.dirname(destinationZip), { recursive: true });
-  await new Promise<void>((resolve, reject) => {
-    const output = fs.createWriteStream(destinationZip);
-    const archive = archiver("zip", { zlib: { level: 9 } });
-    output.on("close", () => resolve());
-    archive.on("error", reject);
-    archive.pipe(output);
-    archive.directory(sourceDir, false);
-    void archive.finalize();
-  });
+function isValidManifest(obj: unknown): obj is ManifestFile {
+  if (typeof obj !== "object" || obj === null) return false;
+  const manifest = obj as Record<string, unknown>;
+  return (
+    typeof manifest.created_at === "string" &&
+    typeof manifest.app === "string" &&
+    (manifest.package_type === "db_only" ||
+      manifest.package_type === "db_and_resources") &&
+    Array.isArray(manifest.database_tables)
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(1)} ${units[unitIndex]}`;
+}
+
+async function getBackupSizeEstimate(root: string): Promise<number> {
+  let total = 0;
+
+  async function walk(dir: string, isRoot = false): Promise<void> {
+    const entries = await fsPromises.readdir(dir);
+    for (const entry of entries) {
+      if (isRoot && (entry === "backups_db" || entry === "backups_db_and_data")) {
+        continue;
+      }
+
+      const fullPath = path.join(dir, entry);
+      const stat = await fsPromises.lstat(fullPath);
+      if (stat.isSymbolicLink()) {
+        continue;
+      }
+      if (stat.isDirectory()) {
+        await walk(fullPath);
+      } else if (stat.isFile()) {
+        total += stat.size;
+      }
+    }
+  }
+
+  await walk(root, true);
+  return total;
 }
 
 export function buildDatabaseRouter(): Router {
@@ -99,11 +144,11 @@ export function buildDatabaseRouter(): Router {
   router.get(
     "/backups-list",
     asyncHandler(async (_req, res) => {
-      await fsPromises.mkdir(getBackupsPath(), { recursive: true });
-      const backups = await fsPromises.readdir(getBackupsPath());
+      await fsPromises.mkdir(getFullBackupsPath(), { recursive: true });
+      const backups = await fsPromises.readdir(getFullBackupsPath());
       const entries = await Promise.all(
         backups.filter((file) => file.endsWith(".zip")).map(async (filename) => {
-          const stat = await fsPromises.stat(getBackupsPath(filename));
+          const stat = await fsPromises.stat(getFullBackupsPath(filename));
           return {
             filename,
             size: stat.size,
@@ -121,36 +166,36 @@ export function buildDatabaseRouter(): Router {
 
   router.post(
     "/create-backup",
-    asyncHandler(async (_req, res) => {
-      const timestamp = new Date()
-        .toISOString()
-        .replace(/[-:]/g, "")
-        .replace(/\..+/, "")
-        .replace("T", "_");
-      const backupDirName = `backup_${timestamp}`;
-      const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), `${backupDirName}_`));
-      const tableModelMap = getTableModelMap();
+    asyncHandler(async (req, res) => {
+      const includeResources = req.body?.includeResources !== false;
 
-      for (const tableName of TABLE_ORDER) {
-        const model = tableModelMap[tableName];
-        const rows = (await model.findAll({
-          raw: true,
-          order: [["id", "ASC"]],
-        })) as Array<Record<string, unknown>>;
-        await fsPromises.writeFile(path.join(tempDir, `${tableName}.csv`), toCsv(rows));
+      try {
+        await requestWorkerBackup({ includeResources });
+        res.status(202).json({
+          message: "Backup job queued",
+          queuedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({ error: "A backup job is already running" });
+          return;
+        }
+
+        logger.warn("Worker unavailable; backup could not be started", { error });
+        res.status(503).json({
+          error: "Worker unavailable; backup could not be started",
+        });
       }
+    }),
+  );
 
-      const filename = `${backupDirName}.zip`;
-      const backupPath = getBackupsPath(filename);
-      await zipDirectory(tempDir, backupPath);
-      await fsPromises.rm(tempDir, { recursive: true, force: true });
-
-      res.status(201).json({
-        message: "Backup created",
-        filename,
-        path: backupPath,
-        tablesExported: TABLE_ORDER.length,
-        timestamp,
+  router.get(
+    "/backup-size-estimate",
+    asyncHandler(async (_req, res) => {
+      const totalBytes = await getBackupSizeEstimate(readApiEnv().PATH_PROJECT_RESOURCES);
+      res.json({
+        totalBytes,
+        totalBytesFormatted: formatBytes(totalBytes),
       });
     }),
   );
@@ -158,7 +203,7 @@ export function buildDatabaseRouter(): Router {
   router.get(
     "/download-backup/:filename",
     asyncHandler(async (req, res) => {
-      const filePath = getBackupsPath(String(req.params.filename));
+      const filePath = getFullBackupsPath(String(req.params.filename));
       await fsPromises.access(filePath);
       res.download(filePath);
     }),
@@ -168,67 +213,97 @@ export function buildDatabaseRouter(): Router {
     "/delete-backup/:filename",
     asyncHandler(async (req, res) => {
       const filename = String(req.params.filename);
-      await fsPromises.rm(getBackupsPath(filename), { force: true });
+      await fsPromises.rm(getFullBackupsPath(filename), { force: true });
       res.json({ message: "Backup deleted", filename });
     }),
   );
 
   router.post(
     "/replenish-database",
-    upload.single("file"),
+    uploadLarge.single("file"),
     asyncHandler(async (req, res) => {
       if (!req.file) {
         throw new AppError(400, "VALIDATION_ERROR", "file is required");
       }
       const tempDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), "golightly04_restore_"));
-      const zipPath = path.join(tempDir, "restore.zip");
-      await fsPromises.writeFile(zipPath, req.file.buffer);
-      await fs.createReadStream(zipPath).pipe(unzipper.Extract({ path: tempDir })).promise();
+      const zipPath = req.file.path;
 
-      const tableModelMap = getTableModelMap();
-      let totalRows = 0;
-      const rowsImported: Record<string, number> = {};
+      try {
+        await safeExtractZip(zipPath, tempDir);
 
-      const { sequelize } = getDb();
-      await sequelize.transaction(async (transaction) => {
-        await sequelize.query(
-          `TRUNCATE TABLE ${[...TABLE_ORDER]
-            .reverse()
-            .map((tableName) => `"public"."${tableName}"`)
-            .join(", ")} CASCADE`,
-          { transaction },
-        );
-
-        for (const tableName of TABLE_ORDER) {
-          const csvPath = path.join(tempDir, `${tableName}.csv`);
-          if (!fs.existsSync(csvPath)) {
-            rowsImported[tableName] = 0;
-            continue;
+        let resourcesRestored = false;
+        let resourceFilesRestored = 0;
+        try {
+          const manifestRaw = await fsPromises.readFile(
+            path.join(tempDir, "manifest.json"),
+            "utf8",
+          );
+          const manifest = JSON.parse(manifestRaw) as unknown;
+          if (isValidManifest(manifest)) {
+            if (manifest.package_type === "db_and_resources") {
+              resourceFilesRestored = await safeRestoreResources(
+                tempDir,
+                readApiEnv().PATH_PROJECT_RESOURCES,
+              );
+              resourcesRestored = true;
+            }
+          } else {
+            logger.warn("Restore manifest is invalid; continuing with DB-only restore");
           }
-          const parsedRows = parseCsv(await fsPromises.readFile(csvPath, "utf8")).map(normalizeRestoreRow);
-          rowsImported[tableName] = parsedRows.length;
-          totalRows += parsedRows.length;
-          if (parsedRows.length > 0) {
-            await tableModelMap[tableName].bulkCreate(parsedRows as Array<Record<string, unknown>>, {
-              transaction,
-              validate: false,
-            });
-          }
+        } catch (error) {
+          logger.warn("Restore manifest missing or unreadable; continuing with DB-only restore", {
+            error,
+          });
         }
 
-        for (const tableName of TABLE_ORDER) {
-          await resetTableIdSequence(tableName, transaction);
-        }
-      });
+        const tableModelMap = getTableModelMap();
+        let totalRows = 0;
+        const rowsImported: Record<string, number> = {};
 
-      await fsPromises.rm(tempDir, { recursive: true, force: true });
+        const { sequelize } = getDb();
+        await sequelize.transaction(async (transaction) => {
+          await sequelize.query(
+            `TRUNCATE TABLE ${[...TABLE_ORDER]
+              .reverse()
+              .map((tableName) => `"public"."${tableName}"`)
+              .join(", ")} CASCADE`,
+            { transaction },
+          );
 
-      res.json({
-        message: "Database replenished",
-        tablesImported: TABLE_ORDER.length,
-        rowsImported,
-        totalRows,
-      });
+          for (const tableName of TABLE_ORDER) {
+            const csvPath = path.join(tempDir, `${tableName}.csv`);
+            if (!fs.existsSync(csvPath)) {
+              rowsImported[tableName] = 0;
+              continue;
+            }
+            const parsedRows = parseCsv(await fsPromises.readFile(csvPath, "utf8")).map(normalizeRestoreRow);
+            rowsImported[tableName] = parsedRows.length;
+            totalRows += parsedRows.length;
+            if (parsedRows.length > 0) {
+              await tableModelMap[tableName].bulkCreate(parsedRows as Array<Record<string, unknown>>, {
+                transaction,
+                validate: false,
+              });
+            }
+          }
+
+          for (const tableName of TABLE_ORDER) {
+            await resetTableIdSequence(tableName, transaction);
+          }
+        });
+
+        res.json({
+          message: "Database replenished",
+          tablesImported: TABLE_ORDER.length,
+          rowsImported,
+          totalRows,
+          resourcesRestored,
+          resourceFilesRestored,
+        });
+      } finally {
+        await fsPromises.rm(req.file.path, { force: true });
+        await fsPromises.rm(tempDir, { recursive: true, force: true });
+      }
     }),
   );
 

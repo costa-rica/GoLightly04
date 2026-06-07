@@ -1,5 +1,6 @@
 import type {
   BackupFile,
+  BackupSizeEstimateResponse,
   CreateBackupResponse,
   DeleteBackupResponse,
   GetBackupsResponse,
@@ -17,12 +18,23 @@ export const getBackupsList = async (): Promise<GetBackupsResponse> => {
   return response.data;
 };
 
-export const createBackup = async (): Promise<CreateBackupResponse> => {
+export const createBackup = async (
+  includeResources = true,
+): Promise<CreateBackupResponse> => {
   const response = await apiClient.post<CreateBackupResponse>(
     "/database/create-backup",
+    { includeResources },
   );
   return response.data;
 };
+
+export const getBackupSizeEstimate =
+  async (): Promise<BackupSizeEstimateResponse> => {
+    const response = await apiClient.get<BackupSizeEstimateResponse>(
+      "/database/backup-size-estimate",
+    );
+    return response.data;
+  };
 
 export const downloadBackup = async (filename: string): Promise<Blob> => {
   const response = await apiClient.get<Blob>(

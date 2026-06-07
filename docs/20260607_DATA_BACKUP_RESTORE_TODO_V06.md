@@ -50,13 +50,13 @@ following commit-message guidance in AGENTS.md.
 
 Foundational path changes. All later phases depend on these.
 
-- [ ] In `api/src/lib/projectPaths.ts`: add `getFullBackupsPath(...segments:
+- [x] In `api/src/lib/projectPaths.ts`: add `getFullBackupsPath(...segments:
       string[]): string` returning
       `getProjectResourcePath("backups_db_and_data", ...segments)`.
-- [ ] In `worker-node/src/lib/projectPaths.ts`: add `getFullBackupsPath(...
+- [x] In `worker-node/src/lib/projectPaths.ts`: add `getFullBackupsPath(...
       segments: string[]): string` returning
       `path.join(getRoot(), "backups_db_and_data", ...segments)`.
-- [ ] Do **not** remove or modify `getBackupsPath` in either file.
+- [x] Do **not** remove or modify `getBackupsPath` in either file.
 
 **Validate:**
 ```bash
@@ -70,7 +70,7 @@ cd worker-node && npm run typecheck
 
 ## Phase 2 — Shared-Types
 
-- [ ] In `shared-types/src/database.ts`:
+- [x] In `shared-types/src/database.ts`:
   - Add `CreateBackupRequest = { includeResources: boolean }`.
   - Replace `CreateBackupResponse` with `{ message: string; queuedAt: string }`.
   - Add `ManifestFile` type (fields: `created_at`, `app`, `environment`,
@@ -80,9 +80,9 @@ cd worker-node && npm run typecheck
     `RestoreDatabaseResponse`.
   - Add `BackupSizeEstimateResponse = { totalBytes: number; totalBytesFormatted:
     string }` (needed for optional Phase 7).
-- [ ] Export all new types from `shared-types/src/index.ts` (check existing
+- [x] Export all new types from `shared-types/src/index.ts` (check existing
   export pattern and follow it).
-- [ ] Rebuild shared-types: `cd shared-types && npm run build`.
+- [x] Rebuild shared-types: `cd shared-types && npm run build`.
 
 **Validate:**
 ```bash
@@ -100,22 +100,22 @@ cd web && npm run typecheck
 
 ### 3a — Add dependencies
 
-- [ ] In `worker-node/package.json`, add to `dependencies`: `"archiver":
+- [x] In `worker-node/package.json`, add to `dependencies`: `"archiver":
       "^7.0.1"`.
-- [ ] In `worker-node/package.json`, add to `devDependencies`:
+- [x] In `worker-node/package.json`, add to `devDependencies`:
       `"@types/archiver": "^7.0.0"`.
-- [ ] Run `npm install` from the repo root (or inside `worker-node/`) to update
+- [x] Run `npm install` from the repo root (or inside `worker-node/`) to update
       `package-lock.json`.
 
 ### 3b — CSV helper
 
-- [ ] Create `worker-node/src/lib/csv.ts`. Copy `toCsv` from
+- [x] Create `worker-node/src/lib/csv.ts`. Copy `toCsv` from
       `api/src/lib/csv.ts` (lines 1-24, the `escapeCell` helper and `toCsv`
       export). Do **not** copy `parseCsv` (not needed in worker).
 
 ### 3c — Backup service
 
-- [ ] Create `worker-node/src/services/backupService.ts` with:
+- [x] Create `worker-node/src/services/backupService.ts` with:
   - Module-level `let _isBackupRunning = false` flag.
   - `isBackupRunning(): boolean` export.
   - `zipDirectory(sourceDir, destinationZip)` — copy the 15-line helper from
@@ -159,7 +159,7 @@ cd web && npm run typecheck
 
 ### 3d — Tests for backup service
 
-- [ ] Create or update `worker-node/tests/backupService.test.ts` (or equivalent
+- [x] Create or update `worker-node/tests/backupService.test.ts` (or equivalent
       test file following the project's existing test pattern) with tests for:
   - **DB-only backup:** When `includeResources: false`, the output zip contains
     `manifest.json` with `package_type: "db_only"` and one CSV per table, and
@@ -197,18 +197,18 @@ cd worker-node && npm run build
 
 ## Phase 4 — Worker-Node: POST /backup Endpoint
 
-- [ ] In `worker-node/src/app.ts`, add the `POST /backup` route after the
+- [x] In `worker-node/src/app.ts`, add the `POST /backup` route after the
       existing `/process` route:
   - Parse `includeResources` from `req.body` (default `true`).
   - If `isBackupRunning()`, return 409 `{ error: "A backup job is already
     running" }` and stop.
   - Return 202 `{ accepted: true }` immediately.
   - Call `void createBackup({ includeResources }).catch(...)` to run async.
-- [ ] Import `isBackupRunning` and `createBackup` from `./services/backupService`.
+- [x] Import `isBackupRunning` and `createBackup` from `./services/backupService`.
 
 ### 4b — Tests for POST /backup endpoint
 
-- [ ] Create or update `worker-node/tests/app.test.ts` (or follow project
+- [x] Create or update `worker-node/tests/app.test.ts` (or follow project
       test-file convention) with tests for:
   - **Acceptance:** `POST /backup` with `{ includeResources: true }` when no
     backup is running returns HTTP 202 `{ accepted: true }`.
@@ -238,11 +238,11 @@ before the route handler runs, so any client-controlled value in the filename
 (such as `file.originalname`) could allow a crafted multipart `filename` field
 containing `..` or path separators to write the upload outside `os.tmpdir()`.
 
-- [ ] In `api/src/middleware/upload.ts`, add `import crypto from "crypto"` at
+- [x] In `api/src/middleware/upload.ts`, add `import crypto from "crypto"` at
       the top of the file (Node.js built-in — no package.json change needed).
-- [ ] In `api/src/middleware/upload.ts`, add `import os from "os"` (if not
+- [x] In `api/src/middleware/upload.ts`, add `import os from "os"` (if not
       present).
-- [ ] Export `uploadLarge` using **only a server-generated filename**. Do not
+- [x] Export `uploadLarge` using **only a server-generated filename**. Do not
       reference `file.originalname` or any other client-supplied field:
   ```typescript
   export const uploadLarge = multer({
@@ -263,9 +263,9 @@ containing `..` or path separators to write the upload outside `os.tmpdir()`.
 **Requirement:** `requestWorkerBackup` throws rather than swallowing failures.
 The API only returns 202 when the worker actually accepts the job.
 
-- [ ] In `api/src/services/workerClient.ts`, export a `WorkerConflictError`
+- [x] In `api/src/services/workerClient.ts`, export a `WorkerConflictError`
       class (extends `Error`, sets `this.name = "WorkerConflictError"`).
-- [ ] Add `requestWorkerBackup({ includeResources: boolean }): Promise<void>`:
+- [x] Add `requestWorkerBackup({ includeResources: boolean }): Promise<void>`:
   - POST to `${URL_WORKER_NODE}/backup` with up to 3 retry attempts and
     exponential-ish back-off (200 ms, 400 ms).
   - If the worker returns HTTP 202: return (success).
@@ -287,12 +287,12 @@ validated. This is the primary change from V02.
 `api/src/config/logger.ts`. A file under `api/src/lib/` imports it as
 `../config/logger`.
 
-- [ ] Create `api/src/lib/safeExtractZip.ts`. Use the following import at the
+- [x] Create `api/src/lib/safeExtractZip.ts`. Use the following import at the
       top of the file — **do not use `"./logger"`**:
   ```typescript
   import { logger } from "../config/logger";
   ```
-- [ ] Implement `safeExtractZip(zipPath, destDir): Promise<SafeExtractResult>`
+- [x] Implement `safeExtractZip(zipPath, destDir): Promise<SafeExtractResult>`
       and helpers `isEntryNameSafe` and `isEntryAllowed` exactly as specified
       in the plan:
 
@@ -328,9 +328,9 @@ validated. This is the primary change from V02.
      i. Update `result` counters (`hasManifest`, `csvFiles`, `resourceCount`).
   3. Return `result`.
 
-- [ ] Verify `unzipper` is already in `api/package.json`. If not, add it and
+- [x] Verify `unzipper` is already in `api/package.json`. If not, add it and
       run `npm install`.
-- [ ] Verify `pipeline` is imported from `"stream/promises"` (Node.js 15+).
+- [x] Verify `pipeline` is imported from `"stream/promises"` (Node.js 15+).
 
 ### 5c-r — safeRestoreResources helper (V05 — new)
 
@@ -339,13 +339,13 @@ testable helper in `api/src/lib/safeRestoreResources.ts` **before** Phase 5d
 calls it from `database.ts`. Without this task, following V04 leaves an
 undefined symbol and fails `npm run typecheck`.
 
-- [ ] Create `api/src/lib/safeRestoreResources.ts`. Use the following import —
+- [x] Create `api/src/lib/safeRestoreResources.ts`. Use the following import —
       **do not use `"./logger"`**:
   ```typescript
   import { logger } from "../config/logger";
   ```
 
-- [ ] Implement `safeRestoreResources(tempDir: string, resourcesRoot: string): Promise<number>`:
+- [x] Implement `safeRestoreResources(tempDir: string, resourcesRoot: string): Promise<number>`:
 
   **Setup:**
   - `const srcRoot = path.resolve(tempDir, "resources")`
@@ -386,7 +386,7 @@ undefined symbol and fails `npm run typecheck`.
 
   - Call `await walk(srcRoot)` and return `restoredCount`.
 
-- [ ] Create `api/tests/lib/safeRestoreResources.test.ts` with the following
+- [x] Create `api/tests/lib/safeRestoreResources.test.ts` with the following
       **direct unit tests** (each test sets up a temp directory with controlled
       layout, calls `safeRestoreResources`, and asserts on the return value and
       destination filesystem state):
@@ -426,7 +426,7 @@ undefined symbol and fails `npm run typecheck`.
     under `tempDir/resources`. Assert the destination file is overwritten with
     the source content without error.
 
-- [ ] Import `safeRestoreResources` in `api/src/routes/database.ts`:
+- [x] Import `safeRestoreResources` in `api/src/routes/database.ts`:
   ```typescript
   import { safeRestoreResources } from "../lib/safeRestoreResources";
   ```
@@ -439,7 +439,7 @@ cd api && npm test -- --testPathPattern safeRestoreResources
 
 ### 5d — database.ts endpoint updates (V03 — replace Extract call)
 
-- [ ] **`POST /database/create-backup`**: Replace synchronous body with:
+- [x] **`POST /database/create-backup`**: Replace synchronous body with:
   - Parse `includeResources` from `req.body` (default `true`).
   - `try { await requestWorkerBackup({ includeResources }); }` → return HTTP 202:
     `{ message: "Backup job queued", queuedAt: new Date().toISOString() }`.
@@ -449,16 +449,16 @@ cd api && npm test -- --testPathPattern safeRestoreResources
   - Remove the `toCsv`, `zipDirectory`, and CSV export imports from this handler
     (they move to worker-node). Keep `zipDirectory` only if still used elsewhere.
 
-- [ ] **`GET /database/backups-list`**: Replace `getBackupsPath()` with
+- [x] **`GET /database/backups-list`**: Replace `getBackupsPath()` with
       `getFullBackupsPath()` in all three occurrences (mkdir, readdir, stat).
 
-- [ ] **`GET /database/download-backup/:filename`**: Replace
+- [x] **`GET /database/download-backup/:filename`**: Replace
       `getBackupsPath(filename)` with `getFullBackupsPath(filename)`.
 
-- [ ] **`DELETE /database/delete-backup/:filename`**: Replace
+- [x] **`DELETE /database/delete-backup/:filename`**: Replace
       `getBackupsPath(filename)` with `getFullBackupsPath(filename)`.
 
-- [ ] **`POST /database/replenish-database`** (V03 — safe extraction required):
+- [x] **`POST /database/replenish-database`** (V03 — safe extraction required):
   - Switch `upload.single("file")` to `uploadLarge.single("file")`.
   - Change `const zipPath = path.join(tempDir, "restore.zip"); await
     fsPromises.writeFile(zipPath, req.file.buffer)` to
@@ -478,23 +478,23 @@ cd api && npm test -- --testPathPattern safeRestoreResources
     - `await fsPromises.rm(req.file.path, { force: true })`.
     - `await fsPromises.rm(tempDir, { recursive: true, force: true })`.
   - Update response to include `resourcesRestored` and `resourceFilesRestored`.
-- [ ] Import `safeExtractZip` from `"../lib/safeExtractZip"`.
-- [ ] Import `safeRestoreResources` from `"../lib/safeRestoreResources"`.
-- [ ] Import `getFullBackupsPath`, `requestWorkerBackup`, `WorkerConflictError`,
+- [x] Import `safeExtractZip` from `"../lib/safeExtractZip"`.
+- [x] Import `safeRestoreResources` from `"../lib/safeRestoreResources"`.
+- [x] Import `getFullBackupsPath`, `requestWorkerBackup`, `WorkerConflictError`,
       `uploadLarge` where needed.
 
 ### 5e — Optional: size estimate endpoint
 
-- [ ] If feasible (~30 lines), add `GET /database/backup-size-estimate`:
+- [x] If feasible (~30 lines), add `GET /database/backup-size-estimate`:
   - Recursively walk `PATH_PROJECT_RESOURCES` skipping `backups_db` and
     `backups_db_and_data`.
   - Sum `stat.size` for each file.
   - Return `{ totalBytes, totalBytesFormatted }`.
-- [ ] If complex, skip and mark as future enhancement.
+- [x] If complex, skip and mark as future enhancement.
 
 ### 5f — Tests for API endpoint changes (V03 — expanded; V06 — upload-layer traversal test added)
 
-- [ ] In `api/tests/database/database.routes.test.ts` (or equivalent), add or
+- [x] In `api/tests/database/database.routes.test.ts` (or equivalent), add or
       update tests for all V02 cases (backup directory change, worker acceptance
       and error propagation, disk-upload restore, temp cleanup, legacy DB-only
       restore, combined manifest/resource restore) **plus the following traversal
@@ -590,7 +590,7 @@ cd api && npm run build
 
 ### 6a — API client update
 
-- [ ] In `web/src/lib/api/database.ts`:
+- [x] In `web/src/lib/api/database.ts`:
   - Update `createBackup` to accept `includeResources: boolean = true` and POST
     it as a JSON body: `apiClient.post("/database/create-backup", {
     includeResources })`.
@@ -599,7 +599,7 @@ cd api && npm run build
 
 ### 6b — Restore confirmation modal
 
-- [ ] Create `web/src/components/modals/ModalConfirmRestore.tsx` following the
+- [x] Create `web/src/components/modals/ModalConfirmRestore.tsx` following the
       existing pattern of `ModalConfirmDelete.tsx`. Props: `{ isOpen: boolean;
       isLoading: boolean; onClose: () => void; onConfirm: () => void }`.
   - Title: "Restore Database"
@@ -610,7 +610,7 @@ cd api && npm run build
 
 ### 6c — Admin page
 
-- [ ] In `web/src/app/admin/page.tsx`:
+- [x] In `web/src/app/admin/page.tsx`:
   - Add `const [includeResources, setIncludeResources] = useState(true)` state.
   - Add `const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] =
       useState(false)` state.
@@ -640,19 +640,19 @@ cd api && npm run build
 
 Explicitly verify the following before marking Phase 6 complete.
 
-- [ ] **Include-resources checkbox default:** On page load the "Include sound &
+- [x] **Include-resources checkbox default:** On page load the "Include sound &
       resource files" checkbox is checked. Confirm by rendering the page in the
       dev browser and inspecting the checkbox state, or with a component test
       that asserts `defaultChecked` or that the controlled state initializes
       to `true`.
-- [ ] **Checkbox toggles correctly:** Unchecking the checkbox causes
+- [x] **Checkbox toggles correctly:** Unchecking the checkbox causes
       `handleCreateBackup` to call `createBackup(false)`; re-checking causes it
       to call `createBackup(true)`.
-- [ ] **Restore confirmation gate:** Clicking "Restore Database" opens
+- [x] **Restore confirmation gate:** Clicking "Restore Database" opens
       `ModalConfirmRestore` without uploading or calling `handleRestoreDatabase`.
       Clicking Cancel closes the modal without triggering restore. Clicking
       "Yes, restore" closes the modal and triggers `handleRestoreDatabase`.
-- [ ] **409 / 503 error toasts:** When the API returns 409 or 503 on backup
+- [x] **409 / 503 error toasts:** When the API returns 409 or 503 on backup
       trigger, the correct distinct error toast appears (not the success toast).
 
 **Validate:**
@@ -669,9 +669,9 @@ cd web && npm run build
 
 Skip this phase if Phase 5e was skipped.
 
-- [ ] In `web/src/lib/api/database.ts`, add `getBackupSizeEstimate` call (if
+- [x] In `web/src/lib/api/database.ts`, add `getBackupSizeEstimate` call (if
       not already added in Phase 6a).
-- [ ] In `web/src/app/admin/page.tsx`:
+- [x] In `web/src/app/admin/page.tsx`:
   - Add `const [sizeEstimate, setSizeEstimate] = useState<BackupSizeEstimateResponse | null>(null)` state.
   - Fetch the estimate when the Database section expands (or on page load).
   - Display the estimate near the Create Backup button: "Estimated uncompressed

@@ -12,6 +12,7 @@ import ModalEditSoundFile from "@/components/modals/ModalEditSoundFile";
 import ModalConfirmDelete from "@/components/modals/ModalConfirmDelete";
 import ModalConfirmCascadeDelete from "@/components/modals/ModalConfirmCascadeDelete";
 import ModalConfirmDeleteUser from "@/components/modals/ModalConfirmDeleteUser";
+import ModalConfirmRestore from "@/components/modals/ModalConfirmRestore";
 import Toast from "@/components/Toast";
 import {
   deleteMeditationObj,
@@ -34,10 +35,12 @@ import {
   createBackup,
   deleteBackup,
   downloadBackup,
+  getBackupSizeEstimate,
   getBackupsList,
   replenishDatabase,
   type BackupFile,
 } from "@/lib/api/database";
+import type { BackupSizeEstimateResponse } from "@golightly/shared-types";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hideLoading, showLoading } from "@/store/features/uiSlice";
 
@@ -84,6 +87,10 @@ export default function AdminPage() {
   const [backups, setBackups] = useState<BackupFile[]>([]);
   const [databaseLoading, setDatabaseLoading] = useState(false);
   const [databaseError, setDatabaseError] = useState<string | null>(null);
+  const [includeResources, setIncludeResources] = useState(true);
+  const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
+  const [sizeEstimate, setSizeEstimate] =
+    useState<BackupSizeEstimateResponse | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -193,6 +200,14 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchBackupSizeEstimate = useCallback(async () => {
+    try {
+      setSizeEstimate(await getBackupSizeEstimate());
+    } catch {
+      setSizeEstimate(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
@@ -212,6 +227,12 @@ export default function AdminPage() {
   useEffect(() => {
     fetchBackups();
   }, [fetchBackups]);
+
+  useEffect(() => {
+    if (isDatabaseExpanded) {
+      fetchBackupSizeEstimate();
+    }
+  }, [fetchBackupSizeEstimate, isDatabaseExpanded]);
 
   const handleDeleteConfirm = async (savePublicMeditations: boolean) => {
     if (!deleteTarget) return;
@@ -319,15 +340,19 @@ export default function AdminPage() {
   };
 
   const handleCreateBackup = async () => {
-    dispatch(showLoading("Creating database backup..."));
+    dispatch(showLoading("Queuing database backup..."));
     try {
-      await createBackup();
-      await fetchBackups();
-      setToast({ message: "Database backup created.", variant: "success" });
+      await createBackup(includeResources);
+      setToast({
+        message: "Backup job queued — refresh this page when the job completes.",
+        variant: "success",
+      });
     } catch (err: any) {
+      const status = err?.response?.status;
       const message =
-        err?.response?.data?.error?.message ||
-        "Unable to create database backup.";
+        status === 409
+          ? "A backup job is already running"
+          : "Worker unavailable — backup could not be started. Try again shortly.";
       setToast({ message, variant: "error" });
     } finally {
       dispatch(hideLoading());
@@ -370,8 +395,12 @@ export default function AdminPage() {
       }
       const tablesImported = response.tablesImported ?? 0;
       const totalRows = response.totalRows ?? 0;
+      const resourceCount = response.resourceFilesRestored ?? 0;
+      const resourceText = response.resourcesRestored
+        ? ` Resource files restored: ${resourceCount}.`
+        : "";
       setToast({
-        message: `Database restored. ${tablesImported} tables, ${totalRows} rows.`,
+        message: `Database restored. ${tablesImported} tables, ${totalRows} rows.${resourceText}`,
         variant: "success",
       });
       await fetchBackups();
@@ -778,6 +807,15 @@ export default function AdminPage() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 rounded-full border border-subtle px-3 py-2 text-xs font-semibold text-ink-muted">
+                  <input
+                    type="checkbox"
+                    checked={includeResources}
+                    onChange={(event) => setIncludeResources(event.target.checked)}
+                    className="h-4 w-4 rounded border-subtle text-primary-600 focus:ring-primary-500"
+                  />
+                  Include sound & resource files
+                </label>
                 <button
                   type="button"
                   onClick={handleCreateBackup}
@@ -856,6 +894,12 @@ export default function AdminPage() {
 
                 {!databaseLoading && !databaseError && (
                   <div className="space-y-6">
+                    {sizeEstimate && (
+                      <p className="text-xs font-semibold text-ink-muted">
+                        Estimated uncompressed size:{" "}
+                        {sizeEstimate.totalBytesFormatted}
+                      </p>
+                    )}
                     <TableAdminDatabase
                       backups={backups}
                       onDownload={handleDownloadBackup}
@@ -888,7 +932,7 @@ export default function AdminPage() {
                           </label>
                           <button
                             type="button"
-                            onClick={handleRestoreDatabase}
+                            onClick={() => setIsRestoreConfirmOpen(true)}
                             disabled={!uploadFile}
                             className="rounded-full border border-primary-200 px-4 py-2 text-xs font-semibold text-primary-700 transition hover:border-primary-300 disabled:cursor-not-allowed disabled:border-subtle disabled:text-ink-muted/60"
                           >
@@ -897,7 +941,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <p className="mt-3 text-xs font-semibold text-red-500">
-                        ⚠️ Warning: Restoring will replace all current data
+                        Warning: Restoring will replace all current data
                       </p>
                     </div>
                   </div>
@@ -958,6 +1002,15 @@ export default function AdminPage() {
         isLoading={isQueueDeleting}
         onClose={() => setQueueDeleteTarget(null)}
         onConfirm={handleQueueDeleteConfirm}
+      />
+      <ModalConfirmRestore
+        isOpen={isRestoreConfirmOpen}
+        isLoading={databaseLoading}
+        onClose={() => setIsRestoreConfirmOpen(false)}
+        onConfirm={() => {
+          setIsRestoreConfirmOpen(false);
+          handleRestoreDatabase();
+        }}
       />
     </ProtectedRoute>
   );

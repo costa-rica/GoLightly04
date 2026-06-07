@@ -1,0 +1,80 @@
+import fsPromises from "fs/promises";
+import path from "path";
+
+import { logger } from "../config/logger";
+
+const EXCLUDED_RESTORE_DIRS = ["backups_db", "backups_db_and_data"];
+
+export async function safeRestoreResources(
+  tempDir: string,
+  resourcesRoot: string,
+): Promise<number> {
+  const srcRoot = path.resolve(tempDir, "resources");
+  const destRoot = path.resolve(resourcesRoot);
+
+  let srcDirStat: Awaited<ReturnType<typeof fsPromises.lstat>>;
+  try {
+    srcDirStat = await fsPromises.lstat(srcRoot);
+  } catch {
+    return 0;
+  }
+
+  if (!srcDirStat.isDirectory()) {
+    return 0;
+  }
+
+  let restoredCount = 0;
+
+  async function walk(dir: string): Promise<void> {
+    const entries = await fsPromises.readdir(dir);
+    for (const entry of entries) {
+      const fullSrc = path.join(dir, entry);
+      const stat = await fsPromises.lstat(fullSrc);
+
+      if (stat.isSymbolicLink()) {
+        logger.warn(`safeRestoreResources: skipping symlink ${fullSrc}`);
+        continue;
+      }
+
+      if (stat.isDirectory()) {
+        await walk(fullSrc);
+        continue;
+      }
+
+      if (!stat.isFile()) {
+        logger.warn(`safeRestoreResources: skipping non-regular entry ${fullSrc}`);
+        continue;
+      }
+
+      const resolvedSrc = path.resolve(fullSrc);
+      if (!resolvedSrc.startsWith(srcRoot + path.sep) && resolvedSrc !== srcRoot) {
+        logger.warn(
+          `safeRestoreResources: source path escapes resources root - skipping ${fullSrc}`,
+        );
+        continue;
+      }
+
+      const relPath = path.relative(srcRoot, resolvedSrc);
+      const destPath = path.resolve(destRoot, relPath);
+      if (!destPath.startsWith(destRoot + path.sep) && destPath !== destRoot) {
+        logger.warn(
+          `safeRestoreResources: destination path escapes resources root - skipping ${relPath}`,
+        );
+        continue;
+      }
+
+      const topLevelSegment = relPath.split(path.sep)[0];
+      if (EXCLUDED_RESTORE_DIRS.includes(topLevelSegment)) {
+        logger.warn(`safeRestoreResources: skipping excluded directory entry ${relPath}`);
+        continue;
+      }
+
+      await fsPromises.mkdir(path.dirname(destPath), { recursive: true });
+      await fsPromises.copyFile(resolvedSrc, destPath);
+      restoredCount++;
+    }
+  }
+
+  await walk(srcRoot);
+  return restoredCount;
+}
