@@ -17,3 +17,11 @@ export function getMeditationAudioRoot() {
 export function getPrerecordedAudioRoot() {
   return path.join(getRoot(), "prerecorded_audio");
 }
+
+export function getBackupsPath(...segments: string[]) {
+  return path.join(getRoot(), "backups_db", ...segments);
+}
+
+export function getFullBackupsPath(...segments: string[]): string {
+  return path.join(getRoot(), "backups_db_and_data", ...segments);
+}

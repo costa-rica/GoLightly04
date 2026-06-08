@@ -6,6 +6,7 @@ import {
   isMeditationActive,
   processMeditation,
 } from "./processor/processMeditation";
+import { createBackup, isBackupRunning } from "./services/backupService";
 
 export function createApp() {
   const app = express();
@@ -51,6 +52,29 @@ export function createApp() {
       void processMeditation(meditationId, mode).catch((error) => {
         logger.error(
           `Background processing failed for meditation ${meditationId}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/backup", async (req, res, next) => {
+    try {
+      const includeResources = req.body?.includeResources !== false;
+
+      if (isBackupRunning()) {
+        res.status(409).json({ error: "A backup job is already running" });
+        return;
+      }
+
+      res.status(202).json({ accepted: true });
+
+      void createBackup({ includeResources }).catch((error) => {
+        logger.error(
+          `Background backup failed: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
         );

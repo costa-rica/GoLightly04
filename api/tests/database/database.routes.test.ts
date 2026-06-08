@@ -5,6 +5,7 @@ import archiver from "archiver";
 import request from "supertest";
 import { buildApp } from "../../src/app";
 import { issueAccessToken } from "../../src/lib/authTokens";
+import { toCsv } from "../../src/lib/csv";
 
 const usersModel = {
   findAll: jest.fn(),
@@ -67,6 +68,23 @@ jest.mock("../../src/lib/db", () => ({
   }),
 }));
 
+jest.mock("../../src/services/workerClient", () => {
+  class WorkerConflictError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "WorkerConflictError";
+    }
+  }
+
+  return {
+    requestWorkerBackup: jest.fn(),
+    WorkerConflictError,
+  };
+});
+
+const mockedRequestWorkerBackup = jest.requireMock("../../src/services/workerClient")
+  .requestWorkerBackup as jest.Mock;
+
 describe("database routes", () => {
   const adminToken = issueAccessToken({
     id: 1,
@@ -84,17 +102,24 @@ describe("database routes", () => {
     meditationsModel.findAll.mockResolvedValue([]);
     jobQueueModel.findAll.mockResolvedValue([]);
     contractUserMeditationsModel.findAll.mockResolvedValue([]);
+    mockedRequestWorkerBackup.mockResolvedValue(undefined);
   });
 
-  it("creates and lists a backup", async () => {
+  it("queues a worker backup and lists full backup directory files", async () => {
+    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db_and_data");
+    await fs.mkdir(backupsDir, { recursive: true });
+    await fs.writeFile(path.join(backupsDir, "backup_test.zip"), "zip");
     const app = buildApp();
 
     const createResponse = await request(app)
       .post("/database/create-backup")
-      .set("Authorization", `Bearer ${adminToken}`);
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ includeResources: false });
 
-    expect(createResponse.status).toBe(201);
-    expect(createResponse.body.filename).toMatch(/backup_.*\.zip$/);
+    expect(createResponse.status).toBe(202);
+    expect(createResponse.body.message).toBe("Backup job queued");
+    expect(createResponse.body.queuedAt).toEqual(expect.any(String));
+    expect(mockedRequestWorkerBackup).toHaveBeenCalledWith({ includeResources: false });
 
     const listResponse = await request(app)
       .get("/database/backups-list")
@@ -102,10 +127,37 @@ describe("database routes", () => {
 
     expect(listResponse.status).toBe(200);
     expect(listResponse.body.count).toBe(1);
+    expect(listResponse.body.backups[0].filename).toBe("backup_test.zip");
+  });
+
+  it("propagates worker backup conflict and unavailable errors", async () => {
+    const { WorkerConflictError } = await import("../../src/services/workerClient");
+    mockedRequestWorkerBackup.mockRejectedValueOnce(
+      new WorkerConflictError("running"),
+    );
+
+    const conflictResponse = await request(buildApp())
+      .post("/database/create-backup")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ includeResources: true });
+
+    expect(conflictResponse.status).toBe(409);
+    expect(conflictResponse.body.error).toBe("A backup job is already running");
+
+    mockedRequestWorkerBackup.mockRejectedValueOnce(new Error("offline"));
+    const unavailableResponse = await request(buildApp())
+      .post("/database/create-backup")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ includeResources: true });
+
+    expect(unavailableResponse.status).toBe(503);
+    expect(unavailableResponse.body.error).toBe(
+      "Worker unavailable; backup could not be started",
+    );
   });
 
   it("deletes a backup file", async () => {
-    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db");
+    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db_and_data");
     await fs.mkdir(backupsDir, { recursive: true });
     await fs.writeFile(path.join(backupsDir, "backup_test.zip"), "zip");
 
@@ -141,5 +193,108 @@ describe("database routes", () => {
         bind: ["public.jobs_queue"],
       }),
     );
+    expect(response.body.resourcesRestored).toBe(false);
+    expect(response.body.resourceFilesRestored).toBe(0);
+  });
+
+  it("restores resources when a combined manifest is present", async () => {
+    const restoreZip = await createRestoreZip({
+      "manifest.json": JSON.stringify({
+        created_at: "2026-06-07T00:00:00.000Z",
+        app: "GoLightly04",
+        environment: "production",
+        package_type: "db_and_resources",
+        database_tables: ["users"],
+        resources_root: "/resources",
+        excluded_dirs: ["backups_db", "backups_db_and_data"],
+      }),
+      "users.csv": "id,email\n1,user@example.com\n",
+      "resources/audio/file.mp3": "sound",
+      "resources/backups_db/old.zip": "old",
+    });
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", restoreZip, "restore.zip");
+
+    expect(response.status).toBe(200);
+    expect(response.body.resourcesRestored).toBe(true);
+    expect(response.body.resourceFilesRestored).toBe(1);
+    await expect(
+      fs.readFile(path.join(process.env.PATH_PROJECT_RESOURCES!, "audio", "file.mp3"), "utf8"),
+    ).resolves.toBe("sound");
+    await expect(
+      fs.access(path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db", "old.zip")),
+    ).rejects.toThrow();
+  });
+
+  it("restores meditations with multiline script source CSV fields", async () => {
+    const scriptSource = 'inhale\nhold, softly\nexhale with "release"';
+    const restoreZip = await createRestoreZip({
+      "meditations.csv": toCsv([
+        {
+          id: 7,
+          userId: 1,
+          title: "Breath",
+          description: "A short practice",
+          meditationArray: [{ type: "text", text: "inhale" }],
+          filename: "",
+          filePath: "",
+          visibility: "private",
+          stage: "library",
+          sourceMode: "script",
+          scriptSource,
+          status: "complete",
+          listenCount: 0,
+          durationSeconds: 120,
+          createdAt: "2026-06-07T00:00:00.000Z",
+          updatedAt: "2026-06-07T00:00:00.000Z",
+        },
+      ]),
+    });
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", restoreZip, "restore.zip");
+
+    expect(response.status).toBe(200);
+    expect(meditationsModel.bulkCreate).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: "7",
+          meditationArray: [{ type: "text", text: "inhale" }],
+          scriptSource,
+        }),
+      ],
+      expect.objectContaining({ validate: false }),
+    );
+    expect(response.body.rowsImported.meditations).toBe(1);
+  });
+
+  it("reports resource restore copy failures instead of treating them as manifest misses", async () => {
+    const copyError = new Error("operation not permitted");
+    const copyFileSpy = jest.spyOn(fs, "copyFile").mockRejectedValueOnce(copyError);
+    const restoreZip = await createRestoreZip({
+      "manifest.json": JSON.stringify({
+        created_at: "2026-06-07T00:00:00.000Z",
+        app: "GoLightly04",
+        environment: "production",
+        package_type: "db_and_resources",
+        database_tables: ["users"],
+      }),
+      "resources/audio/file.mp3": "sound",
+    });
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", restoreZip, "restore.zip");
+
+    expect(response.status).toBe(500);
+    expect(response.body.error.code).toBe("RESOURCE_RESTORE_ERROR");
+    expect(copyFileSpy).toHaveBeenCalled();
+    expect(sequelizeMock.transaction).not.toHaveBeenCalled();
   });
 });
