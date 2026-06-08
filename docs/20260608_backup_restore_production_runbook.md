@@ -55,18 +55,30 @@ npm run build -w @golightly/web
 
 ## Production DB privilege fix
 
-Restore resets table `id` sequences with `setval(...)`. PostgreSQL requires
-`UPDATE` on those sequences for the runtime app role; `USAGE`/`SELECT` alone is
-not enough.
+Restore needs two classes of runtime DB privileges:
 
-Run this as a DB owner or superuser, replacing `golightly04_prod` if production
-uses a different runtime role:
+1. `TRUNCATE` on restored tables because the restore flow clears existing rows
+   with `TRUNCATE TABLE ... CASCADE` before importing CSV data.
+2. `UPDATE` on table `id` sequences because the restore flow resets sequences
+   with `setval(...)`; `USAGE`/`SELECT` alone is not enough.
+
+Run this as a DB owner or superuser, replacing `golightly04_app` if production
+uses a different runtime app role. Confirm the role from the production API
+`.env` value `PG_APP_ROLE` before running these grants.
 
 ```sql
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_prod;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLE
+  public.users,
+  public.sound_files,
+  public.meditations,
+  public.jobs_queue,
+  public.contract_user_meditations
+TO golightly04_app;
+
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;
 ```
 
-If you want the narrower explicit form instead:
+If you want the narrower explicit sequence form instead:
 
 ```sql
 GRANT USAGE, SELECT, UPDATE ON SEQUENCE
@@ -75,21 +87,27 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCE
   public.meditations_id_seq,
   public.jobs_queue_id_seq,
   public.contract_user_meditations_id_seq
-TO golightly04_prod;
+TO golightly04_app;
 ```
 
-Verify the grant from the app role if possible:
+Verify the grants from the app role if possible:
 
 ```sql
 SELECT
-  has_sequence_privilege('golightly04_prod', 'public.users_id_seq', 'UPDATE') AS users_update,
-  has_sequence_privilege('golightly04_prod', 'public.sound_files_id_seq', 'UPDATE') AS sound_files_update,
-  has_sequence_privilege('golightly04_prod', 'public.meditations_id_seq', 'UPDATE') AS meditations_update,
-  has_sequence_privilege('golightly04_prod', 'public.jobs_queue_id_seq', 'UPDATE') AS jobs_queue_update,
-  has_sequence_privilege('golightly04_prod', 'public.contract_user_meditations_id_seq', 'UPDATE') AS contract_user_meditations_update;
+  has_table_privilege('golightly04_app', 'public.users', 'TRUNCATE') AS users_truncate,
+  has_table_privilege('golightly04_app', 'public.sound_files', 'TRUNCATE') AS sound_files_truncate,
+  has_table_privilege('golightly04_app', 'public.meditations', 'TRUNCATE') AS meditations_truncate,
+  has_table_privilege('golightly04_app', 'public.jobs_queue', 'TRUNCATE') AS jobs_queue_truncate,
+  has_table_privilege('golightly04_app', 'public.contract_user_meditations', 'TRUNCATE') AS contract_user_meditations_truncate,
+  has_sequence_privilege('golightly04_app', 'public.users_id_seq', 'UPDATE') AS users_sequence_update,
+  has_sequence_privilege('golightly04_app', 'public.sound_files_id_seq', 'UPDATE') AS sound_files_sequence_update,
+  has_sequence_privilege('golightly04_app', 'public.meditations_id_seq', 'UPDATE') AS meditations_sequence_update,
+  has_sequence_privilege('golightly04_app', 'public.jobs_queue_id_seq', 'UPDATE') AS jobs_queue_sequence_update,
+  has_sequence_privilege('golightly04_app', 'public.contract_user_meditations_id_seq', 'UPDATE') AS contract_user_meditations_sequence_update;
 ```
 
-All columns should return `t`.
+All columns should return `t`. If restore returns Postgres SQLSTATE `42501` on
+`TRUNCATE TABLE`, the table `TRUNCATE` grant is missing for the runtime app role.
 
 ## Restart services
 
