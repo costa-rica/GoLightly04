@@ -1,13 +1,66 @@
 import { Router } from "express";
 import { Op } from "sequelize";
+import type { AdminMeditation } from "@golightly/shared-types";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
 import { requireAdmin } from "../middleware/auth";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
 import { notifyWorker } from "../services/workerClient";
-import { getOrCreateBenevolentUser } from "../services/users/getOrCreateBenevolentUser";
+import {
+  BENEVOLENT_USER_EMAIL,
+  getOrCreateBenevolentUser,
+} from "../services/users/getOrCreateBenevolentUser";
 import { assertAdminMeditationMutable } from "../services/meditations/assertAdminMeditationMutable";
+import { ensureString } from "../middleware/validate";
+import { logger } from "../config/logger";
+
+const ADMIN_MEDITATION_METADATA_FIELDS = ["title", "description", "visibility"] as const;
+
+function serializeDate(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+function serializeAdminMeditationRow(
+  meditation: any,
+  benevolentUserId: number,
+): AdminMeditation {
+  return {
+    id: meditation.id,
+    title: meditation.title,
+    description: meditation.description ?? undefined,
+    meditationArray: meditation.meditationArray,
+    filename: meditation.filename ?? "",
+    filePath: meditation.filePath ?? undefined,
+    visibility: meditation.visibility,
+    stage: meditation.stage ?? "library",
+    sourceMode: meditation.sourceMode ?? "spreadsheet",
+    scriptSource: meditation.scriptSource ?? undefined,
+    createdAt: serializeDate(meditation.createdAt),
+    updatedAt: serializeDate(meditation.updatedAt),
+    listenCount: meditation.listenCount,
+    durationSeconds: meditation.durationSeconds ?? null,
+    status: meditation.status,
+    ownerUserId: meditation.userId,
+    isBenevolentOwned: meditation.userId === benevolentUserId,
+  };
+}
+
+function normalizeOptionalDescription(value: unknown): string | null {
+  if (typeof value !== "string") {
+    throw new AppError(400, "VALIDATION_ERROR", "description must be a string");
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function normalizeVisibility(value: unknown): "public" | "private" {
+  const visibility = ensureString(value, "visibility");
+  if (visibility !== "public" && visibility !== "private") {
+    throw new AppError(400, "VALIDATION_ERROR", "visibility must be public or private");
+  }
+  return visibility;
+}
 
 export function buildAdminRouter(): Router {
   const router = Router();
@@ -79,8 +132,144 @@ export function buildAdminRouter(): Router {
     "/meditations",
     asyncHandler(async (_req, res) => {
       const { Meditation } = getDb();
+      const benevolentUser = await getOrCreateBenevolentUser();
       const meditations = await Meditation.findAll({ order: [["createdAt", "DESC"]] });
-      res.json({ meditations });
+      res.json({
+        meditations: meditations.map((meditation) =>
+          serializeAdminMeditationRow(meditation, benevolentUser.id),
+        ),
+      });
+    }),
+  );
+
+  router.patch(
+    "/meditations/:id/metadata",
+    asyncHandler(async (req, res) => {
+      const meditationId = Number(req.params.id);
+      if (!Number.isFinite(meditationId)) {
+        throw new AppError(400, "VALIDATION_ERROR", "Meditation id must be numeric");
+      }
+
+      const contentType = req.headers["content-type"];
+      if (contentType && !req.is("application/json")) {
+        throw new AppError(400, "VALIDATION_ERROR", "Request body must be JSON");
+      }
+
+      if (
+        req.body === undefined ||
+        req.body === null ||
+        typeof req.body !== "object" ||
+        Array.isArray(req.body)
+      ) {
+        throw new AppError(400, "VALIDATION_ERROR", "Request body must be a JSON object");
+      }
+
+      const body = req.body as Record<string, unknown>;
+      for (const key of Object.keys(body)) {
+        if (!ADMIN_MEDITATION_METADATA_FIELDS.includes(key as typeof ADMIN_MEDITATION_METADATA_FIELDS[number])) {
+          throw new AppError(400, "UNKNOWN_FIELD", `Unknown metadata field: ${key}`);
+        }
+      }
+
+      const hasAtLeastOneField = ADMIN_MEDITATION_METADATA_FIELDS.some((key) => key in body);
+      if (!hasAtLeastOneField) {
+        throw new AppError(400, "VALIDATION_ERROR", "At least one metadata field must be provided");
+      }
+
+      const { Meditation } = getDb();
+      const meditation = await Meditation.findByPk(meditationId);
+      if (!meditation) {
+        throw new AppError(404, "NOT_FOUND", "Meditation not found");
+      }
+
+      const benevolentUser = await getOrCreateBenevolentUser();
+      if (meditation.userId !== benevolentUser.id) {
+        logger.warn("admin.benevolent_meditation_metadata_update_rejected", {
+          reason: "benevolent_owner_required",
+          actorId: req.user!.id,
+          actorEmail: req.user!.email,
+          meditationId: meditation.id,
+          targetOwnerUserId: meditation.userId,
+        });
+        throw new AppError(
+          409,
+          "BENEVOLENT_OWNER_REQUIRED",
+          "Only benevolent-owned meditations can be edited by admins",
+        );
+      }
+
+      if ((meditation.stage ?? "library") !== "library") {
+        logger.warn("admin.benevolent_meditation_metadata_update_rejected", {
+          reason: "stage_not_eligible",
+          actorId: req.user!.id,
+          actorEmail: req.user!.email,
+          meditationId: meditation.id,
+          stage: meditation.stage ?? "library",
+        });
+        throw new AppError(
+          409,
+          "STAGE_NOT_ELIGIBLE",
+          "Only library meditations can be edited by admins",
+        );
+      }
+
+      const updates: {
+        title?: string;
+        description?: string | null;
+        visibility?: "public" | "private";
+      } = {};
+      if ("title" in body) {
+        updates.title = ensureString(body.title, "title");
+      }
+      if ("description" in body) {
+        updates.description = normalizeOptionalDescription(body.description);
+      }
+      if ("visibility" in body) {
+        updates.visibility = normalizeVisibility(body.visibility);
+      }
+
+      const previous = {
+        title: meditation.title,
+        description: meditation.description ?? null,
+        visibility: meditation.visibility,
+      };
+
+      if (updates.title !== undefined) {
+        meditation.title = updates.title;
+      }
+      if ("description" in updates) {
+        meditation.description = updates.description ?? null;
+      }
+      if (updates.visibility !== undefined) {
+        meditation.visibility = updates.visibility;
+      }
+
+      await meditation.save();
+
+      logger.info("admin.benevolent_meditation_metadata_update", {
+        actorId: req.user!.id,
+        actorEmail: req.user!.email,
+        actorIsAdmin: req.user!.isAdmin,
+        meditationId: meditation.id,
+        targetOwnerUserId: meditation.userId,
+        targetOwnerEmail: BENEVOLENT_USER_EMAIL,
+        previous,
+        next: {
+          title: meditation.title,
+          description: meditation.description ?? null,
+          visibility: meditation.visibility,
+        },
+        request: {
+          ip: req.ip,
+          userAgent: req.headers["user-agent"] ?? null,
+        },
+        timestamp: new Date().toISOString(),
+      });
+
+      res.json({
+        message: "Meditation metadata updated",
+        meditation: serializeAdminMeditationRow(meditation, benevolentUser.id),
+      });
     }),
   );
 

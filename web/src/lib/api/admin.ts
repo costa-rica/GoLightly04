@@ -1,5 +1,7 @@
 import type {
   AdminDeleteMeditationResponse,
+  AdminUpdateMeditationMetadataRequest,
+  AdminUpdateMeditationMetadataResponse,
   DeleteQueueRecordResponse,
   DeleteUserResponse,
   GetAllAdminMeditationsResponse,
@@ -11,6 +13,7 @@ import type {
 import apiClient from "./client";
 
 export type {
+  AdminMeditation,
   AdminUser,
   GetQueuerResponse,
   GetUsersResponse,
@@ -48,6 +51,17 @@ export const deleteMeditationObj = async (
 ): Promise<AdminDeleteMeditationResponse> => {
   const response = await apiClient.delete<AdminDeleteMeditationResponse>(
     `/admin/meditations/${meditationId}`,
+  );
+  return response.data;
+};
+
+export const updateAdminMeditationMetadata = async (
+  meditationId: number,
+  data: AdminUpdateMeditationMetadataRequest,
+): Promise<AdminUpdateMeditationMetadataResponse> => {
+  const response = await apiClient.patch<AdminUpdateMeditationMetadataResponse>(
+    `/admin/meditations/${meditationId}/metadata`,
+    data,
   );
   return response.data;
 };

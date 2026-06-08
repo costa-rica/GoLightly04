@@ -13,8 +13,10 @@ import ModalConfirmDelete from "@/components/modals/ModalConfirmDelete";
 import ModalConfirmCascadeDelete from "@/components/modals/ModalConfirmCascadeDelete";
 import ModalConfirmDeleteUser from "@/components/modals/ModalConfirmDeleteUser";
 import ModalConfirmRestore from "@/components/modals/ModalConfirmRestore";
+import ModalEditAdminMeditation from "@/components/modals/ModalEditAdminMeditation";
 import Toast from "@/components/Toast";
 import {
+  type AdminMeditation,
   deleteMeditationObj,
   deleteQueuerRecord,
   deleteUser,
@@ -24,8 +26,8 @@ import {
   requeueMeditation,
   type AdminUser,
   type QueueRecord,
+  updateAdminMeditationMetadata,
 } from "@/lib/api/admin";
-import type { Meditation } from "@/store/features/meditationSlice";
 import {
   deleteSoundFile,
   getSoundFiles,
@@ -40,7 +42,10 @@ import {
   replenishDatabase,
   type BackupFile,
 } from "@/lib/api/database";
-import type { BackupSizeEstimateResponse } from "@golightly/shared-types";
+import type {
+  AdminUpdateMeditationMetadataRequest,
+  BackupSizeEstimateResponse,
+} from "@golightly/shared-types";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hideLoading, showLoading } from "@/store/features/uiSlice";
 
@@ -70,12 +75,15 @@ export default function AdminPage() {
   const [isSoundDeleting, setIsSoundDeleting] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isMeditationsExpanded, setIsMeditationsExpanded] = useState(false);
-  const [meditations, setMeditations] = useState<Meditation[]>([]);
+  const [meditations, setMeditations] = useState<AdminMeditation[]>([]);
   const [meditationsLoading, setMeditationsLoading] = useState(false);
   const [meditationsError, setMeditationsError] = useState<string | null>(null);
   const [meditationDeleteTarget, setMeditationDeleteTarget] =
-    useState<Meditation | null>(null);
+    useState<AdminMeditation | null>(null);
+  const [meditationEditTarget, setMeditationEditTarget] =
+    useState<AdminMeditation | null>(null);
   const [isMeditationDeleting, setIsMeditationDeleting] = useState(false);
+  const [isMeditationSaving, setIsMeditationSaving] = useState(false);
   const [isQueuerExpanded, setIsQueuerExpanded] = useState(false);
   const [queueRecords, setQueueRecords] = useState<QueueRecord[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
@@ -301,6 +309,25 @@ export default function AdminPage() {
       setToast({ message, variant: "error" });
     } finally {
       setIsMeditationDeleting(false);
+    }
+  };
+
+  const handleMeditationMetadataSave = async (
+    meditationId: number,
+    data: AdminUpdateMeditationMetadataRequest,
+  ) => {
+    setIsMeditationSaving(true);
+    try {
+      const response = await updateAdminMeditationMetadata(meditationId, data);
+      setMeditations((prev) =>
+        prev.map((item) =>
+          item.id === response.meditation.id ? response.meditation : item,
+        ),
+      );
+      setToast({ message: "Meditation updated.", variant: "success" });
+      setMeditationEditTarget(null);
+    } finally {
+      setIsMeditationSaving(false);
     }
   };
 
@@ -699,6 +726,7 @@ export default function AdminPage() {
                 {!meditationsLoading && !meditationsError && (
                   <TableAdminMeditations
                     meditations={meditations}
+                    onEdit={(target) => setMeditationEditTarget(target)}
                     onDelete={(target) => setMeditationDeleteTarget(target)}
                   />
                 )}
@@ -996,6 +1024,12 @@ export default function AdminPage() {
         isLoading={isMeditationDeleting}
         onClose={() => setMeditationDeleteTarget(null)}
         onConfirm={handleMeditationDeleteConfirm}
+      />
+      <ModalEditAdminMeditation
+        meditation={meditationEditTarget}
+        isSubmitting={isMeditationSaving}
+        onClose={() => setMeditationEditTarget(null)}
+        onSave={handleMeditationMetadataSave}
       />
       <ModalConfirmCascadeDelete
         isOpen={!!queueDeleteTarget}

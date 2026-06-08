@@ -1,4 +1,4 @@
-import type { Meditation } from "./meditation";
+import type { Meditation, MeditationVisibility } from "./meditation";
 
 export type AdminUser = {
   id: number;
@@ -22,13 +22,28 @@ export type DeleteUserResponse = {
   userId: number;
 };
 
+export type AdminMeditation = Meditation & {
+  isBenevolentOwned: boolean;
+};
+
 export type GetAllAdminMeditationsResponse = {
-  meditations: Meditation[];
+  meditations: AdminMeditation[];
 };
 
 export type AdminDeleteMeditationResponse = {
   message: string;
   meditationId: number;
+};
+
+export type AdminUpdateMeditationMetadataRequest = {
+  title?: string;
+  description?: string;
+  visibility?: MeditationVisibility;
+};
+
+export type AdminUpdateMeditationMetadataResponse = {
+  message: string;
+  meditation: AdminMeditation;
 };
 
 export type QueueRecord = {
