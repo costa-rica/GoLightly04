@@ -15,6 +15,7 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isRegisterOpen, setIsRegisterOpen] = useState(false)
+  const formyUrl = process.env.NEXT_PUBLIC_URL_TO_FORMY?.trim()
   const [verificationError, setVerificationError] = useState<{
     title: string
     message: string
@@ -67,15 +68,19 @@ export default function AppShell({ children }: AppShellProps) {
               >
                 Contact Us
               </a>
-              <span className="text-slate-400 dark:text-calm-600">|</span>
-              <a
-                className="hover:text-slate-700 transition-colors dark:hover:text-calm-200"
-                href="https://formy.go-lightly.love"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Help Us Improve
-              </a>
+              {formyUrl ? (
+                <>
+                  <span className="text-slate-400 dark:text-calm-600">|</span>
+                  <a
+                    className="hover:text-slate-700 transition-colors dark:hover:text-calm-200"
+                    href={formyUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Help Us Improve
+                  </a>
+                </>
+              ) : null}
             </div>
           </div>
         </footer>
