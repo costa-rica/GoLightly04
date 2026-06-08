@@ -2,21 +2,23 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { Meditation } from "@/store/features/meditationSlice";
+import type { AdminMeditation } from "@/lib/api/admin";
 import { formatDateTime, formatDurationOrDash } from "@/lib/utils/formatters";
 
 import AdminTable from "./AdminTable";
 
 type TableAdminMeditationsProps = {
-  meditations: Meditation[];
-  onDelete: (meditation: Meditation) => void;
+  meditations: AdminMeditation[];
+  onEdit: (meditation: AdminMeditation) => void;
+  onDelete: (meditation: AdminMeditation) => void;
 };
 
 export default function TableAdminMeditations({
   meditations,
+  onEdit,
   onDelete,
 }: TableAdminMeditationsProps) {
-  const columns: ColumnDef<Meditation>[] = [
+  const columns: ColumnDef<AdminMeditation>[] = [
     { accessorKey: "id", header: "ID" },
     { accessorKey: "title", header: "Title" },
     {
@@ -42,18 +44,34 @@ export default function TableAdminMeditations({
       cell: ({ row }) => formatDateTime(row.original.createdAt),
     },
     {
-      id: "delete",
-      header: "Delete",
+      id: "actions",
+      header: "Actions",
       enableSorting: false,
-      cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => onDelete(row.original)}
-          className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500 dark:border-red-500/40 dark:text-red-300"
-        >
-          Delete
-        </button>
-      ),
+      cell: ({ row }) => {
+        const canEdit =
+          row.original.isBenevolentOwned && row.original.stage === "library";
+
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(row.original)}
+                className="rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:border-primary-300 dark:border-primary-500/40 dark:text-primary-200"
+              >
+                Edit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onDelete(row.original)}
+              className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-500 dark:border-red-500/40 dark:text-red-300"
+            >
+              Delete
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
