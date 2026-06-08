@@ -84,12 +84,70 @@ describe("safeRestoreResources", () => {
     expect(warnSpy).toHaveBeenCalledTimes(2);
   });
 
-  it("overwrites existing files", async () => {
+  it("overwrites existing files through a temporary sibling and rename", async () => {
+    const realCopyFile = fs.copyFile.bind(fs);
+    const realRename = fs.rename.bind(fs);
+    const copyFileSpy = jest.spyOn(fs, "copyFile").mockImplementation(realCopyFile);
+    const renameSpy = jest.spyOn(fs, "rename").mockImplementation(realRename);
     await fs.mkdir(path.join(tempDir, "resources"), { recursive: true });
     await fs.writeFile(path.join(tempDir, "resources", "same.txt"), "new");
-    await fs.writeFile(path.join(destRoot, "same.txt"), "old");
+    const destPath = path.join(destRoot, "same.txt");
+    await fs.writeFile(destPath, "old");
 
     await expect(safeRestoreResources(tempDir, destRoot)).resolves.toBe(1);
-    await expect(fs.readFile(path.join(destRoot, "same.txt"), "utf8")).resolves.toBe("new");
+    await expect(fs.readFile(destPath, "utf8")).resolves.toBe("new");
+
+    expect(copyFileSpy).toHaveBeenCalledTimes(1);
+    const [, tempPath] = copyFileSpy.mock.calls[0];
+    expect(tempPath).not.toBe(destPath);
+    expect(path.dirname(tempPath.toString())).toBe(destRoot);
+
+    expect(renameSpy).toHaveBeenCalledWith(tempPath, destPath);
+    expect(copyFileSpy.mock.invocationCallOrder[0]).toBeLessThan(
+      renameSpy.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("preserves an existing file when copying to the temporary file fails", async () => {
+    const copyError = new Error("copy failed");
+    jest.spyOn(logger, "error").mockImplementation(() => logger);
+    const copyFileSpy = jest.spyOn(fs, "copyFile").mockImplementationOnce(async (_src, dest) => {
+      await fs.writeFile(dest, "partial");
+      throw copyError;
+    });
+    await fs.mkdir(path.join(tempDir, "resources"), { recursive: true });
+    await fs.writeFile(path.join(tempDir, "resources", "same.txt"), "new");
+    const destPath = path.join(destRoot, "same.txt");
+    await fs.writeFile(destPath, "old");
+
+    await expect(safeRestoreResources(tempDir, destRoot)).rejects.toBe(copyError);
+
+    await expect(fs.readFile(destPath, "utf8")).resolves.toBe("old");
+    await expect(fs.readdir(destRoot)).resolves.toEqual(["same.txt"]);
+    expect(copyFileSpy).toHaveBeenCalledTimes(1);
+    expect(copyFileSpy.mock.calls[0][1]).not.toBe(destPath);
+  });
+
+  it("logs copy failures with production-safe context", async () => {
+    const copyError = new Error("operation not permitted");
+    const errorSpy = jest.spyOn(logger, "error").mockImplementation(() => logger);
+    const copyFileSpy = jest.spyOn(fs, "copyFile").mockRejectedValueOnce(copyError);
+    await fs.mkdir(path.join(tempDir, "resources", "audio"), { recursive: true });
+    await fs.writeFile(path.join(tempDir, "resources", "audio", "file.mp3"), "sound");
+
+    await expect(safeRestoreResources(tempDir, destRoot)).rejects.toBe(copyError);
+
+    expect(copyFileSpy).toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(
+      "safeRestoreResources: resource copy failed",
+      expect.objectContaining({
+        error: copyError,
+        sourcePath: path.join(tempDir, "resources", "audio", "file.mp3"),
+        destPath: path.join(destRoot, "audio", "file.mp3"),
+        tempDestPath: expect.stringContaining(".file.mp3."),
+        relPath: path.join("audio", "file.mp3"),
+        tempCleanupError: null,
+      }),
+    );
   });
 });

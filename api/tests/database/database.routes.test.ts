@@ -5,6 +5,7 @@ import archiver from "archiver";
 import request from "supertest";
 import { buildApp } from "../../src/app";
 import { issueAccessToken } from "../../src/lib/authTokens";
+import { toCsv } from "../../src/lib/csv";
 
 const usersModel = {
   findAll: jest.fn(),
@@ -226,5 +227,74 @@ describe("database routes", () => {
     await expect(
       fs.access(path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db", "old.zip")),
     ).rejects.toThrow();
+  });
+
+  it("restores meditations with multiline script source CSV fields", async () => {
+    const scriptSource = 'inhale\nhold, softly\nexhale with "release"';
+    const restoreZip = await createRestoreZip({
+      "meditations.csv": toCsv([
+        {
+          id: 7,
+          userId: 1,
+          title: "Breath",
+          description: "A short practice",
+          meditationArray: [{ type: "text", text: "inhale" }],
+          filename: "",
+          filePath: "",
+          visibility: "private",
+          stage: "library",
+          sourceMode: "script",
+          scriptSource,
+          status: "complete",
+          listenCount: 0,
+          durationSeconds: 120,
+          createdAt: "2026-06-07T00:00:00.000Z",
+          updatedAt: "2026-06-07T00:00:00.000Z",
+        },
+      ]),
+    });
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", restoreZip, "restore.zip");
+
+    expect(response.status).toBe(200);
+    expect(meditationsModel.bulkCreate).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: "7",
+          meditationArray: [{ type: "text", text: "inhale" }],
+          scriptSource,
+        }),
+      ],
+      expect.objectContaining({ validate: false }),
+    );
+    expect(response.body.rowsImported.meditations).toBe(1);
+  });
+
+  it("reports resource restore copy failures instead of treating them as manifest misses", async () => {
+    const copyError = new Error("operation not permitted");
+    const copyFileSpy = jest.spyOn(fs, "copyFile").mockRejectedValueOnce(copyError);
+    const restoreZip = await createRestoreZip({
+      "manifest.json": JSON.stringify({
+        created_at: "2026-06-07T00:00:00.000Z",
+        app: "GoLightly04",
+        environment: "production",
+        package_type: "db_and_resources",
+        database_tables: ["users"],
+      }),
+      "resources/audio/file.mp3": "sound",
+    });
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", restoreZip, "restore.zip");
+
+    expect(response.status).toBe(500);
+    expect(response.body.error.code).toBe("RESOURCE_RESTORE_ERROR");
+    expect(copyFileSpy).toHaveBeenCalled();
+    expect(sequelizeMock.transaction).not.toHaveBeenCalled();
   });
 });

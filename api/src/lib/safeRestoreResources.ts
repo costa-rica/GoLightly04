@@ -1,9 +1,16 @@
+import { randomUUID } from "crypto";
 import fsPromises from "fs/promises";
 import path from "path";
 
 import { logger } from "../config/logger";
 
 const EXCLUDED_RESTORE_DIRS = ["backups_db", "backups_db_and_data"];
+
+function createTempSiblingPath(destPath: string): string {
+  const destDir = path.dirname(destPath);
+  const destName = path.basename(destPath);
+  return path.join(destDir, `.${destName}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`);
+}
 
 export async function safeRestoreResources(
   tempDir: string,
@@ -70,7 +77,27 @@ export async function safeRestoreResources(
       }
 
       await fsPromises.mkdir(path.dirname(destPath), { recursive: true });
-      await fsPromises.copyFile(resolvedSrc, destPath);
+      const tempDestPath = createTempSiblingPath(destPath);
+      try {
+        await fsPromises.copyFile(resolvedSrc, tempDestPath);
+        await fsPromises.rename(tempDestPath, destPath);
+      } catch (error) {
+        let tempCleanupError: unknown = null;
+        try {
+          await fsPromises.rm(tempDestPath, { force: true });
+        } catch (cleanupError) {
+          tempCleanupError = cleanupError;
+        }
+        logger.error("safeRestoreResources: resource copy failed", {
+          error,
+          sourcePath: resolvedSrc,
+          destPath,
+          tempDestPath,
+          relPath,
+          tempCleanupError,
+        });
+        throw error;
+      }
       restoredCount++;
     }
   }

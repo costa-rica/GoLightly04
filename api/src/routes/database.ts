@@ -233,20 +233,15 @@ export function buildDatabaseRouter(): Router {
 
         let resourcesRestored = false;
         let resourceFilesRestored = 0;
+        let manifest: ManifestFile | null = null;
         try {
           const manifestRaw = await fsPromises.readFile(
             path.join(tempDir, "manifest.json"),
             "utf8",
           );
-          const manifest = JSON.parse(manifestRaw) as unknown;
-          if (isValidManifest(manifest)) {
-            if (manifest.package_type === "db_and_resources") {
-              resourceFilesRestored = await safeRestoreResources(
-                tempDir,
-                readApiEnv().PATH_PROJECT_RESOURCES,
-              );
-              resourcesRestored = true;
-            }
+          const parsedManifest = JSON.parse(manifestRaw) as unknown;
+          if (isValidManifest(parsedManifest)) {
+            manifest = parsedManifest;
           } else {
             logger.warn("Restore manifest is invalid; continuing with DB-only restore");
           }
@@ -254,6 +249,23 @@ export function buildDatabaseRouter(): Router {
           logger.warn("Restore manifest missing or unreadable; continuing with DB-only restore", {
             error,
           });
+        }
+
+        if (manifest?.package_type === "db_and_resources") {
+          try {
+            resourceFilesRestored = await safeRestoreResources(
+              tempDir,
+              readApiEnv().PATH_PROJECT_RESOURCES,
+            );
+            resourcesRestored = true;
+          } catch (error) {
+            logger.error("Restore resource copy failed", { error });
+            throw new AppError(
+              500,
+              "RESOURCE_RESTORE_ERROR",
+              "Unable to restore resource files",
+            );
+          }
         }
 
         const tableModelMap = getTableModelMap();
