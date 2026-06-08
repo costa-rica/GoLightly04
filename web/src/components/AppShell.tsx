@@ -12,10 +12,35 @@ type AppShellProps = {
   children: React.ReactNode
 }
 
+type Theme = 'light' | 'dark'
+
+const THEME_STORAGE_KEY = 'golightly.theme'
+const DEFAULT_THEME: Theme = 'light'
+
+function getCurrentTheme(): Theme {
+  if (typeof window === 'undefined') {
+    return DEFAULT_THEME
+  }
+
+  try {
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+    return storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : DEFAULT_THEME
+  } catch {
+    return DEFAULT_THEME
+  }
+}
+
+function withThemeParam(rawUrl: string, theme: Theme): string {
+  const url = new URL(rawUrl, window.location.origin)
+  url.searchParams.set('theme', theme)
+  return url.toString()
+}
+
 export default function AppShell({ children }: AppShellProps) {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isRegisterOpen, setIsRegisterOpen] = useState(false)
   const formyUrl = process.env.NEXT_PUBLIC_URL_TO_FORMY?.trim()
+  const [formyThemedUrl, setFormyThemedUrl] = useState(formyUrl || '')
   const [verificationError, setVerificationError] = useState<{
     title: string
     message: string
@@ -50,8 +75,27 @@ export default function AppShell({ children }: AppShellProps) {
     }
   }, [searchParams, router])
 
+  useEffect(() => {
+    if (!formyUrl) {
+      setFormyThemedUrl('')
+      return
+    }
+
+    setFormyThemedUrl(withThemeParam(formyUrl, getCurrentTheme()))
+  }, [formyUrl])
+
   const handleCloseVerificationError = () => {
     setVerificationError(null)
+  }
+
+  const handleFormyClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!formyUrl) {
+      return
+    }
+
+    const nextUrl = withThemeParam(formyUrl, getCurrentTheme())
+    event.currentTarget.href = nextUrl
+    setFormyThemedUrl(nextUrl)
   }
 
   return (
@@ -73,7 +117,8 @@ export default function AppShell({ children }: AppShellProps) {
                   <span className="text-slate-400 dark:text-calm-600">|</span>
                   <a
                     className="hover:text-slate-700 transition-colors dark:hover:text-calm-200"
-                    href={formyUrl}
+                    href={formyThemedUrl}
+                    onClick={handleFormyClick}
                     rel="noreferrer"
                     target="_blank"
                   >
