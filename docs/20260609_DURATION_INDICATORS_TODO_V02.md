@@ -140,7 +140,7 @@ Plan §Worker: population and §Automated verification → worker-node.
 Plan §Backfill script and §Implementation sequence step 7.
 
 **Pre-check (run before writing the script):**
-- [ ] Count complete meditations with zero matching `jobs_queue` rows:
+- [x] Count complete meditations with zero matching `jobs_queue` rows:
   ```sql
   SELECT COUNT(*)
   FROM meditations m
@@ -152,7 +152,7 @@ Plan §Backfill script and §Implementation sequence step 7.
   If this count is unexpectedly high, stop and revisit the V02 §Assumptions and §Risks sections before proceeding. A high count means the backfill will leave many rows unpopulated and the Guidance indicator will show gray for them.
 
 **Implementation:**
-- [ ] Write `scripts/backfill-segment-durations.ts` following the structure of `scripts/backfill-meditation-durations.ts`:
+- [x] Write `scripts/backfill-segment-durations.ts` following the structure of `scripts/backfill-meditation-durations.ts`:
   - Supports `--apply`, `--force`, `--limit`, and `--help` flags.
   - `--help` must print usage information and exit successfully **before** any database initialization; no DB connection is opened when `--help` is passed. This is required so that `npm run backfill:segment-durations -- --help` can be used as a smoke test that does not depend on the DB being reachable.
   - For each `complete` meditation (respecting `--limit`):
@@ -166,20 +166,20 @@ Plan §Backfill script and §Implementation sequence step 7.
   - Print a JSON summary including total processed, total skipped (already populated), and per-category `skippedMissingFile` counts.
   - Call `sequelize.close()` in a `finally` block.
   - Uses `console.*` per the one-shot script exemption in AGENTS.md.
-- [ ] Add the `backfill:segment-durations` entry to the root `package.json` scripts, following the pattern of `backfill:durations` and `backfill:sound-durations`:
+- [x] Add the `backfill:segment-durations` entry to the root `package.json` scripts, following the pattern of `backfill:durations` and `backfill:sound-durations`:
   ```json
   "backfill:segment-durations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/backfill-segment-durations.ts"
   ```
   The script file and the `package.json` change must be committed together.
-- [ ] Run `npm run backfill:segment-durations -- --help` and confirm it prints usage and exits successfully without TypeScript or runtime errors and without opening a DB connection.
-- [ ] Run `npm run typecheck:scripts` and confirm it passes.
+- [x] Run `npm run backfill:segment-durations -- --help` and confirm it prints usage and exits successfully without TypeScript or runtime errors and without opening a DB connection.
+- [x] Run `npm run typecheck:scripts` and confirm it passes.
 
 **Per-phase gate:**
-- [ ] `jobs_queue` pre-check above was run and the result was acceptable
-- [ ] `npm run backfill:segment-durations -- --help` prints usage and exits successfully
-- [ ] `npm run typecheck:scripts` passes
-- [ ] Check off completed items above
-- [ ] Commit `scripts/backfill-segment-durations.ts` and root `package.json` together, referencing this file + Phase 5
+- [x] `jobs_queue` pre-check above was run and the result was acceptable
+- [x] `npm run backfill:segment-durations -- --help` prints usage and exits successfully
+- [x] `npm run typecheck:scripts` passes
+- [x] Check off completed items above
+- [x] Commit `scripts/backfill-segment-durations.ts` and root `package.json` together, referencing this file + Phase 5
 
 ---
 
