@@ -1,6 +1,6 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-05-14
+updated_at: 2026-06-09
 created_by: codex (gpt-5)
 modified_by: codex (gpt-5)
 ---
@@ -26,6 +26,7 @@ Most tables define `createdAt` and `updatedAt` model attributes mapped to `creat
 | `is_email_verified` | BOOLEAN | NOT NULL, DEFAULT `false` | Email verification flag. |
 | `email_verified_at` | DATE | NULL | Verification timestamp. |
 | `is_admin` | BOOLEAN | NOT NULL, DEFAULT `false` | Admin permission flag. |
+| `show_script_mode_for_creating_meditations` | BOOLEAN | NOT NULL, DEFAULT `false` | Profile preference that enables script-mode meditation creation. |
 | `created_at` | DATE | NOT NULL | Sequelize timestamp. |
 | `updated_at` | DATE | NOT NULL | Sequelize timestamp. |
 
@@ -47,6 +48,7 @@ Most tables define `createdAt` and `updatedAt` model attributes mapped to `creat
 | `name` | TEXT | NOT NULL | Display name for an uploaded sound. |
 | `description` | TEXT | NULL | Optional catalog description. |
 | `filename` | TEXT | NOT NULL | Filename under `prerecorded_audio`. |
+| `duration_seconds` | INTEGER | NULL | Optional audio duration in seconds. |
 | `created_at` | DATE | NOT NULL | Sequelize timestamp. |
 | `updated_at` | DATE | NOT NULL | Sequelize timestamp. |
 
@@ -69,8 +71,12 @@ Most tables define `createdAt` and `updatedAt` model attributes mapped to `creat
 | `filename` | TEXT | NULL | Final generated audio filename. |
 | `file_path` | TEXT | NULL | Final generated audio path. |
 | `visibility` | ENUM(`public`, `private`) | NOT NULL, DEFAULT `public` | Public/private access flag. |
+| `stage` | ENUM(`template`, `staged`, `library`) | NOT NULL, DEFAULT `library` | Lifecycle stage for template, in-progress, or saved library meditations. |
+| `source_mode` | VARCHAR(16) | NOT NULL, DEFAULT `spreadsheet` | Source creation mode; app code uses `spreadsheet` or `script`. |
+| `script_source` | TEXT | NULL | Original script text for script-created meditations. |
 | `status` | ENUM(`pending`, `processing`, `complete`, `failed`) | NOT NULL, DEFAULT `pending` | Audio generation state. |
 | `listen_count` | INTEGER | NOT NULL, DEFAULT `0` | Playback count. |
+| `duration_seconds` | INTEGER | NULL | Optional final audio duration in seconds. |
 | `created_at` | DATE | NOT NULL | Sequelize timestamp. |
 | `updated_at` | DATE | NOT NULL | Sequelize timestamp. |
 
