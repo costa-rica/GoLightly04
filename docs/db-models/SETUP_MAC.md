@@ -55,6 +55,7 @@ Two notes on the grants below:
 
 - **`GRANT CREATE ON SCHEMA public`** is required because PostgreSQL 15+ no longer grants `CREATE` on `public` to all roles automatically. Without it, the boot role cannot create ENUM types or tables during `provisionDatabase()`.
 - **`ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot`** — the `FOR ROLE` clause is required. Without it the default privileges only cover objects created by your current superuser, not by the boot role.
+- The restore route runs through `golightly04_app`, so that role also needs `TRUNCATE` on tables and `UPDATE` on sequences.
 
 Run this block for each project database:
 
@@ -63,28 +64,34 @@ Run this block for each project database:
 GRANT CREATE ON SCHEMA public TO golightly04_boot;
 GRANT CONNECT ON DATABASE golightly04_dev TO golightly04_app;
 GRANT USAGE ON SCHEMA public TO golightly04_app;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO golightly04_app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO golightly04_app;
+  GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO golightly04_app;
 
 \c golightly04_test
 GRANT CREATE ON SCHEMA public TO golightly04_boot;
 GRANT CONNECT ON DATABASE golightly04_test TO golightly04_app;
 GRANT USAGE ON SCHEMA public TO golightly04_app;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO golightly04_app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO golightly04_app;
+  GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO golightly04_app;
 
 \c golightly_test
 GRANT CREATE ON SCHEMA public TO golightly04_boot;
 GRANT CONNECT ON DATABASE golightly_test TO golightly04_app;
 GRANT USAGE ON SCHEMA public TO golightly04_app;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO golightly04_app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO golightly04_app;
+  GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO golightly04_app;
 ```
 
 ### 4. Configure password-less local access (pg_hba.conf)
@@ -272,10 +279,12 @@ psql golightly04_dev
 GRANT CREATE ON SCHEMA public TO golightly04_boot;
 GRANT CONNECT ON DATABASE golightly04_dev TO golightly04_app;
 GRANT USAGE ON SCHEMA public TO golightly04_app;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO golightly04_app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO golightly04_app;
+  GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO golightly04_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO golightly04_app;
 
 SELECT
   has_schema_privilege('golightly04_boot', 'public', 'CREATE') AS boot_can_create,
