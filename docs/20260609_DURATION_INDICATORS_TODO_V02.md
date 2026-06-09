@@ -112,7 +112,7 @@ Plan §API: serializers and §API: reset on rebuild.
 
 Plan §Worker: population and §Automated verification → worker-node.
 
-- [ ] Extend `concatenateMeditation()` in `worker-node/src/services/concatenator.ts`:
+- [x] Extend `concatenateMeditation()` in `worker-node/src/services/concatenator.ts`:
   - Declare three accumulators before the job loop: `talkingTotal`, `pauseTotal`, `soundTotal` (all start at 0).
   - In the loop (alongside existing `normalizedFiles` accumulation), for each job by type:
     - **Text jobs:** call `probeDurationSeconds()` on the normalized temp file at `target`; add the result to `talkingTotal`.
@@ -125,13 +125,13 @@ Plan §Worker: population and §Automated verification → worker-node.
     durationSecondsSound:   soundTotal,
     ```
   - If concatenation throws before reaching `meditation.update()`, the three fields are not written; this is correct behavior.
-- [ ] Add a unit test for the accumulation logic: construct a synthetic job list with known text, pause, and sound entries; stub or inject `probeDurationSeconds` rather than invoking real ffprobe; assert that the three totals written to `meditation.update()` match the expected values.
+- [x] Add a unit test for the accumulation logic: construct a synthetic job list with known text, pause, and sound entries; stub or inject `probeDurationSeconds` rather than invoking real ffprobe; assert that the three totals written to `meditation.update()` match the expected values.
 
 **Per-phase gate:**
-- [ ] `npm run typecheck -w @golightly/worker-node` passes
-- [ ] `npm test -w @golightly/worker-node` passes (accumulation unit test green, no regressions)
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 4
+- [x] `npm run typecheck -w @golightly/worker-node` passes
+- [x] `npm test -w @golightly/worker-node` passes (accumulation unit test green, no regressions)
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 4
 
 ---
 

@@ -97,6 +97,9 @@ export async function concatenateMeditation(meditationId: number) {
 
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "golightly-worker-"));
   const normalizedFiles: string[] = [];
+  let talkingTotal = 0;
+  let pauseTotal = 0;
+  let soundTotal = 0;
 
   try {
     for (const job of jobs) {
@@ -111,14 +114,28 @@ export async function concatenateMeditation(meditationId: number) {
           throw new Error(`Missing synthesized file for job ${job.id}`);
         }
         await normalizeAudio(job.filePath, target);
+        const duration = await probeDurationSeconds(target);
+        if (duration === null) {
+          logger.warn(`ffprobe failed for text job ${job.id} at ${target}; counting 0 seconds`);
+        } else {
+          talkingTotal += duration;
+        }
       } else if (job.type === "sound") {
         const soundPath = path.join(
           getPrerecordedAudioRoot(),
           String(inputData.sound_file ?? ""),
         );
         await normalizeAudio(soundPath, target);
+        const duration = await probeDurationSeconds(target);
+        if (duration === null) {
+          logger.warn(`ffprobe failed for sound job ${job.id} at ${target}; counting 0 seconds`);
+        } else {
+          soundTotal += duration;
+        }
       } else {
-        await createSilentSegment(Number(inputData.pause_duration ?? 0), target);
+        const pauseSeconds = Math.round(Number(inputData.pause_duration ?? 0));
+        pauseTotal += pauseSeconds;
+        await createSilentSegment(pauseSeconds, target);
       }
 
       normalizedFiles.push(target);
@@ -141,6 +158,9 @@ export async function concatenateMeditation(meditationId: number) {
       filename,
       filePath: destination,
       durationSeconds,
+      durationSecondsTalking: talkingTotal,
+      durationSecondsPause: pauseTotal,
+      durationSecondsSound: soundTotal,
     });
 
     return destination;
