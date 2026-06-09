@@ -2,7 +2,7 @@
 created_at: 2026-06-09
 updated_at: 2026-06-09
 created_by: claude (sonnet)
-modified_by: claude (sonnet)
+modified_by: codex (gpt-5)
 ---
 
 # TODO: Duration Indicators
@@ -30,23 +30,23 @@ Execution checklist for the design in [20260609_DURATION_INDICATORS_PLAN_V02.md]
 
 Plan §Database.
 
-- [ ] Create `db-models/migrations/20260609_add_duration_seconds_segments.sql` following the pattern of `20260518_add_duration_seconds.sql`:
+- [x] Create `db-models/migrations/20260609_add_duration_seconds_segments.sql` following the pattern of `20260518_add_duration_seconds.sql`:
   ```sql
   ALTER TABLE meditations
     ADD COLUMN IF NOT EXISTS duration_seconds_talking INTEGER NULL,
     ADD COLUMN IF NOT EXISTS duration_seconds_pause   INTEGER NULL,
     ADD COLUMN IF NOT EXISTS duration_seconds_sound   INTEGER NULL;
   ```
-- [ ] Apply the migration to the **development** environment: `psql -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DATABASE -f db-models/migrations/20260609_add_duration_seconds_segments.sql`
-- [ ] Verify all three columns exist in the `meditations` table in development (e.g., `\d meditations` in psql).
-- [ ] Apply the migration to the **production** environment using the same command against the production connection.
-- [ ] Verify all three columns exist in production.
+- [x] Apply the migration to the **development** environment: `psql -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DATABASE -f db-models/migrations/20260609_add_duration_seconds_segments.sql`
+- [x] Verify all three columns exist in the `meditations` table in development (e.g., `\d meditations` in psql).
+- [x] Apply the migration to the **production** environment using the same command against the production connection.
+- [x] Verify all three columns exist in production.
 
 **Per-phase gate:**
-- [ ] Migration file created at the correct path
-- [ ] Columns confirmed present in development environment
-- [ ] Columns confirmed present in production environment
-- [ ] Commit the migration file (and only the migration file) referencing this file + Phase 1
+- [x] Migration file created at the correct path
+- [x] Columns confirmed present in development environment
+- [x] Columns confirmed present in production environment
+- [x] Commit the migration file (and only the migration file) referencing this file + Phase 1
 
 ---
 
@@ -56,11 +56,11 @@ Plan §Database.
 
 Plan §Model and §Shared types.
 
-- [ ] Update `db-models/src/models/Meditation.ts`: add three fields following the `durationSeconds` pattern at line 100. Each field: `DataTypes.INTEGER`, `allowNull: true`, with a `field:` entry mapping to its snake_case column name:
+- [x] Update `db-models/src/models/Meditation.ts`: add three fields following the `durationSeconds` pattern at line 100. Each field: `DataTypes.INTEGER`, `allowNull: true`, with a `field:` entry mapping to its snake_case column name:
   - `durationSecondsTalking` → `duration_seconds_talking`
   - `durationSecondsPause` → `duration_seconds_pause`
   - `durationSecondsSound` → `duration_seconds_sound`
-- [ ] Update `shared-types/src/meditation.ts`: add three optional nullable number fields to the `Meditation` type:
+- [x] Update `shared-types/src/meditation.ts`: add three optional nullable number fields to the `Meditation` type:
   ```typescript
   durationSecondsTalking?: number | null;
   durationSecondsPause?: number | null;
@@ -69,11 +69,11 @@ Plan §Model and §Shared types.
   No changes to `web/src/store/features/meditationSlice.ts` are needed — it re-exports `Meditation` directly from `@golightly/shared-types`.
 
 **Per-phase gate:**
-- [ ] `npm run typecheck -w @golightly/db-models` passes
-- [ ] `npm run typecheck -w @golightly/shared-types` passes
-- [ ] (Equivalently: `npm run typecheck:shared` at repo root passes)
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 2
+- [x] `npm run typecheck -w @golightly/db-models` passes
+- [x] `npm run typecheck -w @golightly/shared-types` passes
+- [x] (Equivalently: `npm run typecheck:shared` at repo root passes)
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 2
 
 ---
 
