@@ -28,7 +28,7 @@ import { createOrRegenerateStagedMeditation } from "../services/meditations/crea
 import { saveStagedToLibrary } from "../services/meditations/saveStagedToLibrary";
 import { assertMeditationAccess } from "../services/meditations/assertMeditationAccess";
 
-function mapMeditationRecord(
+export function mapMeditationRecord(
   meditation: any,
   options: {
     isFavorite?: boolean;
@@ -56,6 +56,9 @@ function mapMeditationRecord(
     updatedAt: meditation.updatedAt instanceof Date ? meditation.updatedAt.toISOString() : meditation.updatedAt,
     listenCount: meditation.listenCount,
     durationSeconds: meditation.durationSeconds ?? null,
+    durationSecondsTalking: meditation.durationSecondsTalking ?? null,
+    durationSecondsPause: meditation.durationSecondsPause ?? null,
+    durationSecondsSound: meditation.durationSecondsSound ?? null,
     status: meditation.status,
     isFavorite: options.isFavorite,
     isOwned: options.isOwned,

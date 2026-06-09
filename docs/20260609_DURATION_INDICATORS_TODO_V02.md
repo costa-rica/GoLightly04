@@ -82,29 +82,29 @@ Plan §Model and §Shared types.
 Plan §API: serializers and §API: reset on rebuild.
 
 **Serializers:**
-- [ ] Update `mapMeditationRecord()` in `api/src/routes/meditations.ts` (line 31): add the three new fields mirroring the `durationSeconds: meditation.durationSeconds ?? null` pattern:
+- [x] Update `mapMeditationRecord()` in `api/src/routes/meditations.ts` (line 31): add the three new fields mirroring the `durationSeconds: meditation.durationSeconds ?? null` pattern:
   ```typescript
   durationSecondsTalking: meditation.durationSecondsTalking ?? null,
   durationSecondsPause:   meditation.durationSecondsPause   ?? null,
   durationSecondsSound:   meditation.durationSecondsSound   ?? null,
   ```
-- [ ] Update `serializeAdminMeditationRow()` in `api/src/routes/admin.ts` (line 24): same three fields, same pattern.
+- [x] Update `serializeAdminMeditationRow()` in `api/src/routes/admin.ts` (line 24): same three fields, same pattern.
 
 **Rebuild-reset paths:**
-- [ ] Update `api/src/services/meditations/createOrRegenerateStagedMeditation.ts`: locate both `update()` blocks that already set `durationSeconds: null`; add `durationSecondsTalking: null`, `durationSecondsPause: null`, `durationSecondsSound: null` to each block.
-- [ ] Update `api/src/services/meditations/regenerateMeditationFromScript.ts`: in the `lockedMeditation.update()` call inside the transaction that sets `durationSeconds: null` and `status: "pending"`, add the same three new fields.
+- [x] Update `api/src/services/meditations/createOrRegenerateStagedMeditation.ts`: locate both `update()` blocks that already set `durationSeconds: null`; add `durationSecondsTalking: null`, `durationSecondsPause: null`, `durationSecondsSound: null` to each block.
+- [x] Update `api/src/services/meditations/regenerateMeditationFromScript.ts`: in the `lockedMeditation.update()` call inside the transaction that sets `durationSeconds: null` and `status: "pending"`, add the same three new fields.
 
 **Tests (required per V02 §Automated verification):**
-- [ ] Add a test asserting that `mapMeditationRecord()` includes `durationSecondsTalking`, `durationSecondsPause`, and `durationSecondsSound` in its output with the correct camelCase field names.
-- [ ] Add a test asserting that `serializeAdminMeditationRow()` includes the same three fields.
-- [ ] Add a test asserting that the `createOrRegenerateStagedMeditation` rebuild-reset path writes `null` for all three new fields (not just `durationSeconds`) when a pending rebuild is triggered.
-- [ ] Add a test asserting that the `regenerateMeditationFromScript` rebuild-reset path writes `null` for all three new fields.
+- [x] Add a test asserting that `mapMeditationRecord()` includes `durationSecondsTalking`, `durationSecondsPause`, and `durationSecondsSound` in its output with the correct camelCase field names.
+- [x] Add a test asserting that `serializeAdminMeditationRow()` includes the same three fields.
+- [x] Add a test asserting that the `createOrRegenerateStagedMeditation` rebuild-reset path writes `null` for all three new fields (not just `durationSeconds`) when a pending rebuild is triggered.
+- [x] Add a test asserting that the `regenerateMeditationFromScript` rebuild-reset path writes `null` for all three new fields.
 
 **Per-phase gate:**
-- [ ] `npm run typecheck -w @golightly/api` passes
-- [ ] `npm test -w @golightly/api` passes (all new tests green, no regressions)
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 3
+- [x] `npm run typecheck -w @golightly/api` passes
+- [x] `npm test -w @golightly/api` passes (all new tests green, no regressions)
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 3
 
 ---
 

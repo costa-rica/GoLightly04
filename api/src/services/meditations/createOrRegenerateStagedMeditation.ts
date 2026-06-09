@@ -103,6 +103,9 @@ export async function createOrRegenerateStagedMeditation(opts: {
             filename: null,
             filePath: null,
             durationSeconds: null,
+            durationSecondsTalking: null,
+            durationSecondsPause: null,
+            durationSecondsSound: null,
             meditationArray: prepared.elements.map((element, index) => ({
               ...element,
               sequence: index + 1,
@@ -135,6 +138,9 @@ export async function createOrRegenerateStagedMeditation(opts: {
           filename: null,
           filePath: null,
           durationSeconds: null,
+          durationSecondsTalking: null,
+          durationSecondsPause: null,
+          durationSecondsSound: null,
           status: "pending",
           meditationArray: prepared.elements.map((element, index) => ({
             ...element,

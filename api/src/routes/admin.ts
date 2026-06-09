@@ -21,7 +21,7 @@ function serializeDate(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : value;
 }
 
-function serializeAdminMeditationRow(
+export function serializeAdminMeditationRow(
   meditation: any,
   benevolentUserId: number,
 ): AdminMeditation {
@@ -40,6 +40,9 @@ function serializeAdminMeditationRow(
     updatedAt: serializeDate(meditation.updatedAt),
     listenCount: meditation.listenCount,
     durationSeconds: meditation.durationSeconds ?? null,
+    durationSecondsTalking: meditation.durationSecondsTalking ?? null,
+    durationSecondsPause: meditation.durationSecondsPause ?? null,
+    durationSecondsSound: meditation.durationSecondsSound ?? null,
     status: meditation.status,
     ownerUserId: meditation.userId,
     isBenevolentOwned: meditation.userId === benevolentUserId,
