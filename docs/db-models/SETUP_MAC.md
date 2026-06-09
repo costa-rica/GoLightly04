@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-05-14
+updated_at: 2026-06-09
 created_by: codex (gpt-5)
-modified_by: claude (opus-4-7)
+modified_by: codex (gpt-5)
 ---
 
 # Local Database Setup - Mac
@@ -277,10 +277,24 @@ ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;
 
-SELECT grantee, privilege_type
-FROM information_schema.role_schema_grants
-WHERE schema_name = 'public'
-ORDER BY grantee, privilege_type;
+SELECT
+  has_schema_privilege('golightly04_boot', 'public', 'CREATE') AS boot_can_create,
+  has_schema_privilege('golightly04_app', 'public', 'USAGE') AS app_can_use_schema,
+  has_database_privilege('golightly04_app', 'golightly04_dev', 'CONNECT') AS app_can_connect;
+
+SELECT
+  defaclrole::regrole AS role,
+  defaclnamespace::regnamespace AS schema,
+  CASE defaclobjtype
+    WHEN 'r' THEN 'tables'
+    WHEN 'S' THEN 'sequences'
+    ELSE defaclobjtype::text
+  END AS object_type,
+  defaclacl AS default_privileges
+FROM pg_default_acl
+WHERE defaclrole = 'golightly04_boot'::regrole
+  AND defaclnamespace = 'public'::regnamespace
+ORDER BY defaclobjtype;
 ```
 
 ### 8. Restore from a backup
