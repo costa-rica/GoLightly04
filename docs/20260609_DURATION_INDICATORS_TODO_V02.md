@@ -189,29 +189,29 @@ Plan §Backfill script and §Implementation sequence step 7.
 
 Plan §Implementation sequence steps 8.
 
-- [ ] Run a dry-run against a populated environment (development or production — production preferred for representative data): `npm run backfill:segment-durations -- --limit 10`
+- [x] Run a dry-run against a populated environment (development or production — production preferred for representative data): `npm run backfill:segment-durations -- --limit 10`
   - No `--apply` flag; this is a read-only dry-run.
-- [ ] Review the JSON output:
+- [x] Review the JSON output:
   - Examine the distribution of `durationSecondsTalking` values across the sample.
   - Note any `skippedMissingFile` warnings and whether they are expected.
   - Assess overall plausibility of all three fields.
-- [ ] If the 10-row sample shows poor spread (e.g., all values cluster in one color bucket), increase `--limit` to 50 or higher and re-run until the distribution is representative enough to calibrate thresholds.
-- [ ] Determine `MID_THRESHOLD` and `HIGH_THRESHOLD` values from the distribution:
+- [x] If the 10-row sample shows poor spread (e.g., all values cluster in one color bucket), increase `--limit` to 50 or higher and re-run until the distribution is representative enough to calibrate thresholds.
+- [x] Determine `MID_THRESHOLD` and `HIGH_THRESHOLD` values from the distribution:
   - Values below `MID_THRESHOLD` → gray (low guidance)
   - Values from `MID_THRESHOLD` to below `HIGH_THRESHOLD` → light-blue (medium guidance)
   - Values at or above `HIGH_THRESHOLD` → yellow (high guidance)
-- [ ] Record the chosen threshold values and sample size used below, so the rationale is traceable:
+- [x] Record the chosen threshold values and sample size used below, so the rationale is traceable:
 
   > **Calibration record:**
-  > Sample size: ___
-  > `MID_THRESHOLD`: ___
-  > `HIGH_THRESHOLD`: ___
-  > Distribution summary: ___
+  > Sample size: 5 eligible complete meditations (requested `--limit 10`; only 5 complete meditations were available)
+  > `MID_THRESHOLD`: 5
+  > `HIGH_THRESHOLD`: 30
+  > Distribution summary: `durationSecondsTalking` values were 0, 0, 2, 22, and 37 seconds; missing-file and probe-failure counts were 0 for both talking and sound.
 
 **Per-phase gate:**
-- [ ] Dry-run completed against real data
-- [ ] `MID_THRESHOLD` and `HIGH_THRESHOLD` values confirmed and recorded above
-- [ ] Do not begin Phase 7 until both values are filled in above
+- [x] Dry-run completed against real data
+- [x] `MID_THRESHOLD` and `HIGH_THRESHOLD` values confirmed and recorded above
+- [x] Do not begin Phase 7 until both values are filled in above
 
 ---
 
