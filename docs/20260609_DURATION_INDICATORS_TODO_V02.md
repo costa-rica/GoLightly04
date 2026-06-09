@@ -221,33 +221,33 @@ Plan §Implementation sequence steps 8.
 
 Plan §Web: Guidance column and §Automated verification → web.
 
-- [ ] Add a `formatGuidanceDuration` helper in `web/src/components/tables/TableMeditation.tsx` (or a co-located formatter file):
+- [x] Add a `formatGuidanceDuration` helper in `web/src/components/tables/TableMeditation.tsx` (or a co-located formatter file):
   - `null` or `undefined` → `"-"` (or `""`, consistent with other empty-state labels in the table)
   - Values under 60 s → `"<N>s"` (e.g., `"45s"`)
   - Values at or above 60 s → minute-and-second form (e.g., `"1m 30s"`)
   - **Do not reuse `formatDurationOrDash`** for this tooltip — it rounds to whole minutes and produces `"0 mins"` for sub-60s values, which is uninformative.
-- [ ] Define `MID_THRESHOLD` and `HIGH_THRESHOLD` constants at the top of the component, set to the values confirmed in Phase 6.
-- [ ] Add `guidanceColor(seconds: number | null | undefined): string` function returning the appropriate gray / light-blue / yellow Tailwind class based on `MID_THRESHOLD` and `HIGH_THRESHOLD`.
-- [ ] Add the `Guidance` column header to the desktop table in `web/src/components/tables/TableMeditation.tsx`.
-- [ ] In each desktop table row, render a small circle or pill element in the Guidance cell:
+- [x] Define `MID_THRESHOLD` and `HIGH_THRESHOLD` constants at the top of the component, set to the values confirmed in Phase 6.
+- [x] Add `guidanceColor(seconds: number | null | undefined): string` function returning the appropriate gray / light-blue / yellow Tailwind class based on `MID_THRESHOLD` and `HIGH_THRESHOLD`.
+- [x] Add the `Guidance` column header to the desktop table in `web/src/components/tables/TableMeditation.tsx`.
+- [x] In each desktop table row, render a small circle or pill element in the Guidance cell:
   - `className={guidanceColor(meditation.durationSecondsTalking)}`
   - `title={formatGuidanceDuration(meditation.durationSecondsTalking)}`
   - No text inside the cell element; no ratio display.
-- [ ] Increment the desktop table's empty-state `colSpan` by 1 for the new column.
-- [ ] Add the Guidance indicator inline with existing length metadata in the mobile card view.
-- [ ] Confirm `TableAdminMeditations.tsx` is **not** modified — it is out of scope.
+- [x] Increment the desktop table's empty-state `colSpan` by 1 for the new column.
+- [x] Add the Guidance indicator inline with existing length metadata in the mobile card view.
+- [x] Confirm `TableAdminMeditations.tsx` is **not** modified — it is out of scope.
 
 **Per-phase gate:**
-- [ ] `npm run typecheck -w @golightly/web` passes
-- [ ] `npm run build -w @golightly/web` passes
-- [ ] Manual browser check:
-  - [ ] Guidance cell renders with correct color for a meditation with a known `durationSecondsTalking` value
-  - [ ] Hovering the indicator shows the `formatGuidanceDuration` label (e.g., `"45s"` or `"1m 30s"`)
-  - [ ] A meditation with null `durationSecondsTalking` shows gray with `"-"` tooltip
-  - [ ] Desktop empty-state row spans the correct number of columns
-  - [ ] Mobile card shows the Guidance indicator
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 7
+- [x] `npm run typecheck -w @golightly/web` passes
+- [x] `npm run build -w @golightly/web` passes
+- [x] Manual browser check:
+  - [x] Guidance cell renders with correct color for a meditation with a known `durationSecondsTalking` value
+  - [x] Hovering the indicator shows the `formatGuidanceDuration` label (e.g., `"45s"` or `"1m 30s"`)
+  - [x] A meditation with null `durationSecondsTalking` shows gray with `"-"` tooltip
+  - [x] Desktop empty-state row spans the correct number of columns
+  - [x] Mobile card shows the Guidance indicator
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 7
 
 ---
 
