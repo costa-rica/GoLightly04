@@ -702,3 +702,17 @@ After the fresh reset the old user row will not exist, so this may be moot. Conf
 #### Nick response
 
 Everything will be dropped an erased on this prd adn the result of it.
+
+## Other Nick comments
+
+I want to confirm this prd does the following:
+
+1. allow the server hermes ai agent to make meditations using the manully created "system user" (I.e. benevolent_monkey@go-lightly.love)
+2. when the script is run can we pick which user creates it. So the script will need to make meditations under the benevolent_monkey@go-lightly.love and the nrodrig1@gmail.com user.
+3. I will store the nrodrig1@gmail.com and benevolent_monkey@go-lightly.love credentials in /home/nick/agents_home/hermes/secrets/.env. Then if the I ask hermes to create meditations it will invoke the required credentials for the user it will make it under then run `scripts/importMeditations.ts` in the most efficient way. But the GoLightly04 will not have `SYSTEM_USER_EMAIL` or `SYSTEM_USER_PASSWORD` stored or referenced.
+   - The hermes agent can create markdown files and store them in the /home/nick/GoLightly04-meditations/ directory if I request it to make a new meditation.
+
+## Revisions
+
+1. let's make the `ADMIN_EMAIL` a list of emails separated by commas. so the next version will look like `ADMIN_EMAIL=nrodrig1@gmail.com,benevolent_monkey@go-lightly.love` and both will get the same `ADMIN_PASSWORD` value that can then be reset to different values.
+2. Let's avoid migrations for this effort. We will start fresh with a new database. Whatever db schema changes we need to make, let's make them now and not worry about the migration of data. However, for the runbook we can keep a section for where migrations should occur, because future modifications may require migrations.
