@@ -58,8 +58,8 @@ module.exports = {
           950: '#020617',
         },
         buildBlock: {
-          text: '#4F46E5',
-          pause: '#D97706',
+          text: '#D97706',
+          pause: '#4F46E5',
           sound: '#0D9488',
         },
         canvas: 'rgb(var(--surface-canvas) / <alpha-value>)',

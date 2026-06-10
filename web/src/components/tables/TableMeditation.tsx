@@ -29,7 +29,7 @@ const HIGH_THRESHOLD = 30;
 const headerHelp = {
   length: "Total generated audio duration.",
   guidance:
-    "Gray = low/no guidance, blue = medium guidance, yellow = high guidance, based on talking duration.",
+    "Gray = low/no guidance, yellow = medium guidance, orange = high guidance, based on talking duration.",
   favorite: "Marks meditations you want quick access to.",
   listens: "Number of times this meditation has been played.",
 };
@@ -53,10 +53,10 @@ function guidanceColor(seconds: number | null | undefined): string {
     return `${baseClass} bg-calm-300 dark:bg-calm-600`;
   }
   if (seconds >= HIGH_THRESHOLD) {
-    return `${baseClass} bg-amber-300 dark:bg-amber-400`;
+    return `${baseClass} bg-buildBlock-text`;
   }
   if (seconds >= MID_THRESHOLD) {
-    return `${baseClass} bg-sky-300 dark:bg-sky-400`;
+    return `${baseClass} bg-yellow-300 dark:bg-yellow-400`;
   }
   return `${baseClass} bg-calm-300 dark:bg-calm-600`;
 }
