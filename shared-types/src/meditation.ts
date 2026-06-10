@@ -24,6 +24,9 @@ export type Meditation = {
   updatedAt: string;
   listenCount: number;
   durationSeconds?: number | null;
+  durationSecondsTalking?: number | null;
+  durationSecondsPause?: number | null;
+  durationSecondsSound?: number | null;
   isFavorite?: boolean;
   isOwned?: boolean;
   ownerUserId?: number;

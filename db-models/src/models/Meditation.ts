@@ -25,6 +25,9 @@ export class Meditation extends Model<
   declare status: CreationOptional<"pending" | "processing" | "complete" | "failed">;
   declare listenCount: CreationOptional<number>;
   declare durationSeconds: CreationOptional<number | null>;
+  declare durationSecondsTalking: CreationOptional<number | null>;
+  declare durationSecondsPause: CreationOptional<number | null>;
+  declare durationSecondsSound: CreationOptional<number | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -101,6 +104,21 @@ export function initMeditationModel(sequelize: Sequelize): typeof Meditation {
         type: DataTypes.INTEGER,
         allowNull: true,
         field: "duration_seconds",
+      },
+      durationSecondsTalking: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "duration_seconds_talking",
+      },
+      durationSecondsPause: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "duration_seconds_pause",
+      },
+      durationSecondsSound: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "duration_seconds_sound",
       },
       createdAt: {
         type: DataTypes.DATE,

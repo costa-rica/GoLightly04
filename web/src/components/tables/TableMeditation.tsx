@@ -23,6 +23,36 @@ import {
 } from "@/store/features/meditationSlice";
 import { formatDurationOrDash } from "@/lib/utils/formatters";
 
+const MID_THRESHOLD = 5;
+const HIGH_THRESHOLD = 30;
+
+function formatGuidanceDuration(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined) return "-";
+
+  const roundedSeconds = Math.max(0, Math.round(seconds));
+  if (roundedSeconds < 60) return `${roundedSeconds}s`;
+
+  const minutes = Math.floor(roundedSeconds / 60);
+  const remainingSeconds = roundedSeconds % 60;
+  return remainingSeconds === 0
+    ? `${minutes}m`
+    : `${minutes}m ${remainingSeconds}s`;
+}
+
+function guidanceColor(seconds: number | null | undefined): string {
+  const baseClass = "inline-flex h-3 w-3 shrink-0 rounded-full";
+  if (seconds === null || seconds === undefined) {
+    return `${baseClass} bg-calm-300 dark:bg-calm-600`;
+  }
+  if (seconds >= HIGH_THRESHOLD) {
+    return `${baseClass} bg-amber-300 dark:bg-amber-400`;
+  }
+  if (seconds >= MID_THRESHOLD) {
+    return `${baseClass} bg-sky-300 dark:bg-sky-400`;
+  }
+  return `${baseClass} bg-calm-300 dark:bg-calm-600`;
+}
+
 export default function TableMeditation() {
   const dispatch = useAppDispatch();
   const { meditations, loading, error } = useAppSelector(
@@ -306,6 +336,9 @@ export default function TableMeditation() {
                         <th className="px-4 py-3 font-semibold">Title</th>
                         <th className="px-4 py-3 font-semibold">Play</th>
                         <th className="px-4 py-3 font-semibold">Length</th>
+                        <th className="px-4 py-3 text-center font-semibold">
+                          Guidance
+                        </th>
                         {isAuthenticated && (
                           <th className="px-4 py-3 text-center font-semibold">
                             Favorite
@@ -320,7 +353,7 @@ export default function TableMeditation() {
                       {visibleRows.length === 0 && (
                         <tr>
                           <td
-                            colSpan={isAuthenticated ? 5 : 4}
+                            colSpan={isAuthenticated ? 6 : 5}
                             className="px-4 py-6 text-center text-calm-500"
                           >
                             No meditations available yet.
@@ -370,6 +403,15 @@ export default function TableMeditation() {
                             </td>
                             <td className="px-4 py-3 text-calm-600 dark:text-calm-400">
                               {formatDurationOrDash(meditation.durationSeconds)}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={guidanceColor(meditation.durationSecondsTalking)}
+                                title={formatGuidanceDuration(meditation.durationSecondsTalking)}
+                                aria-label={`Guidance ${formatGuidanceDuration(
+                                  meditation.durationSecondsTalking,
+                                )}`}
+                              />
                             </td>
                             {isAuthenticated && (
                               <td className="px-4 py-3 text-center">
@@ -488,6 +530,14 @@ export default function TableMeditation() {
                               )}
                               <div className="flex items-center gap-1 text-xs text-calm-600 dark:text-calm-400">
                                 <span>{formatDurationOrDash(meditation.durationSeconds)}</span>
+                                <span aria-hidden="true">·</span>
+                                <span
+                                  className={guidanceColor(meditation.durationSecondsTalking)}
+                                  title={formatGuidanceDuration(meditation.durationSecondsTalking)}
+                                  aria-label={`Guidance ${formatGuidanceDuration(
+                                    meditation.durationSecondsTalking,
+                                  )}`}
+                                />
                                 <span aria-hidden="true">·</span>
                                 <svg
                                   className="h-4 w-4"
