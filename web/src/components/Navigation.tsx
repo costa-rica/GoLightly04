@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  type ComponentType,
+  type SVGProps,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/features/authSlice";
 import { setApiAuthToken } from "@/lib/api/client";
@@ -15,17 +22,36 @@ type NavigationProps = {
   onLoginClick?: () => void;
 };
 
-function ProfileIcon() {
+type IconProps = SVGProps<SVGSVGElement>;
+type MenuIcon = ComponentType<IconProps>;
+
+type MenuLinkProps = {
+  href: string;
+  icon: MenuIcon;
+  label: string;
+  onClick: () => void;
+};
+
+type MenuButtonProps = {
+  icon: MenuIcon;
+  label: string;
+  onClick: () => void;
+};
+
+const menuRowClass =
+  "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-calm-700 transition hover:bg-calm-100 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:text-calm-200 dark:hover:bg-calm-900 dark:hover:text-primary-300";
+
+function ProfileIcon(props: IconProps) {
   return (
     <svg
       aria-hidden="true"
-      className="h-5 w-5"
       fill="none"
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth="2"
       viewBox="0 0 24 24"
+      {...props}
     >
       <path d="M20 21a8 8 0 0 0-16 0" />
       <circle cx="12" cy="7" r="4" />
@@ -33,24 +59,152 @@ function ProfileIcon() {
   );
 }
 
+function InfoIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
+
+function ShieldIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+
+function LogInIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+    </svg>
+  );
+}
+
+function LogOutIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+function MenuLink({ href, icon: Icon, label, onClick }: MenuLinkProps) {
+  return (
+    <Link href={href} className={menuRowClass} onClick={onClick}>
+      <Icon className="h-5 w-5 shrink-0 text-calm-500 dark:text-calm-400" />
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+function MenuButton({ icon: Icon, label, onClick }: MenuButtonProps) {
+  return (
+    <button type="button" className={menuRowClass} onClick={onClick}>
+      <Icon className="h-5 w-5 shrink-0 text-calm-500 dark:text-calm-400" />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function Divider() {
+  return <div className="my-2 h-px bg-calm-200 dark:bg-calm-800" />;
+}
+
 export default function Navigation({ onLoginClick }: NavigationProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const pathname = usePathname();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-  const isAdminPage = pathname?.startsWith("/admin");
+  const closeMenu = useCallback((returnFocus = true) => {
+    setIsMenuOpen(false);
+
+    if (returnFocus) {
+      window.requestAnimationFrame(() => {
+        hamburgerRef.current?.focus();
+      });
+    }
+  }, []);
 
   useEffect(() => {
-    if (!isMobileOpen) return;
+    if (!isMenuOpen) return;
+
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      sidebarRef.current?.focus();
+    });
+
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = originalOverflow;
     };
-  }, [isMobileOpen]);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeMenu, isMenuOpen]);
 
   const handleAuthClick = () => {
     if (isAuthenticated) {
@@ -59,58 +213,13 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
       clearAuthStorage();
       setToastMessage("You have been logged out.");
       router.push("/");
-      setIsMobileOpen(false);
+      closeMenu();
       return;
     }
 
     onLoginClick?.();
-    setIsMobileOpen(false);
+    closeMenu();
   };
-
-  const handleCloseMobile = () => setIsMobileOpen(false);
-
-  // Determine what navigation links to show
-  const getNavLinks = () => {
-    // Not logged in: no nav links
-    if (!isAuthenticated) {
-      return null;
-    }
-
-    // Logged in, not admin, on homepage: no nav links
-    if (!user?.isAdmin && !isAdminPage) {
-      return null;
-    }
-
-    // Logged in as admin on admin page: show Home
-    if (user?.isAdmin && isAdminPage) {
-      return (
-        <Link
-          href="/"
-          className="text-sm font-semibold text-calm-700 transition hover:text-primary-700 dark:text-calm-200 dark:hover:text-primary-300"
-          onClick={handleCloseMobile}
-        >
-          Home
-        </Link>
-      );
-    }
-
-    // Logged in as admin on homepage: show Admin
-    if (user?.isAdmin && !isAdminPage) {
-      return (
-        <Link
-          href="/admin"
-          className="text-sm font-semibold text-calm-700 transition hover:text-primary-700 dark:text-calm-200 dark:hover:text-primary-300"
-          onClick={handleCloseMobile}
-        >
-          Admin
-        </Link>
-      );
-    }
-
-    return null;
-  };
-
-  const navLinks = getNavLinks();
 
   return (
     <>
@@ -130,114 +239,144 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
               </span>
             </Link>
 
-            <div className="hidden items-center gap-3 md:flex">
-              {navLinks}
-              <ThemeToggle />
-              {isAuthenticated && (
-                <Link
-                  href="/profile"
-                  aria-label="Open profile"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-calm-300 text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
-                >
-                  <ProfileIcon />
-                </Link>
-              )}
-              <button
-                type="button"
-                onClick={handleAuthClick}
-                className="rounded-full border border-calm-300 px-4 py-2 text-sm font-semibold text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
-              >
-                {isAuthenticated ? "Logout" : "Login"}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 md:hidden">
-              <ThemeToggle />
-              <button
-                type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-calm-200 text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200"
-                aria-label="Open navigation menu"
-                aria-expanded={isMobileOpen}
-                onClick={() => setIsMobileOpen(true)}
-              >
-                <span className="sr-only">Open menu</span>
-                <div className="flex flex-col gap-1">
-                  <span className="h-0.5 w-5 rounded-full bg-current" />
-                  <span className="h-0.5 w-5 rounded-full bg-current" />
-                  <span className="h-0.5 w-5 rounded-full bg-current" />
-                </div>
-              </button>
-            </div>
+            <button
+              ref={hamburgerRef}
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-calm-200 text-calm-700 transition hover:border-primary-300 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
+              aria-label="Open navigation menu"
+              aria-controls="site-navigation-sidebar"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen(true)}
+            >
+              <span className="sr-only">Open menu</span>
+              <span className="flex flex-col gap-1" aria-hidden="true">
+                <span className="h-0.5 w-5 rounded-full bg-current" />
+                <span className="h-0.5 w-5 rounded-full bg-current" />
+                <span className="h-0.5 w-5 rounded-full bg-current" />
+              </span>
+            </button>
           </div>
         </div>
       </header>
 
       <div
-        className={`fixed inset-0 z-40 md:hidden ${
-          isMobileOpen ? "pointer-events-auto" : "pointer-events-none"
+        aria-hidden={!isMenuOpen}
+        inert={!isMenuOpen}
+        className={`fixed inset-0 z-50 ${
+          isMenuOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
       >
         <button
           type="button"
           aria-label="Close navigation menu"
-          className={`absolute inset-0 bg-calm-900/35 backdrop-blur-sm transition-opacity ${
-            isMobileOpen ? "opacity-100" : "opacity-0"
+          tabIndex={-1}
+          className={`absolute inset-0 bg-calm-900/35 backdrop-blur-sm transition-opacity motion-reduce:transition-none ${
+            isMenuOpen ? "opacity-100" : "opacity-0"
           }`}
-          onClick={handleCloseMobile}
+          onClick={() => closeMenu()}
         />
-        <div
-          className={`absolute left-0 top-0 flex h-full w-3/4 max-w-xs flex-col gap-6 bg-white px-6 py-6 shadow-xl transition-transform dark:bg-calm-950 ${
-            isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        <aside
+          id="site-navigation-sidebar"
+          ref={sidebarRef}
+          tabIndex={-1}
+          aria-label="Site navigation"
+          className={`absolute right-0 top-0 flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col bg-white px-5 py-5 shadow-xl outline-none transition-transform duration-200 motion-reduce:transition-none dark:bg-calm-950 ${
+            isMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 border-b border-calm-200 pb-4 dark:border-calm-800">
             <Link
               href="/"
-              className="flex items-center gap-3"
-              onClick={handleCloseMobile}
+              className="flex min-w-0 items-center gap-3"
+              onClick={() => closeMenu()}
             >
               <Image
                 src="/images/golightlyLogo02.png"
-                alt="GoLightly"
+                alt="Go Lightly"
                 width={32}
                 height={32}
-                className="rounded-full"
+                className="shrink-0 rounded-full"
               />
-              <span className="font-display text-base font-semibold text-calm-900 dark:text-calm-50">
+              <span className="truncate font-display text-base font-semibold text-calm-900 dark:text-calm-50">
                 Go Lightly
               </span>
             </Link>
             <button
               type="button"
               aria-label="Close menu"
-              onClick={handleCloseMobile}
-              className="rounded-full border border-calm-200 px-3 py-2 text-sm text-calm-600 dark:border-calm-700 dark:text-calm-200"
+              onClick={() => closeMenu()}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-calm-200 text-calm-600 transition hover:border-primary-300 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
             >
-              Close
+              <span className="sr-only">Close menu</span>
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M18 6L6 18" />
+                <path d="M6 6l12 12" />
+              </svg>
             </button>
           </div>
 
-          <nav className="flex flex-col gap-4">
-            {navLinks}
-            {isAuthenticated && (
-              <Link
-                href="/profile"
-                className="text-sm font-semibold text-calm-700 transition hover:text-primary-700 dark:text-calm-200 dark:hover:text-primary-300"
-                onClick={handleCloseMobile}
-              >
-                Profile
-              </Link>
+          <nav className="mt-5 flex flex-col gap-1" aria-label="Main menu">
+            {isAuthenticated ? (
+              <>
+                <MenuLink
+                  href="/profile"
+                  icon={ProfileIcon}
+                  label="Profile"
+                  onClick={() => closeMenu()}
+                />
+                <ThemeToggle variant="sidebar" />
+                <MenuLink
+                  href="/about"
+                  icon={InfoIcon}
+                  label="About Us"
+                  onClick={() => closeMenu()}
+                />
+                <Divider />
+                {user?.isAdmin ? (
+                  <>
+                    <MenuLink
+                      href="/admin"
+                      icon={ShieldIcon}
+                      label="Admin"
+                      onClick={() => closeMenu()}
+                    />
+                    <Divider />
+                  </>
+                ) : null}
+                <MenuButton
+                  icon={LogOutIcon}
+                  label="Logout"
+                  onClick={handleAuthClick}
+                />
+              </>
+            ) : (
+              <>
+                <MenuLink
+                  href="/about"
+                  icon={InfoIcon}
+                  label="About Us"
+                  onClick={() => closeMenu()}
+                />
+                <ThemeToggle variant="sidebar" />
+                <Divider />
+                <MenuButton
+                  icon={LogInIcon}
+                  label="Login"
+                  onClick={handleAuthClick}
+                />
+              </>
             )}
           </nav>
-
-          <button
-            type="button"
-            onClick={handleAuthClick}
-            className="mt-auto rounded-full border border-calm-300 px-4 py-2 text-sm font-semibold text-calm-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-calm-700 dark:text-calm-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
-          >
-            {isAuthenticated ? "Logout" : "Login"}
-          </button>
-        </div>
+        </aside>
       </div>
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 type Theme = "light" | "dark";
 
@@ -33,7 +33,12 @@ function MoonIcon() {
   );
 }
 
-export default function ThemeToggle() {
+type ThemeToggleProps = {
+  variant?: "icon" | "sidebar";
+};
+
+export default function ThemeToggle({ variant = "icon" }: ThemeToggleProps) {
+  const inputId = useId();
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
@@ -49,6 +54,36 @@ export default function ThemeToggle() {
     window.localStorage.setItem(STORAGE_KEY, nextTheme);
     applyTheme(nextTheme);
   };
+
+  if (variant === "sidebar") {
+    return (
+      <label
+        htmlFor={inputId}
+        className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-calm-700 transition hover:bg-calm-100 focus-within:bg-calm-100 dark:text-calm-200 dark:hover:bg-calm-900 dark:focus-within:bg-calm-900"
+      >
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-calm-500 dark:text-calm-400">
+          {theme === "dark" ? <MoonIcon /> : <SunIcon />}
+        </span>
+        <span className="flex-1">Theme</span>
+        <span className="flex items-center gap-2 text-xs font-semibold text-calm-500 dark:text-calm-400">
+          <span>Light</span>
+          <span className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-calm-300 transition dark:bg-primary-700">
+            <input
+              id={inputId}
+              type="checkbox"
+              role="switch"
+              checked={theme === "dark"}
+              onChange={toggleTheme}
+              className="peer sr-only"
+              aria-label="Use dark theme"
+            />
+            <span className="absolute left-1 h-4 w-4 rounded-full bg-white shadow transition peer-checked:translate-x-5 motion-reduce:transition-none" />
+          </span>
+          <span>Dark</span>
+        </span>
+      </label>
+    );
+  }
 
   return (
     <button
