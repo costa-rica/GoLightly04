@@ -26,6 +26,14 @@ import { formatDurationOrDash } from "@/lib/utils/formatters";
 const MID_THRESHOLD = 5;
 const HIGH_THRESHOLD = 30;
 
+const headerHelp = {
+  length: "Total generated audio duration.",
+  guidance:
+    "Gray = low/no guidance, blue = medium guidance, yellow = high guidance, based on talking duration.",
+  favorite: "Marks meditations you want quick access to.",
+  listens: "Number of times this meditation has been played.",
+};
+
 function formatGuidanceDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined) return "-";
 
@@ -51,6 +59,51 @@ function guidanceColor(seconds: number | null | undefined): string {
     return `${baseClass} bg-sky-300 dark:bg-sky-400`;
   }
   return `${baseClass} bg-calm-300 dark:bg-calm-600`;
+}
+
+function HeaderHelp({
+  label,
+  helpText,
+  align = "left",
+}: {
+  label: string;
+  helpText: string;
+  align?: "left" | "center" | "right";
+}) {
+  const id = `meditation-table-${label.toLowerCase()}-help`;
+  const tooltipAlign =
+    align === "right"
+      ? "right-0"
+      : align === "center"
+        ? "left-1/2 -translate-x-1/2"
+        : "left-0";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 ${
+        align === "right" ? "justify-end" : align === "center" ? "justify-center" : ""
+      }`}
+    >
+      <span>{label}</span>
+      <span className="group relative inline-flex">
+        <button
+          type="button"
+          aria-describedby={id}
+          aria-label={`${label}: ${helpText}`}
+          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-calm-300 text-[10px] font-semibold leading-none text-calm-500 transition hover:border-primary-300 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:border-calm-600 dark:text-calm-400 dark:hover:border-primary-500 dark:hover:text-primary-300"
+        >
+          ?
+        </button>
+        <span
+          id={id}
+          role="tooltip"
+          className={`pointer-events-none invisible absolute top-full z-20 mt-2 w-56 rounded-md border border-calm-200 bg-white px-3 py-2 text-left text-xs font-normal leading-snug text-calm-700 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 dark:border-calm-700 dark:bg-calm-950 dark:text-calm-200 ${tooltipAlign}`}
+        >
+          {helpText}
+        </span>
+      </span>
+    </span>
+  );
 }
 
 export default function TableMeditation() {
@@ -335,17 +388,31 @@ export default function TableMeditation() {
                       <tr className="text-calm-500 dark:text-calm-400">
                         <th className="px-4 py-3 font-semibold">Title</th>
                         <th className="px-4 py-3 font-semibold">Play</th>
-                        <th className="px-4 py-3 font-semibold">Length</th>
+                        <th className="px-4 py-3 font-semibold">
+                          <HeaderHelp label="Length" helpText={headerHelp.length} />
+                        </th>
                         <th className="px-4 py-3 text-center font-semibold">
-                          Guidance
+                          <HeaderHelp
+                            label="Guidance"
+                            helpText={headerHelp.guidance}
+                            align="center"
+                          />
                         </th>
                         {isAuthenticated && (
                           <th className="px-4 py-3 text-center font-semibold">
-                            Favorite
+                            <HeaderHelp
+                              label="Favorite"
+                              helpText={headerHelp.favorite}
+                              align="center"
+                            />
                           </th>
                         )}
                         <th className="px-4 py-3 text-right font-semibold">
-                          Listens
+                          <HeaderHelp
+                            label="Listens"
+                            helpText={headerHelp.listens}
+                            align="right"
+                          />
                         </th>
                       </tr>
                     </thead>
