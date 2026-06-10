@@ -77,6 +77,9 @@ Most tables define `createdAt` and `updatedAt` model attributes mapped to `creat
 | `status` | ENUM(`pending`, `processing`, `complete`, `failed`) | NOT NULL, DEFAULT `pending` | Audio generation state. |
 | `listen_count` | INTEGER | NOT NULL, DEFAULT `0` | Playback count. |
 | `duration_seconds` | INTEGER | NULL | Optional final audio duration in seconds. |
+| `duration_seconds_talking` | INTEGER | NULL | Total duration in seconds of text-job audio segments, measured from generated audio files by the worker build process. Reset to null when a pending rebuild starts and repopulated when the worker completes. |
+| `duration_seconds_pause` | INTEGER | NULL | Total requested pause duration in whole seconds across pause elements. Reset to null when a pending rebuild starts and repopulated when the worker completes. |
+| `duration_seconds_sound` | INTEGER | NULL | Total duration in seconds of prerecorded sound-job audio segments. Reset to null when a pending rebuild starts and repopulated when the worker completes. |
 | `created_at` | DATE | NOT NULL | Sequelize timestamp. |
 | `updated_at` | DATE | NOT NULL | Sequelize timestamp. |
 

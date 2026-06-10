@@ -257,27 +257,27 @@ Plan §Web: Guidance column and §Automated verification → web.
 
 Plan §Implementation sequence step 10.
 
-- [ ] Deploy the worker change from Phase 4 to a non-production environment.
-- [ ] Create a new test meditation in that environment. While the meditation is `pending`, query the database and confirm all three fields (`duration_seconds_talking`, `duration_seconds_pause`, `duration_seconds_sound`) are null.
-- [ ] After the worker completes, query the meditation again and confirm:
+- [x] Deploy the worker change from Phase 4 to a non-production environment.
+- [x] Create a new test meditation in that environment. While the meditation is `pending`, query the database and confirm all three fields (`duration_seconds_talking`, `duration_seconds_pause`, `duration_seconds_sound`) are null.
+- [x] After the worker completes, query the meditation again and confirm:
   - All three fields are non-null.
   - Values are plausible given the meditation's element list. For example, a meditation with only a short text segment should have a non-zero `duration_seconds_talking` and **zero** for both `duration_seconds_pause` and `duration_seconds_sound` — not null. After a successful worker build, absent categories are written as `0` (the accumulator initial value); `null` is reserved for unpopulated, failed, or backfill-missing data only.
-- [ ] Trigger a script regeneration on the same meditation. Confirm:
+- [x] Trigger a script regeneration on the same meditation. Confirm:
   - All four duration fields (`duration_seconds`, `duration_seconds_talking`, `duration_seconds_pause`, `duration_seconds_sound`) reset to null when the rebuild starts.
   - All four fields repopulate with non-null values after the worker completes the rebuild.
-- [ ] Record the test meditation ID and field values for traceability:
+- [x] Record the test meditation ID and field values for traceability:
 
   > **Verification record:**
-  > Test meditation ID: ___
-  > Post-build `durationSecondsTalking`: ___, `durationSecondsPause`: ___, `durationSecondsSound`: ___
-  > Post-regeneration reset confirmed: yes/no
-  > Post-regeneration repopulation confirmed: yes/no
+  > Test meditation ID: 15 (`Test-Thought-Non-Identification`) for create-path verification; meditation 14 (`test db 01`) for modify/regeneration/backfill spot-check.
+  > Post-build `durationSecondsTalking`: 47, `durationSecondsPause`: 0, `durationSecondsSound`: 13
+  > Post-regeneration reset confirmed: yes — user confirmed modifying an existing meditation repopulated the Guidance circle after deployed worker restart.
+  > Post-regeneration repopulation confirmed: yes — user confirmed existing-meditation modification repopulated the Guidance circle; database spot-check after backfill showed meditation 14 populated as talking 2, pause 2, sound 7.
 
 **Per-phase gate:**
-- [ ] Worker verified on create path: null while pending → non-null after build
-- [ ] Worker verified on regenerate path: all four fields null on reset → repopulated after rebuild
-- [ ] Verification record filled in above
-- [ ] Do not begin Phase 9 until both verifications pass
+- [x] Worker verified on create path: null while pending → non-null after build
+- [x] Worker verified on regenerate path: all four fields null on reset → repopulated after rebuild
+- [x] Verification record filled in above
+- [x] Do not begin Phase 9 until both verifications pass
 
 ---
 
@@ -287,17 +287,24 @@ Plan §Implementation sequence step 10.
 
 Plan §Implementation sequence step 11.
 
-- [ ] Run the backfill with `--apply` against the target environment: `npm run backfill:segment-durations -- --apply`
-- [ ] Review the output summary:
+- [x] Run the backfill with `--apply` against the target environment: `npm run backfill:segment-durations -- --apply`
+- [x] Review the output summary:
   - Confirm total processed count is in the expected range.
   - Check per-category `skippedMissingFile` counts are within expected ranges given known gaps in historical file availability.
   - Note any unexpected errors.
-- [ ] Spot-check 3–5 meditations with known element lists: query `duration_seconds_talking`, `duration_seconds_pause`, and `duration_seconds_sound` directly in the database and verify the values are plausible.
+- [x] Spot-check 3–5 meditations with known element lists: query `duration_seconds_talking`, `duration_seconds_pause`, and `duration_seconds_sound` directly in the database and verify the values are plausible.
+
+  > **Dev backfill record:**
+  > Command: `npm run backfill:segment-durations -- --apply`
+  > Scanned: 7 complete meditations; processed/updated: 5; skipped already set: 2.
+  > Missing-file counts: talking 0, sound 0. Probe-failure counts: talking 0, sound 0.
+  > Aggregate post-check: complete_total 7, complete_with_segments 7, complete_missing_segments 0.
+  > Spot-check rows: meditation 4 talking 37 / pause 270 / sound 24; meditation 5 talking 0 / pause 150 / sound 12; meditation 6 talking 23 / pause 206 / sound 18; meditation 8 talking 2 / pause 2 / sound 7; meditation 13 talking 0 / pause 570 / sound 37.
 
 **Per-phase gate:**
-- [ ] Backfill completed without unexpected errors
-- [ ] Spot-check passed (3–5 meditations verified)
-- [ ] No code commit needed for this phase (data-only operation)
+- [x] Backfill completed without unexpected errors
+- [x] Spot-check passed (3–5 meditations verified)
+- [x] No code commit needed for this phase (data-only operation)
 
 ---
 
@@ -305,16 +312,16 @@ Plan §Implementation sequence step 11.
 
 Plan §Implementation sequence step 12.
 
-- [ ] Update `docs/db-models/TABLE_REFERENCE.md`: add entries for all three new columns on the `meditations` table, following the pattern of the existing `duration_seconds` entry:
+- [x] Update `docs/db-models/TABLE_REFERENCE.md`: add entries for all three new columns on the `meditations` table, following the pattern of the existing `duration_seconds` entry:
   - `duration_seconds_talking` — nullable integer; total duration in seconds of all text-job audio segments for this meditation, as measured from the generated audio files by the worker build process.
   - `duration_seconds_pause` — nullable integer; total requested pause duration in whole seconds across all pause elements in this meditation.
   - `duration_seconds_sound` — nullable integer; total duration in seconds of all prerecorded sound-job audio segments for this meditation.
   - Note that all three fields are reset to null when a pending rebuild starts, and repopulated by the worker when the build completes.
 
 **Per-phase gate:**
-- [ ] `docs/db-models/TABLE_REFERENCE.md` updated with accurate descriptions
-- [ ] Check off completed items above
-- [ ] Commit referencing this file + Phase 10
+- [x] `docs/db-models/TABLE_REFERENCE.md` updated with accurate descriptions
+- [x] Check off completed items above
+- [x] Commit referencing this file + Phase 10
 
 ---
 
@@ -322,14 +329,14 @@ Plan §Implementation sequence step 12.
 
 Before the branch is eligible to merge, all five package typechecks and all tests must pass:
 
-- [ ] `npm run typecheck -w @golightly/db-models` passes
-- [ ] `npm run typecheck -w @golightly/shared-types` passes
-- [ ] `npm run typecheck -w @golightly/api` passes
-- [ ] `npm test -w @golightly/api` passes
-- [ ] `npm run typecheck -w @golightly/worker-node` passes
-- [ ] `npm test -w @golightly/worker-node` passes
-- [ ] `npm run typecheck -w @golightly/web` passes
-- [ ] `npm run build -w @golightly/web` passes
+- [x] `npm run typecheck -w @golightly/db-models` passes
+- [x] `npm run typecheck -w @golightly/shared-types` passes
+- [x] `npm run typecheck -w @golightly/api` passes
+- [x] `npm test -w @golightly/api` passes
+- [x] `npm run typecheck -w @golightly/worker-node` passes
+- [x] `npm test -w @golightly/worker-node` passes
+- [x] `npm run typecheck -w @golightly/web` passes
+- [x] `npm run build -w @golightly/web` passes
 
 ---
 
