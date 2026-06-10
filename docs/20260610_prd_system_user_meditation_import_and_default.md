@@ -160,11 +160,13 @@ No schema change. The system user is a normal `User` row created through the sta
 In `api/src/routes/admin.ts`, add `isDefault` and `sourceFile` to the serialized meditation row returned in the admin meditations list. No route logic change required; only the serialization shape.
 
 **Before:**
+
 ```typescript
 { id, title, description, stage, userId, createdAt, ... }
 ```
 
 **After:**
+
 ```typescript
 { id, title, description, stage, isDefault, sourceFile, userId, createdAt, ... }
 ```
@@ -180,12 +182,16 @@ In `api/src/routes/admin.ts`, add `isDefault` and `sourceFile` to the serialized
 ```typescript
 // Within a single transaction:
 await Meditation.update({ isDefault: false }, { where: {} });
-const [count] = await Meditation.update({ isDefault: true }, { where: { id: req.params.id } });
+const [count] = await Meditation.update(
+	{ isDefault: true },
+	{ where: { id: req.params.id } },
+);
 if (count === 0) return res.status(404).json({ error: "Meditation not found" });
 res.json({ id: req.params.id, isDefault: true });
 ```
 
 **Response codes:**
+
 - `200` — success, returns `{ id, isDefault: true }`.
 - `404` — meditation with that ID does not exist.
 - `403` — caller is not an admin (handled by middleware).
@@ -205,10 +211,10 @@ res.json({ id: req.params.id, isDefault: true });
 
 ### Source Directories
 
-| User | Directory |
-|---|---|
+| User                       | Directory                                               |
+| -------------------------- | ------------------------------------------------------- |
 | System (benevolent_monkey) | `/home/nick/GoLightly04-meditations/benevolent_monkey/` |
-| Nick | `/home/nick/GoLightly04-meditations/nick/` |
+| Nick                       | `/home/nick/GoLightly04-meditations/nick/`              |
 
 ### File Format
 
@@ -234,13 +240,13 @@ A 10-minute silent meditation with the Tibetan Singing Bowl marking each two-min
 
 ### Section Handling
 
-| Section header | Action |
-|---|---|
-| `## Nick Description` | Skip entirely — never published. |
-| `## Title` | Extract trimmed single-line string → `meditation.title`. |
-| `## Description` | Extract trimmed (possibly multi-line) string → `meditation.description`. |
-| `## Meditation Script` | Parse into ordered element list (see below). |
-| Any other `## ...` heading | Ignore with a `WARN` log. |
+| Section header             | Action                                                                   |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `## Nick Description`      | Skip entirely — never published.                                         |
+| `## Title`                 | Extract trimmed single-line string → `meditation.title`.                 |
+| `## Description`           | Extract trimmed (possibly multi-line) string → `meditation.description`. |
+| `## Meditation Script`     | Parse into ordered element list (see below).                             |
+| Any other `## ...` heading | Ignore with a `WARN` log.                                                |
 
 A file missing `## Title` or `## Meditation Script` is invalid. The parser must return an error for that file; the import script will skip it and continue.
 
@@ -250,13 +256,13 @@ The body of `## Meditation Script` is parsed line-by-line into an element list c
 
 **Token recognition rules (evaluated in order per line):**
 
-| Pattern | Element type | Mapping |
-|---|---|---|
-| `[Sound Name]` | `sound` | Strip `[` and `]`; look up sound by name in registry. |
-| `<break time="Ns" />` | `break` | Extract N as float seconds. Accept `<break time="N.Ms"/>` with or without space before `/>`. |
-| `{speed=N}...{/speed}` (single or multi-line) | `spoken` with rate `N` | N is a float. Content between tags is the spoken text, trimmed. |
-| Non-empty line with no recognized markup | `spoken` | Trimmed line text, default rate. |
-| Empty or whitespace-only line | *(skip)* | — |
+| Pattern                                       | Element type           | Mapping                                                                                      |
+| --------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| `[Sound Name]`                                | `sound`                | Strip `[` and `]`; look up sound by name in registry.                                        |
+| `<break time="Ns" />`                         | `break`                | Extract N as float seconds. Accept `<break time="N.Ms"/>` with or without space before `/>`. |
+| `{speed=N}...{/speed}` (single or multi-line) | `spoken` with rate `N` | N is a float. Content between tags is the spoken text, trimmed.                              |
+| Non-empty line with no recognized markup      | `spoken`               | Trimmed line text, default rate.                                                             |
+| Empty or whitespace-only line                 | _(skip)_               | —                                                                                            |
 
 **Multi-line speed blocks:** if `{speed=N}` and `{/speed}` appear on different lines, accumulate all lines between them as a single spoken element.
 
@@ -275,11 +281,11 @@ If a sound name is not in the registry, log an error identifying the file and li
 
 `{sound_code}_{total_minutes}_{interval}.md`
 
-| Segment | Meaning |
-|---|---|
-| `sound_code` | Short code for primary sound (e.g., `tb` = Tibetan Singing Bowl) |
-| `total_minutes` | Integer total meditation duration in minutes |
-| `interval` | Integer interval in minutes between sound cues |
+| Segment         | Meaning                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| `sound_code`    | Short code for primary sound (e.g., `tb` = Tibetan Singing Bowl) |
+| `total_minutes` | Integer total meditation duration in minutes                     |
+| `interval`      | Integer interval in minutes between sound cues                   |
 
 The import script records the filename (as a relative path) in `sourceFile` but does not derive behavior from the filename segments.
 
@@ -288,7 +294,7 @@ The import script records the filename (as a relative path) in `sourceFile` but 
 Before creating a meditation, the import script queries:
 
 ```typescript
-Meditation.findOne({ where: { sourceFile: relativeFilePath } })
+Meditation.findOne({ where: { sourceFile: relativeFilePath } });
 ```
 
 - If a match exists and `--overwrite` flag is NOT set: log `SKIP <file>` and continue.
@@ -324,11 +330,11 @@ npx ts-node scripts/importMeditations.ts \
 
 **Flags:**
 
-| Flag | Behavior |
-|---|---|
-| `--dir <path>` | Required. Directory of `.md` files to import. |
-| `--overwrite` | Delete and re-create meditations that already have a matching `sourceFile`. |
-| `--dry-run` | Parse all files and report what would be created/skipped; no DB writes or audio generation. |
+| Flag           | Behavior                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| `--dir <path>` | Required. Directory of `.md` files to import.                                               |
+| `--overwrite`  | Delete and re-create meditations that already have a matching `sourceFile`.                 |
+| `--dry-run`    | Parse all files and report what would be created/skipped; no DB writes or audio generation. |
 
 ### Secrets File
 
@@ -376,14 +382,14 @@ The script authenticates as the system user using the existing `POST /auth/login
 
 ### Error Handling Policy
 
-| Condition | Behavior |
-|---|---|
-| Missing `SYSTEM_USER_EMAIL` or `SYSTEM_USER_PASSWORD` | Abort immediately with error message. |
-| Auth failure (401/403) | Abort immediately — all subsequent requests would fail. |
-| Parse error in a single file | Log error with filename and reason, skip file, continue. |
-| Unknown sound name in script | Log error with filename and line number, skip file, continue. |
-| Meditation generation timeout (> 5 min) | Log error, mark file as failed, continue. |
-| Network error during single meditation creation | Log error, mark file as failed, continue. |
+| Condition                                             | Behavior                                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------- |
+| Missing `SYSTEM_USER_EMAIL` or `SYSTEM_USER_PASSWORD` | Abort immediately with error message.                         |
+| Auth failure (401/403)                                | Abort immediately — all subsequent requests would fail.       |
+| Parse error in a single file                          | Log error with filename and reason, skip file, continue.      |
+| Unknown sound name in script                          | Log error with filename and line number, skip file, continue. |
+| Meditation generation timeout (> 5 min)               | Log error, mark file as failed, continue.                     |
+| Network error during single meditation creation       | Log error, mark file as failed, continue.                     |
 
 ---
 
@@ -592,20 +598,20 @@ Open `/admin`, navigate to the Meditations table, and click **Set as Default** o
 
 Tasks in dependency order. Steps 1–3 can be done before the reset; steps 4 onwards require a clean database.
 
-| # | Task | Dependencies |
-|---|---|---|
-| 1 | Add `isDefault` and `sourceFile` columns (migration + model) | — |
-| 2 | Implement `POST /admin/meditations/:id/set-default` endpoint | 1 |
-| 3 | Update admin meditations serializer to include `isDefault`, `sourceFile` | 1 |
-| 4 | Implement admin UI Default column and Set as Default button | 3 |
-| 5 | Implement markdown parser module with unit tests | — |
-| 6 | Implement `scripts/importMeditations.ts` | 5, system user exists |
-| 7 | Perform fresh DB reset (per runbook) | All code merged |
-| 8 | Nick manually registers system user through website | 7 |
-| 9 | Run import script for `benevolent_monkey` meditations | 6, 8 |
-| 10 | Run import script for `nick` meditations (optional) | 6 |
-| 11 | Set default meditation from `/admin` | 4, 9 |
-| 12 | Deprecate `scripts/seedDefaultMeditation.ts` and `getOrCreateBenevolentUser.ts` | 9 validated |
+| #   | Task                                                                            | Dependencies          |
+| --- | ------------------------------------------------------------------------------- | --------------------- |
+| 1   | Add `isDefault` and `sourceFile` columns (migration + model)                    | —                     |
+| 2   | Implement `POST /admin/meditations/:id/set-default` endpoint                    | 1                     |
+| 3   | Update admin meditations serializer to include `isDefault`, `sourceFile`        | 1                     |
+| 4   | Implement admin UI Default column and Set as Default button                     | 3                     |
+| 5   | Implement markdown parser module with unit tests                                | —                     |
+| 6   | Implement `scripts/importMeditations.ts`                                        | 5, system user exists |
+| 7   | Perform fresh DB reset (per runbook)                                            | All code merged       |
+| 8   | Nick manually registers system user through website                             | 7                     |
+| 9   | Run import script for `benevolent_monkey` meditations                           | 6, 8                  |
+| 10  | Run import script for `nick` meditations (optional)                             | 6                     |
+| 11  | Set default meditation from `/admin`                                            | 4, 9                  |
+| 12  | Deprecate `scripts/seedDefaultMeditation.ts` and `getOrCreateBenevolentUser.ts` | 9 validated           |
 
 ---
 
@@ -617,7 +623,7 @@ Option A (HTTP login) treats the script as a normal client and requires the API 
 
 #### Nick response
 
-*(blank)*
+Let's do option A
 
 ---
 
@@ -627,7 +633,7 @@ The PRD proposes a dedicated `sourceFile TEXT` column for query clarity. A `meta
 
 #### Nick response
 
-*(blank)*
+use a metadata JSONB column
 
 ---
 
@@ -637,9 +643,17 @@ The PRD's current assumption is the same script, separate invocation, with Nick'
 
 #### Nick response
 
-*(blank)*
+The /home/nick/agents_home/hermes/secrets/.env file will have nick credentials also:
+Example:
 
----
+```
+CREDENTIALS_EMAIL_NICK=nrodrig1@gmail.com
+CREDENTIALS_PASSWORD_NICK=test
+CREDENTIALS_EMAIL_BENEVOLENT_MOKNEY=benevolent_monkey@go-lightly.love
+CREDENTIALS_PASSWORD_BENEVOLENT_MOKNEY=test
+```
+
+## If hermes is requested to create a meditaiton under a user whose credentials are missing the hermes agent will not attempt the creation of a meditaiton and respond to me that it cannot do it becuase of missing credentials for the specific user.
 
 ### Q4: Should the `stage: "template"` value on the existing seeded meditation be preserved after reset, deprecated, or removed from the codebase entirely?
 
@@ -647,7 +661,7 @@ With `isDefault` now handling the "which meditation is the default" concern, `st
 
 #### Nick response
 
-*(blank)*
+Let's remove anything having to do with a seeded meditaiton that isn't part of the normal meditaiton creation flow. I want this to be idempotent and belonging to the benevolent_monkey so if we make it private it won't show up on the lists of meditations but can still display as the default - if this is not possible bring this up in hte next prd unanswered questions.
 
 ---
 
@@ -657,7 +671,7 @@ Options: (a) `404`, (b) the most recently created meditation, (c) a hard-coded f
 
 #### Nick response
 
-*(blank)*
+If there is no default meditation let's just make an error on the page but the page should be able to display. The meditaiton creation will occur prior to accessing the page so we should be able to avoid this. If my answer does not align with the rest of the PRD, bring this up in the next prd version.
 
 ---
 
@@ -667,7 +681,7 @@ Native `confirm()` is trivial to implement but inconsistent with any design syst
 
 #### Nick response
 
-*(blank)*
+Make a modal consistent with the existing UI. Let's avoid browser native dialogs as much as possible.
 
 ---
 
@@ -677,7 +691,7 @@ The PRD currently proposes a 5-minute timeout per meditation with skip-and-conti
 
 #### Nick response
 
-*(blank)*
+The script should not retry automatically. 5 minutes is acceptable timeout per meditation.
 
 ---
 
@@ -687,4 +701,4 @@ After the fresh reset the old user row will not exist, so this may be moot. Conf
 
 #### Nick response
 
-*(blank)*
+Everything will be dropped an erased on this prd adn the result of it.
