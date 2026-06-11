@@ -46,6 +46,11 @@ export default function CreateMeditationModeSwitcher() {
       const response = await getStagingMeditation();
       setStagingMeditation(response.meditation);
     } catch (error: any) {
+      if (error?.response?.data?.error?.code === "NO_STAGED_MEDITATION") {
+        setStagingMeditation(null);
+        setStagingError(null);
+        return;
+      }
       setStagingError(error?.response?.data?.error?.message || "Unable to load starter meditation.");
     } finally {
       setIsStagingLoading(false);

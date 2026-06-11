@@ -7,6 +7,7 @@ type MeditationLike = {
   visibility: "public" | "private";
   status?: string;
   stage?: "template" | "staged" | "library";
+  isDefault?: boolean;
 };
 
 export function assertMeditationAccess(
@@ -25,6 +26,7 @@ export function assertMeditationAccess(
     }
     if (
       (meditation.visibility === "public" && meditation.status === "complete") ||
+      (meditation.isDefault && meditation.status === "complete") ||
       requester?.id === meditation.userId ||
       requester?.isAdmin
     ) {

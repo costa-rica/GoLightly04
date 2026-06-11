@@ -387,7 +387,7 @@ export function buildMeditationsRouter(): Router {
     asyncHandler(async (req, res) => {
       const meditation = await loadMeditationOrThrow(Number(req.params.id));
       assertMeditationAccess(meditation, req.user, "stream");
-      res.json({ token: issueStreamToken(meditation.id, req.user!.id) });
+      res.json({ token: issueStreamToken(meditation.id, req.user!.id, req.user!.isAdmin) });
     }),
   );
 
@@ -402,7 +402,7 @@ export function buildMeditationsRouter(): Router {
       }
       assertMeditationAccess(
         meditation,
-        req.user ?? (tokenPayload ? { id: tokenPayload.userId, isAdmin: false } : undefined),
+        req.user ?? (tokenPayload ? { id: tokenPayload.userId, isAdmin: tokenPayload.isAdmin } : undefined),
         "stream",
       );
       if (!meditation.filePath) {

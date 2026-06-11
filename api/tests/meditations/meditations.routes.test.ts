@@ -204,6 +204,52 @@ describe("meditations routes", () => {
     expect(response.headers["content-type"]).toContain("audio/mpeg");
   });
 
+  it("streams a private meditation with an admin stream token", async () => {
+    const baseDir = path.join(os.tmpdir(), "golightly04-admin-stream-tests");
+    const filePath = path.join(baseDir, "stream.mp3");
+    await fs.mkdir(baseDir, { recursive: true });
+    await fs.writeFile(filePath, "stream-data");
+
+    meditationModel.findByPk.mockResolvedValue({
+      id: 16,
+      userId: 10,
+      visibility: "private",
+      status: "complete",
+      filePath,
+      listenCount: 0,
+      save: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const token = issueStreamToken(16, 99, true);
+    const response = await request(buildApp()).get(`/meditations/16/stream?token=${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("audio/mpeg");
+  });
+
+  it("streams the default meditation without an owner token", async () => {
+    const baseDir = path.join(os.tmpdir(), "golightly04-default-stream-tests");
+    const filePath = path.join(baseDir, "stream.mp3");
+    await fs.mkdir(baseDir, { recursive: true });
+    await fs.writeFile(filePath, "stream-data");
+
+    meditationModel.findByPk.mockResolvedValue({
+      id: 17,
+      userId: 10,
+      visibility: "private",
+      status: "complete",
+      isDefault: true,
+      filePath,
+      listenCount: 0,
+      save: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const response = await request(buildApp()).get("/meditations/17/stream");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("audio/mpeg");
+  });
+
   it("returns serialized script when scriptSource is null", async () => {
     soundFileModel.findAll.mockResolvedValue([{ id: 1, name: "Rain", filename: "rain.mp3" }]);
     meditationModel.findByPk.mockResolvedValue(
