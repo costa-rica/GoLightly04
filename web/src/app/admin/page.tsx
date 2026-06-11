@@ -24,6 +24,7 @@ import {
   getQueuerRecords,
   getUsers,
   requeueMeditation,
+  setDefaultMeditation,
   type AdminUser,
   type QueueRecord,
   updateAdminMeditationMetadata,
@@ -82,8 +83,11 @@ export default function AdminPage() {
     useState<AdminMeditation | null>(null);
   const [meditationEditTarget, setMeditationEditTarget] =
     useState<AdminMeditation | null>(null);
+  const [meditationDefaultTarget, setMeditationDefaultTarget] =
+    useState<AdminMeditation | null>(null);
   const [isMeditationDeleting, setIsMeditationDeleting] = useState(false);
   const [isMeditationSaving, setIsMeditationSaving] = useState(false);
+  const [isSettingDefault, setIsSettingDefault] = useState(false);
   const [isQueuerExpanded, setIsQueuerExpanded] = useState(false);
   const [queueRecords, setQueueRecords] = useState<QueueRecord[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
@@ -328,6 +332,28 @@ export default function AdminPage() {
       setMeditationEditTarget(null);
     } finally {
       setIsMeditationSaving(false);
+    }
+  };
+
+  const handleSetDefaultConfirm = async () => {
+    if (!meditationDefaultTarget) return;
+    setIsSettingDefault(true);
+    try {
+      const response = await setDefaultMeditation(meditationDefaultTarget.id);
+      setMeditations((prev) =>
+        prev.map((item) => ({
+          ...item,
+          isDefault: item.id === response.meditation.id,
+        })),
+      );
+      setToast({ message: "Default meditation updated.", variant: "success" });
+      setMeditationDefaultTarget(null);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error?.message || "Unable to set default meditation.";
+      setToast({ message, variant: "error" });
+    } finally {
+      setIsSettingDefault(false);
     }
   };
 
@@ -728,6 +754,7 @@ export default function AdminPage() {
                     meditations={meditations}
                     onEdit={(target) => setMeditationEditTarget(target)}
                     onDelete={(target) => setMeditationDeleteTarget(target)}
+                    onSetDefault={(target) => setMeditationDefaultTarget(target)}
                   />
                 )}
               </div>
@@ -1030,6 +1057,16 @@ export default function AdminPage() {
         isSubmitting={isMeditationSaving}
         onClose={() => setMeditationEditTarget(null)}
         onSave={handleMeditationMetadataSave}
+      />
+      <ModalConfirmDelete
+        isOpen={!!meditationDefaultTarget}
+        title="Set default meditation"
+        message={`Set "${meditationDefaultTarget?.title ?? "this meditation"}" as the default? It will be hidden from ordinary meditation lists and shown in the default meditation section.`}
+        confirmLabel="Set Default"
+        variant="primary"
+        isLoading={isSettingDefault}
+        onClose={() => setMeditationDefaultTarget(null)}
+        onConfirm={handleSetDefaultConfirm}
       />
       <ModalConfirmCascadeDelete
         isOpen={!!queueDeleteTarget}

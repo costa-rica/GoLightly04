@@ -70,6 +70,7 @@ export async function createMeditationFromElements(opts: {
   sourceMode: SourceMode;
   scriptSource: string | null;
   stage?: MeditationStage;
+  metadata?: Record<string, unknown>;
 }): Promise<Meditation> {
   const { sequelize, Meditation } = getDb();
   return sequelize.transaction(async (transaction) => {
@@ -82,6 +83,7 @@ export async function createMeditationFromElements(opts: {
         stage: opts.stage ?? "library",
         sourceMode: opts.sourceMode,
         scriptSource: opts.scriptSource,
+        metadata: opts.metadata ?? {},
         status: "pending",
         meditationArray: opts.elements.map((element, index) => ({
           ...element,

@@ -3,6 +3,14 @@ export type MeditationStatus = "pending" | "processing" | "complete" | "failed";
 export type SourceMode = "spreadsheet" | "script";
 export type MeditationStage = "template" | "staged" | "library";
 
+export type ImportProvenanceMetadata = {
+  sourceFile: string;
+  sourceRoot: string;
+  sourceUserKey: "nick" | "benevolent_monkey";
+  importedAt: string;
+  checksum: string;
+};
+
 export type MeditationElement = {
   id: number;
   text?: string;
@@ -34,6 +42,8 @@ export type Meditation = {
   stage: MeditationStage;
   sourceMode?: SourceMode;
   scriptSource?: string | null;
+  isDefault: boolean;
+  importMetadata?: ImportProvenanceMetadata | Record<string, unknown>;
 };
 
 export type CreateMeditationRequest = {
@@ -49,6 +59,39 @@ export type CreateMeditationScriptRequest = {
   visibility: MeditationVisibility;
   script: string;
 };
+
+export type GetDefaultMeditationResponse = {
+  meditation: Meditation;
+};
+
+export type ImportLookupRequest = {
+  sourceUserKey: ImportProvenanceMetadata["sourceUserKey"];
+  sourceFile: string;
+};
+
+export type ImportLookupResponse = {
+  duplicate: boolean;
+  meditation?: Meditation;
+};
+
+export type ImportMeditationRequest = {
+  title: string;
+  description?: string;
+  script: string;
+  overwrite?: boolean;
+  importMetadata: ImportProvenanceMetadata;
+};
+
+export type ImportMeditationResponse =
+  | {
+      action: "created" | "overwritten";
+      meditation: Meditation;
+      previousMeditationId?: number;
+    }
+  | {
+      action: "duplicate";
+      meditation: Meditation;
+    };
 
 export type TextJobInputData = {
   text: string;

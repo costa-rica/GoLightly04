@@ -22,6 +22,8 @@ export class Meditation extends Model<
   declare stage: CreationOptional<"template" | "staged" | "library">;
   declare sourceMode: CreationOptional<"spreadsheet" | "script">;
   declare scriptSource: string | null;
+  declare isDefault: CreationOptional<boolean>;
+  declare metadata: CreationOptional<Record<string, unknown>>;
   declare status: CreationOptional<"pending" | "processing" | "complete" | "failed">;
   declare listenCount: CreationOptional<number>;
   declare durationSeconds: CreationOptional<number | null>;
@@ -88,6 +90,17 @@ export function initMeditationModel(sequelize: Sequelize): typeof Meditation {
         type: DataTypes.TEXT,
         allowNull: true,
         field: "script_source",
+      },
+      isDefault: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        field: "is_default",
+      },
+      metadata: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: {},
       },
       status: {
         type: DataTypes.ENUM("pending", "processing", "complete", "failed"),

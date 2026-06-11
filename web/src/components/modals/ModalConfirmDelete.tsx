@@ -7,6 +7,7 @@ type ModalConfirmDeleteProps = {
   title?: string;
   message?: string;
   confirmLabel?: string;
+  variant?: "danger" | "primary";
   isLoading?: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -17,6 +18,7 @@ export default function ModalConfirmDelete({
   title = "Delete meditation",
   message = "Are you sure you want to delete this meditation? This action cannot be undone.",
   confirmLabel = "Delete",
+  variant = "danger",
   isLoading = false,
   onClose,
   onConfirm,
@@ -86,7 +88,11 @@ export default function ModalConfirmDelete({
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200"
+            className={
+              variant === "primary"
+                ? "rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-xs font-semibold text-primary-700 transition hover:border-primary-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-500/40 dark:bg-primary-500/15 dark:text-primary-200"
+                : "rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200"
+            }
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : confirmLabel}

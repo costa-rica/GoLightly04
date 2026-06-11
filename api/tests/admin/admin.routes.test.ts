@@ -10,6 +10,12 @@ const meditationModel = {
   update: jest.fn(),
 };
 
+const sequelizeMock = {
+  transaction: jest.fn(async (callback: (transaction: object) => Promise<unknown>) =>
+    callback({}),
+  ),
+};
+
 const jobQueueModel = {
   findAll: jest.fn(),
   findByPk: jest.fn(),
@@ -19,11 +25,12 @@ const jobQueueModel = {
 const userModel = {
   findAll: jest.fn(),
   findByPk: jest.fn(),
-  findOrCreate: jest.fn(),
+  findOne: jest.fn(),
 };
 
 jest.mock("../../src/lib/db", () => ({
   getDb: () => ({
+    sequelize: sequelizeMock,
     Meditation: meditationModel,
     JobQueue: jobQueueModel,
     User: userModel,
@@ -60,13 +67,12 @@ describe("admin routes", () => {
   });
 
   const mockBenevolentUser = (id = 22) => {
-    userModel.findOrCreate.mockResolvedValue([
+    userModel.findOne.mockResolvedValue(
       {
         id,
-        email: "benevolent.system@golightly.local",
+        email: "benevolent_monkey@go-lightly.love",
       },
-      false,
-    ]);
+    );
   };
 
   const buildMeditation = (overrides: Record<string, unknown> = {}) => ({
@@ -82,6 +88,8 @@ describe("admin routes", () => {
     sourceMode: "spreadsheet",
     scriptSource: null,
     status: "complete",
+    isDefault: false,
+    metadata: {},
     listenCount: 3,
     durationSeconds: null,
     createdAt: new Date("2026-04-22T00:00:00.000Z"),
@@ -326,7 +334,7 @@ describe("admin routes", () => {
           actorIsAdmin: true,
           meditationId: 8,
           targetOwnerUserId: 22,
-          targetOwnerEmail: "benevolent.system@golightly.local",
+          targetOwnerEmail: "benevolent_monkey@go-lightly.love",
           previous: {
             title: "Original Title",
             description: "Original description",
@@ -378,6 +386,36 @@ describe("admin routes", () => {
         }),
       );
     });
+  });
+
+  it("sets exactly one default meditation", async () => {
+    mockBenevolentUser(22);
+    const meditation = buildMeditation({ id: 40, isDefault: false });
+    meditationModel.findByPk.mockResolvedValue(meditation);
+    meditationModel.update.mockResolvedValue([3]);
+
+    const response = await request(buildApp())
+      .post("/admin/meditations/40/set-default")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(response.status).toBe(200);
+    expect(meditationModel.update).toHaveBeenCalledWith(
+      { isDefault: false },
+      expect.objectContaining({ where: {} }),
+    );
+    expect(meditation.isDefault).toBe(true);
+    expect(meditation.save).toHaveBeenCalled();
+    expect(response.body.meditation).toMatchObject({
+      id: 40,
+      isDefault: true,
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      "admin.default_meditation_set",
+      expect.objectContaining({
+        actorId: 1,
+        meditationId: 40,
+      }),
+    );
   });
 
   it("requeues a failed meditation", async () => {

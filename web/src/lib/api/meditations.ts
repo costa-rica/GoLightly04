@@ -7,6 +7,7 @@ import type {
   GenerateStagedMeditationRequest,
   GenerateStagedMeditationResponse,
   GetAllMeditationsResponse,
+  GetDefaultMeditationResponse,
   GetStagingMeditationResponse,
   RegenerateMeditationResponse,
   SaveStagedMeditationRequest,
@@ -34,6 +35,20 @@ export const getAllMeditations = async (
     ...data,
     meditations: data.meditations ?? data.meditationsArray ?? [],
   };
+};
+
+export const getDefaultMeditation = async (
+  accessToken?: string | null,
+): Promise<GetDefaultMeditationResponse> => {
+  const response = await apiClient.get<GetDefaultMeditationResponse>(
+    "/meditations/default",
+    {
+      headers: accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : undefined,
+    },
+  );
+  return response.data;
 };
 
 export const createMeditation = async (

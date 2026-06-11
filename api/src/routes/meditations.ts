@@ -1,10 +1,8 @@
 import fs from "fs";
 import fsPromises from "fs/promises";
-import path from "path";
 import { Op } from "sequelize";
 import { Router } from "express";
 import {
-  parseMeditationScript,
   SCRIPT_MAX_BYTES,
   serializeMeditationElementsToScript,
   type GenerateStagedMeditationRequest,
@@ -27,6 +25,12 @@ import { validateMeditationMetadata } from "../services/meditations/validateMedi
 import { createOrRegenerateStagedMeditation } from "../services/meditations/createOrRegenerateStagedMeditation";
 import { saveStagedToLibrary } from "../services/meditations/saveStagedToLibrary";
 import { assertMeditationAccess } from "../services/meditations/assertMeditationAccess";
+import { getDefaultMeditation } from "../services/meditations/defaultMeditation";
+import { createScriptMeditation } from "../services/meditations/createScriptMeditation";
+import {
+  normalizeImportLookup,
+  validateImportProvenanceMetadata,
+} from "../services/meditations/importProvenance";
 
 export function mapMeditationRecord(
   meditation: any,
@@ -63,6 +67,8 @@ export function mapMeditationRecord(
     isFavorite: options.isFavorite,
     isOwned: options.isOwned,
     ownerUserId: meditation.userId,
+    isDefault: meditation.isDefault === true,
+    importMetadata: meditation.metadata ?? {},
   };
 }
 
@@ -79,6 +85,22 @@ async function loadSoundFilenameToNameLookup() {
   const { SoundFile } = getDb();
   const soundFiles = await SoundFile.findAll();
   return buildSoundFilenameToNameLookup(soundFiles);
+}
+
+function buildImportLookupWhere(opts: {
+  userId: number;
+  sourceUserKey: string;
+  sourceFile: string;
+}) {
+  return {
+    userId: opts.userId,
+    metadata: {
+      [Op.contains]: {
+        sourceUserKey: opts.sourceUserKey,
+        sourceFile: opts.sourceFile,
+      },
+    },
+  } as any;
 }
 
 export function buildMeditationsRouter(): Router {
@@ -122,31 +144,13 @@ export function buildMeditationsRouter(): Router {
       requireBodyFields(req.body, ["title", "visibility", "script"]);
       const { title, description, visibility } = validateMeditationMetadata(req.body);
       const script = ensureString(req.body.script, "script");
-      if (Buffer.byteLength(script, "utf8") > SCRIPT_MAX_BYTES) {
-        throw new AppError(400, "VALIDATION_ERROR", `script must be ${SCRIPT_MAX_BYTES} bytes or less`);
-      }
 
-      const { SoundFile } = getDb();
-      const sounds = await SoundFile.findAll();
-      const soundMap = new Map(
-        sounds.map((sound) => [sound.name.trim().toLowerCase(), sound]),
-      );
-      const parseResult = parseMeditationScript(
-        script,
-        (bracketText) => soundMap.get(bracketText.trim().toLowerCase()) ?? null,
-      );
-      if (!parseResult.ok) {
-        throw new AppError(400, "SCRIPT_PARSE_ERROR", "Unable to parse meditation script", parseResult.errors);
-      }
-
-      const meditation = await createMeditationFromElements({
+      const meditation = await createScriptMeditation({
         userId: req.user!.id,
         title,
         description,
         visibility,
-        elements: parseResult.elements,
-        sourceMode: "script",
-        scriptSource: script,
+        script,
       });
 
       void notifyWorker(meditation.id, "intake");
@@ -160,6 +164,110 @@ export function buildMeditationsRouter(): Router {
   );
 
   router.get(
+    "/default",
+    optionalAuth,
+    asyncHandler(async (req, res) => {
+      const meditation = await getDefaultMeditation();
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+      res.json({
+        meditation: mapMeditationRecord(meditation, {
+          isOwned: req.user?.id === meditation.userId,
+          soundFilenameToName,
+        }),
+      });
+    }),
+  );
+
+  router.get(
+    "/imports",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const sourceUserKey = normalizeImportLookup(req.query.sourceUserKey, "sourceUserKey");
+      const sourceFile = normalizeImportLookup(req.query.sourceFile, "sourceFile");
+      const { Meditation } = getDb();
+      const meditation = await Meditation.findOne({
+        where: buildImportLookupWhere({ userId: req.user!.id, sourceUserKey, sourceFile }),
+        order: [["createdAt", "DESC"]],
+      });
+
+      if (!meditation) {
+        res.json({ duplicate: false });
+        return;
+      }
+
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+      res.json({
+        duplicate: true,
+        meditation: mapMeditationRecord(meditation, {
+          isOwned: true,
+          soundFilenameToName,
+        }),
+      });
+    }),
+  );
+
+  router.post(
+    "/imports",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      requireBodyFields(req.body, ["title", "script", "importMetadata"]);
+      const { title, description } = validateMeditationMetadata({
+        ...req.body,
+        visibility: "private",
+      });
+      const script = ensureString(req.body.script, "script");
+      const importMetadata = validateImportProvenanceMetadata(req.body.importMetadata);
+      const overwrite = req.body.overwrite === true;
+      const { Meditation } = getDb();
+
+      const existing = await Meditation.findOne({
+        where: buildImportLookupWhere({
+          userId: req.user!.id,
+          sourceUserKey: importMetadata.sourceUserKey,
+          sourceFile: importMetadata.sourceFile,
+        }),
+        order: [["createdAt", "DESC"]],
+      });
+
+      const soundFilenameToName = await loadSoundFilenameToNameLookup();
+      if (existing && !overwrite) {
+        res.status(200).json({
+          action: "duplicate",
+          meditation: mapMeditationRecord(existing, {
+            isOwned: true,
+            soundFilenameToName,
+          }),
+        });
+        return;
+      }
+
+      const previousMeditationId = existing?.id;
+      if (existing && overwrite) {
+        await deleteMeditationCascade(existing.id);
+      }
+
+      const meditation = await createScriptMeditation({
+        userId: req.user!.id,
+        title,
+        description,
+        visibility: "private",
+        script,
+        metadata: importMetadata,
+      });
+      void notifyWorker(meditation.id, "intake");
+
+      res.status(existing ? 200 : 201).json({
+        action: existing ? "overwritten" : "created",
+        meditation: mapMeditationRecord(meditation, {
+          isOwned: true,
+          soundFilenameToName,
+        }),
+        ...(previousMeditationId ? { previousMeditationId } : {}),
+      });
+    }),
+  );
+
+  router.get(
     "/staging",
     requireAuth,
     asyncHandler(async (req, res) => {
@@ -167,12 +275,9 @@ export function buildMeditationsRouter(): Router {
       const meditation = await Meditation.findOne({
         where: { userId: req.user!.id, stage: "staged" },
         order: [["updatedAt", "DESC"]],
-      }) ?? await Meditation.findOne({
-        where: { stage: "template" },
-        order: [["createdAt", "ASC"]],
       });
       if (!meditation) {
-        throw new AppError(404, "NOT_FOUND", "Default meditation template not found");
+        throw new AppError(404, "NO_STAGED_MEDITATION", "No staged meditation exists");
       }
       const soundFilenameToName = buildSoundFilenameToNameLookup(await SoundFile.findAll());
       res.json({
@@ -221,7 +326,7 @@ export function buildMeditationsRouter(): Router {
     optionalAuth,
     asyncHandler(async (req, res) => {
       const { ContractUserMeditation, Meditation, SoundFile } = getDb();
-      const stageClause = { stage: "library" };
+      const stageClause = { stage: "library", isDefault: false };
       const where = req.user?.isAdmin
         ? stageClause
         : req.user
