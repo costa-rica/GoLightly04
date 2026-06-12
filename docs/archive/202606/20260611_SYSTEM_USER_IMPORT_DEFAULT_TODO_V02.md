@@ -7,9 +7,9 @@ modified_by: codex (gpt-5)
 
 # System User Meditation Import and Default Management TODO V02
 
-Source plan: `docs/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V02.md`
+Source plan: `docs/archive/202606/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V02.md`
 
-V01 assessment: `docs/20260611_SYSTEM_USER_IMPORT_DEFAULT_TODO_V01_ASSESSMENT_CODEX.md`
+V01 assessment: `docs/archive/202606/20260611_SYSTEM_USER_IMPORT_DEFAULT_TODO_V01_ASSESSMENT_CODEX.md`
 
 V02 changes:
 

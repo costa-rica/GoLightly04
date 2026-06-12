@@ -7,7 +7,7 @@ modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 
 # System User Meditation Import and Default Management TODO V01
 
-Source plan: `docs/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V02.md`
+Source plan: `docs/archive/202606/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V02.md`
 
 Vetting status: Codex accepted Plan V02 for TODO determination and did not create a V02 assessment file.
 

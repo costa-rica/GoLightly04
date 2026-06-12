@@ -9,7 +9,7 @@ modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 
 ## Source Requirements
 
-Primary requirements are in `docs/20260610_prd_system_user_meditation_import_and_default_v03.md`.
+Primary requirements are in `docs/archive/202606/20260610_prd_system_user_meditation_import_and_default_v03.md`.
 
 This plan assumes a clean-slate rollout: the database and `project_resources` will be reset before the feature is used. The plan therefore targets the fresh schema/model definitions instead of writing backward-compatible data migrations for existing user data.
 

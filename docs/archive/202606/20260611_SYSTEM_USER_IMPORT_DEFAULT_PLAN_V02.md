@@ -9,9 +9,9 @@ modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 
 ## Source Requirements
 
-Primary requirements are in `docs/20260610_prd_system_user_meditation_import_and_default_v03.md`.
+Primary requirements are in `docs/archive/202606/20260610_prd_system_user_meditation_import_and_default_v03.md`.
 
-This V02 plan responds to `docs/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V01_ASSESSMENT_CODEX.md` by making four previously under-specified areas concrete:
+This V02 plan responds to `docs/archive/202606/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V01_ASSESSMENT_CODEX.md` by making four previously under-specified areas concrete:
 
 1. the frontend default-meditation surface and sequencing;
 2. HTTP-visible duplicate detection for imports;

@@ -7,9 +7,9 @@ modified_by: codex (gpt-5)
 
 # System User Import Default TODO V01 Assessment
 
-Assessment target: `docs/20260611_SYSTEM_USER_IMPORT_DEFAULT_TODO_V01.md`
+Assessment target: `docs/archive/202606/20260611_SYSTEM_USER_IMPORT_DEFAULT_TODO_V01.md`
 
-Accepted plan: `docs/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V02.md`
+Accepted plan: `docs/archive/202606/20260611_SYSTEM_USER_IMPORT_DEFAULT_PLAN_V02.md`
 
 Result: implementation should not proceed until the TODO is revised.
 
