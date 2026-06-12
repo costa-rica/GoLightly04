@@ -5,14 +5,14 @@ import type { Meditation } from "@golightly/shared-types";
 import CreateMeditationForm from "@/components/forms/CreateMeditationForm";
 import ScriptMeditationEditor from "@/components/forms/ScriptMeditationEditor";
 import { useAppSelector } from "@/store/hooks";
-import { getStagingMeditation } from "@/lib/api/meditations";
+import { getDefaultMeditation, getStagingMeditation } from "@/lib/api/meditations";
 
 type CreateMode = "script" | "form";
 
 const STORAGE_KEY = "golightly.createMode";
 
 export default function CreateMeditationModeSwitcher() {
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const { accessToken, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const showScriptMode = user?.showScriptModeForCreatingMeditations ?? false;
   const [mode, setMode] = useState<CreateMode>("form");
   const [stagingMeditation, setStagingMeditation] = useState<Meditation | null>(null);
@@ -46,11 +46,29 @@ export default function CreateMeditationModeSwitcher() {
       const response = await getStagingMeditation();
       setStagingMeditation(response.meditation);
     } catch (error: any) {
+      if (error?.response?.data?.error?.code === "NO_STAGED_MEDITATION") {
+        try {
+          const response = await getDefaultMeditation(isAuthenticated ? accessToken : null);
+          setStagingMeditation(response.meditation);
+          setStagingError(null);
+        } catch (defaultError: any) {
+          if (defaultError?.response?.data?.error?.code === "NO_DEFAULT_MEDITATION") {
+            setStagingMeditation(null);
+            setStagingError(null);
+            return;
+          }
+          setStagingMeditation(null);
+          setStagingError(
+            defaultError?.response?.data?.error?.message || "Unable to load starter meditation.",
+          );
+        }
+        return;
+      }
       setStagingError(error?.response?.data?.error?.message || "Unable to load starter meditation.");
     } finally {
       setIsStagingLoading(false);
     }
-  }, []);
+  }, [accessToken, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;

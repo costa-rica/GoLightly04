@@ -1,5 +1,6 @@
 import type {
   AdminDeleteMeditationResponse,
+  AdminSetDefaultMeditationResponse,
   AdminUpdateMeditationMetadataRequest,
   AdminUpdateMeditationMetadataResponse,
   DeleteQueueRecordResponse,
@@ -62,6 +63,15 @@ export const updateAdminMeditationMetadata = async (
   const response = await apiClient.patch<AdminUpdateMeditationMetadataResponse>(
     `/admin/meditations/${meditationId}/metadata`,
     data,
+  );
+  return response.data;
+};
+
+export const setDefaultMeditation = async (
+  meditationId: number,
+): Promise<AdminSetDefaultMeditationResponse> => {
+  const response = await apiClient.post<AdminSetDefaultMeditationResponse>(
+    `/admin/meditations/${meditationId}/set-default`,
   );
   return response.data;
 };

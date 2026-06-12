@@ -7,6 +7,7 @@ type MeditationLike = {
   visibility: "public" | "private";
   status?: string;
   stage?: "template" | "staged" | "library";
+  isDefault?: boolean;
 };
 
 export function assertMeditationAccess(
@@ -17,9 +18,6 @@ export function assertMeditationAccess(
   const stage = meditation.stage ?? "library";
 
   if (intent === "read" || intent === "stream") {
-    if (stage === "template") {
-      return;
-    }
     if (stage === "staged") {
       if (requester?.id === meditation.userId) {
         return;
@@ -28,6 +26,7 @@ export function assertMeditationAccess(
     }
     if (
       (meditation.visibility === "public" && meditation.status === "complete") ||
+      (meditation.isDefault && meditation.status === "complete") ||
       requester?.id === meditation.userId ||
       requester?.isAdmin
     ) {
@@ -36,9 +35,6 @@ export function assertMeditationAccess(
     throw new AppError(403, "FORBIDDEN", "You do not have access to this meditation");
   }
 
-  if (stage === "template") {
-    throw new AppError(409, "PROTECTED_TEMPLATE", "Template meditations cannot be mutated");
-  }
   if (stage === "staged") {
     throw new AppError(409, "STAGED_MEDITATION", "Use staging endpoints to mutate staged meditations");
   }

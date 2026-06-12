@@ -4,7 +4,7 @@ export function assertAdminMeditationMutable(
   meditation: { stage?: "template" | "staged" | "library" },
   _intent: "delete" | "queue-delete" | "requeue",
 ): void {
-  if ((meditation.stage ?? "library") === "template") {
-    throw new AppError(409, "PROTECTED_TEMPLATE", "Template meditations are protected");
+  if ((meditation.stage ?? "library") === "staged") {
+    throw new AppError(409, "STAGED_MEDITATION", "Staged meditations must be managed through staging flows");
   }
 }

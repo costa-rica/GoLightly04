@@ -8,6 +8,7 @@ import { issueAccessToken, issueStreamToken } from "../../src/lib/authTokens";
 
 const mockedNotifyWorker = jest.fn();
 const mockedDeleteMeditationAudioFiles = jest.fn();
+const mockedDeleteMeditationCascade = jest.fn();
 
 const sequelizeMock = {
   transaction: jest.fn(async (callback: (transaction: { LOCK: { UPDATE: string } }) => Promise<unknown>) =>
@@ -18,6 +19,7 @@ const sequelizeMock = {
 const meditationModel = {
   create: jest.fn(),
   findAll: jest.fn(),
+  findOne: jest.fn(),
   findByPk: jest.fn(),
 };
 
@@ -52,7 +54,7 @@ jest.mock("../../src/services/workerClient", () => ({
 }));
 
 jest.mock("../../src/services/meditations/deleteMeditationCascade", () => ({
-  deleteMeditationCascade: jest.fn().mockResolvedValue(undefined),
+  deleteMeditationCascade: (...args: unknown[]) => mockedDeleteMeditationCascade(...args),
 }));
 
 jest.mock("../../src/services/meditations/meditationFileCleanup", () => ({
@@ -93,6 +95,8 @@ describe("meditations routes", () => {
       updatedAt: new Date("2026-04-22T00:00:00.000Z"),
       listenCount: 0,
       status: "complete",
+      isDefault: false,
+      metadata: {},
       save: jest.fn().mockResolvedValue(undefined),
       update: jest.fn().mockResolvedValue(undefined),
       ...overrides,
@@ -109,6 +113,7 @@ describe("meditations routes", () => {
     jobQueueModel.create.mockResolvedValue({});
     mockedNotifyWorker.mockResolvedValue(undefined);
     mockedDeleteMeditationAudioFiles.mockResolvedValue(undefined);
+    mockedDeleteMeditationCascade.mockResolvedValue(undefined);
   });
 
   it("creates a meditation and queues jobs", async () => {
@@ -199,6 +204,52 @@ describe("meditations routes", () => {
     expect(response.headers["content-type"]).toContain("audio/mpeg");
   });
 
+  it("streams a private meditation with an admin stream token", async () => {
+    const baseDir = path.join(os.tmpdir(), "golightly04-admin-stream-tests");
+    const filePath = path.join(baseDir, "stream.mp3");
+    await fs.mkdir(baseDir, { recursive: true });
+    await fs.writeFile(filePath, "stream-data");
+
+    meditationModel.findByPk.mockResolvedValue({
+      id: 16,
+      userId: 10,
+      visibility: "private",
+      status: "complete",
+      filePath,
+      listenCount: 0,
+      save: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const token = issueStreamToken(16, 99, true);
+    const response = await request(buildApp()).get(`/meditations/16/stream?token=${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("audio/mpeg");
+  });
+
+  it("streams the default meditation without an owner token", async () => {
+    const baseDir = path.join(os.tmpdir(), "golightly04-default-stream-tests");
+    const filePath = path.join(baseDir, "stream.mp3");
+    await fs.mkdir(baseDir, { recursive: true });
+    await fs.writeFile(filePath, "stream-data");
+
+    meditationModel.findByPk.mockResolvedValue({
+      id: 17,
+      userId: 10,
+      visibility: "private",
+      status: "complete",
+      isDefault: true,
+      filePath,
+      listenCount: 0,
+      save: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const response = await request(buildApp()).get("/meditations/17/stream");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("audio/mpeg");
+  });
+
   it("returns serialized script when scriptSource is null", async () => {
     soundFileModel.findAll.mockResolvedValue([{ id: 1, name: "Rain", filename: "rain.mp3" }]);
     meditationModel.findByPk.mockResolvedValue(
@@ -236,7 +287,7 @@ describe("meditations routes", () => {
     await request(buildApp()).get("/meditations/all");
     expect(meditationModel.findAll).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        where: { stage: "library", visibility: "public", status: "complete" },
+        where: { stage: "library", isDefault: false, visibility: "public", status: "complete" },
       }),
     );
 
@@ -248,12 +299,193 @@ describe("meditations routes", () => {
       { userId: 10 },
     ]);
     expect(authedWhere.stage).toBe("library");
+    expect(authedWhere.isDefault).toBe(false);
 
     await request(buildApp()).get("/meditations/all").set("Authorization", `Bearer ${adminToken}`);
     expect(meditationModel.findAll).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        where: { stage: "library" },
+        where: { stage: "library", isDefault: false },
       }),
+    );
+  });
+
+  it("returns the default meditation without ordinary list filters", async () => {
+    soundFileModel.findAll.mockResolvedValue([]);
+    meditationModel.findOne.mockResolvedValue(
+      meditationRecord({
+        id: 77,
+        title: "Default",
+        visibility: "private",
+        isDefault: true,
+      }),
+    );
+
+    const response = await request(buildApp()).get("/meditations/default");
+
+    expect(response.status).toBe(200);
+    expect(response.body.meditation).toMatchObject({
+      id: 77,
+      title: "Default",
+      visibility: "private",
+      isDefault: true,
+    });
+    expect(meditationModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { isDefault: true },
+      }),
+    );
+  });
+
+  it("returns structured no-default errors", async () => {
+    meditationModel.findOne.mockResolvedValue(null);
+
+    const response = await request(buildApp()).get("/meditations/default");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("NO_DEFAULT_MEDITATION");
+  });
+
+  it("looks up imports by owner-scoped provenance metadata", async () => {
+    meditationModel.findOne.mockResolvedValue(
+      meditationRecord({
+        id: 88,
+        visibility: "private",
+        metadata: {
+          sourceUserKey: "nick",
+          sourceFile: "one.md",
+        },
+      }),
+    );
+
+    const response = await request(buildApp())
+      .get("/meditations/imports?sourceUserKey=nick&sourceFile=one.md")
+      .set("Authorization", `Bearer ${userToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.duplicate).toBe(true);
+    expect(response.body.meditation.id).toBe(88);
+    expect(meditationModel.findOne.mock.calls[0][0].where.userId).toBe(10);
+  });
+
+  it("skips duplicate imports without mutation when overwrite is false", async () => {
+    meditationModel.findOne.mockResolvedValue(meditationRecord({ id: 91, visibility: "private" }));
+
+    const response = await request(buildApp())
+      .post("/meditations/imports")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        title: "Imported",
+        script: "Hello",
+        importMetadata: {
+          sourceUserKey: "nick",
+          sourceFile: "one.md",
+          sourceRoot: "/tmp/source",
+          importedAt: "2026-06-11T00:00:00.000Z",
+          checksum: `sha256:${"a".repeat(64)}`,
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.action).toBe("duplicate");
+    expect(meditationModel.create).not.toHaveBeenCalled();
+    expect(mockedDeleteMeditationCascade).not.toHaveBeenCalled();
+  });
+
+  it("creates a new private import when no duplicate exists", async () => {
+    meditationModel.findOne.mockResolvedValue(null);
+    meditationModel.create.mockResolvedValue(
+      meditationRecord({
+        id: 93,
+        title: "Imported",
+        visibility: "private",
+        metadata: {
+          sourceUserKey: "nick",
+          sourceFile: "new.md",
+        },
+      }),
+    );
+
+    const response = await request(buildApp())
+      .post("/meditations/imports")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        title: "Imported",
+        script: "Hello",
+        importMetadata: {
+          sourceUserKey: "nick",
+          sourceFile: "new.md",
+          sourceRoot: "/tmp/source",
+          importedAt: "2026-06-11T00:00:00.000Z",
+          checksum: `sha256:${"c".repeat(64)}`,
+        },
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      action: "created",
+      meditation: { id: 93, visibility: "private" },
+    });
+    expect(meditationModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        visibility: "private",
+        sourceMode: "script",
+        metadata: expect.objectContaining({
+          sourceUserKey: "nick",
+          sourceFile: "new.md",
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(mockedNotifyWorker).toHaveBeenCalledWith(93, "intake");
+  });
+
+  it("overwrites imports through delete and recreate with a new id", async () => {
+    meditationModel.findOne.mockResolvedValue(meditationRecord({ id: 91, visibility: "private" }));
+    meditationModel.create.mockResolvedValue(
+      meditationRecord({
+        id: 92,
+        title: "Imported",
+        visibility: "private",
+        metadata: {
+          sourceUserKey: "nick",
+          sourceFile: "one.md",
+        },
+      }),
+    );
+
+    const response = await request(buildApp())
+      .post("/meditations/imports")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        title: "Imported",
+        script: "Hello",
+        overwrite: true,
+        importMetadata: {
+          sourceUserKey: "nick",
+          sourceFile: "one.md",
+          sourceRoot: "/tmp/source",
+          importedAt: "2026-06-11T00:00:00.000Z",
+          checksum: `sha256:${"b".repeat(64)}`,
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      action: "overwritten",
+      previousMeditationId: 91,
+      meditation: { id: 92 },
+    });
+    expect(mockedDeleteMeditationCascade).toHaveBeenCalledWith(91);
+    expect(meditationModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        visibility: "private",
+        sourceMode: "script",
+        metadata: expect.objectContaining({
+          sourceUserKey: "nick",
+          sourceFile: "one.md",
+        }),
+      }),
+      expect.any(Object),
     );
   });
 

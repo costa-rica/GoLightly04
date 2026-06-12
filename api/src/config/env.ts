@@ -16,6 +16,7 @@ export type ApiEnv = {
   EMAIL_FROM: string;
   PATH_PROJECT_RESOURCES: string;
   ADMIN_EMAIL: string;
+  ADMIN_EMAILS: string[];
   ADMIN_PASSWORD: string;
   LOG_MAX_SIZE: number;
   LOG_MAX_FILES: number;
@@ -62,6 +63,17 @@ function readOptionalNumber(name: "LOG_MAX_SIZE" | "LOG_MAX_FILES", fallback: nu
 }
 
 export function readApiEnv(): ApiEnv {
+  const adminEmails = readString("ADMIN_EMAIL")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean)
+    .filter((email, index, emails) =>
+      emails.findIndex((item) => item.toLowerCase() === email.toLowerCase()) === index,
+    );
+  if (adminEmails.length === 0) {
+    throw new Error("ADMIN_EMAIL must include at least one email");
+  }
+
   return {
     NODE_ENV: normalizeNodeEnv(process.env.NODE_ENV),
     NAME_APP: readString("NAME_APP"),
@@ -77,7 +89,8 @@ export function readApiEnv(): ApiEnv {
     EMAIL_PASSWORD: readString("EMAIL_PASSWORD"),
     EMAIL_FROM: readString("EMAIL_FROM"),
     PATH_PROJECT_RESOURCES: readString("PATH_PROJECT_RESOURCES"),
-    ADMIN_EMAIL: readString("ADMIN_EMAIL"),
+    ADMIN_EMAIL: adminEmails.join(","),
+    ADMIN_EMAILS: adminEmails,
     ADMIN_PASSWORD: readString("ADMIN_PASSWORD"),
     LOG_MAX_SIZE: readOptionalNumber("LOG_MAX_SIZE", 5),
     LOG_MAX_FILES: readOptionalNumber("LOG_MAX_FILES", 5),

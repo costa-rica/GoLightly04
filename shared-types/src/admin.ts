@@ -24,6 +24,7 @@ export type DeleteUserResponse = {
 
 export type AdminMeditation = Meditation & {
   isBenevolentOwned: boolean;
+  ownerEmail?: string;
 };
 
 export type GetAllAdminMeditationsResponse = {
@@ -42,6 +43,11 @@ export type AdminUpdateMeditationMetadataRequest = {
 };
 
 export type AdminUpdateMeditationMetadataResponse = {
+  message: string;
+  meditation: AdminMeditation;
+};
+
+export type AdminSetDefaultMeditationResponse = {
   message: string;
   meditation: AdminMeditation;
 };

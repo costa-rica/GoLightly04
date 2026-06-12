@@ -9,11 +9,12 @@ import { deleteMeditationCascade } from "../services/meditations/deleteMeditatio
 import { notifyWorker } from "../services/workerClient";
 import {
   BENEVOLENT_USER_EMAIL,
-  getOrCreateBenevolentUser,
-} from "../services/users/getOrCreateBenevolentUser";
+  findBenevolentUser,
+} from "../services/users/findBenevolentUser";
 import { assertAdminMeditationMutable } from "../services/meditations/assertAdminMeditationMutable";
 import { ensureString } from "../middleware/validate";
 import { logger } from "../config/logger";
+import { setDefaultMeditation } from "../services/meditations/defaultMeditation";
 
 const ADMIN_MEDITATION_METADATA_FIELDS = ["title", "description", "visibility"] as const;
 
@@ -23,8 +24,9 @@ function serializeDate(value: Date | string): string {
 
 export function serializeAdminMeditationRow(
   meditation: any,
-  benevolentUserId: number,
+  benevolentUserId: number | null,
 ): AdminMeditation {
+  const ownerEmail = meditation.User?.email ?? meditation.user?.email;
   return {
     id: meditation.id,
     title: meditation.title,
@@ -45,7 +47,10 @@ export function serializeAdminMeditationRow(
     durationSecondsSound: meditation.durationSecondsSound ?? null,
     status: meditation.status,
     ownerUserId: meditation.userId,
-    isBenevolentOwned: meditation.userId === benevolentUserId,
+    isDefault: meditation.isDefault === true,
+    importMetadata: meditation.metadata ?? {},
+    ownerEmail,
+    isBenevolentOwned: benevolentUserId !== null && meditation.userId === benevolentUserId,
   };
 }
 
@@ -108,11 +113,15 @@ export function buildAdminRouter(): Router {
       }
 
       const meditations = await Meditation.findAll({ where: { userId: id } });
-      if (meditations.some((meditation) => (meditation.stage ?? "library") === "template")) {
-        throw new AppError(409, "PROTECTED_USER", "Cannot delete a user that owns the template meditation");
-      }
       if (savePublicMeditationsAsBenevolentUser) {
-        const benevolentUser = await getOrCreateBenevolentUser();
+        const benevolentUser = await findBenevolentUser();
+        if (!benevolentUser) {
+          throw new AppError(
+            409,
+            "BENEVOLENT_USER_REQUIRED",
+            "The manually registered benevolent_monkey account must exist before public meditations can be reassigned",
+          );
+        }
         await Meditation.update(
           { userId: benevolentUser.id },
           { where: { userId: id, visibility: "public" } },
@@ -134,12 +143,15 @@ export function buildAdminRouter(): Router {
   router.get(
     "/meditations",
     asyncHandler(async (_req, res) => {
-      const { Meditation } = getDb();
-      const benevolentUser = await getOrCreateBenevolentUser();
-      const meditations = await Meditation.findAll({ order: [["createdAt", "DESC"]] });
+      const { Meditation, User } = getDb();
+      const benevolentUser = await findBenevolentUser();
+      const meditations = await Meditation.findAll({
+        include: [{ model: User, attributes: ["email"], required: false }],
+        order: [["createdAt", "DESC"]],
+      });
       res.json({
         meditations: meditations.map((meditation) =>
-          serializeAdminMeditationRow(meditation, benevolentUser.id),
+          serializeAdminMeditationRow(meditation, benevolentUser?.id ?? null),
         ),
       });
     }),
@@ -185,7 +197,14 @@ export function buildAdminRouter(): Router {
         throw new AppError(404, "NOT_FOUND", "Meditation not found");
       }
 
-      const benevolentUser = await getOrCreateBenevolentUser();
+      const benevolentUser = await findBenevolentUser();
+      if (!benevolentUser) {
+        throw new AppError(
+          409,
+          "BENEVOLENT_USER_REQUIRED",
+          "The manually registered benevolent_monkey account must exist before benevolent meditations can be edited",
+        );
+      }
       if (meditation.userId !== benevolentUser.id) {
         logger.warn("admin.benevolent_meditation_metadata_update_rejected", {
           reason: "benevolent_owner_required",
@@ -272,6 +291,30 @@ export function buildAdminRouter(): Router {
       res.json({
         message: "Meditation metadata updated",
         meditation: serializeAdminMeditationRow(meditation, benevolentUser.id),
+      });
+    }),
+  );
+
+  router.post(
+    "/meditations/:id/set-default",
+    asyncHandler(async (req, res) => {
+      const meditationId = Number(req.params.id);
+      if (!Number.isFinite(meditationId)) {
+        throw new AppError(400, "VALIDATION_ERROR", "Meditation id must be numeric");
+      }
+
+      const meditation = await setDefaultMeditation(meditationId);
+      const benevolentUser = await findBenevolentUser();
+      logger.info("admin.default_meditation_set", {
+        actorId: req.user!.id,
+        actorEmail: req.user!.email,
+        meditationId: meditation.id,
+        targetOwnerUserId: meditation.userId,
+      });
+
+      res.json({
+        message: "Default meditation updated",
+        meditation: serializeAdminMeditationRow(meditation, benevolentUser?.id ?? null),
       });
     }),
   );

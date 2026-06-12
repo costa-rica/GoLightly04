@@ -15,7 +15,8 @@
     "typecheck:scripts": "tsc -p tsconfig.scripts.json --noEmit",
     "backfill:durations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/backfill-meditation-durations.ts",
     "backfill:sound-durations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/backfill-sound-file-durations.ts",
-    "backfill:segment-durations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/backfill-segment-durations.ts"
+    "backfill:segment-durations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/backfill-segment-durations.ts",
+    "import:meditations": "TS_NODE_PROJECT=tsconfig.scripts.json ts-node --transpile-only scripts/importMeditations.ts"
   },
   "dependencies": {
     "@ffprobe-installer/ffprobe": "^2.1.2",

@@ -24,17 +24,33 @@ export async function onStartUp(): Promise<void> {
   logger.info("Project resource directories ensured");
 
   const { User } = getDb();
-  const existingAdmin = await User.findOne({ where: { email: env.ADMIN_EMAIL } });
-  if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, 10);
-    await User.create({
-      email: env.ADMIN_EMAIL,
-      password: passwordHash,
-      isAdmin: true,
-      isEmailVerified: true,
-      emailVerifiedAt: new Date(),
-      authProvider: "local",
-    });
-    logger.info("Admin user created");
+  const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, 10);
+  let createdCount = 0;
+  let promotedCount = 0;
+  for (const email of env.ADMIN_EMAILS) {
+    const existingAdmin = await User.findOne({ where: { email } });
+    if (!existingAdmin) {
+      await User.create({
+        email,
+        password: passwordHash,
+        isAdmin: true,
+        isEmailVerified: true,
+        emailVerifiedAt: new Date(),
+        authProvider: "local",
+      });
+      createdCount += 1;
+      continue;
+    }
+
+    if (!existingAdmin.isAdmin) {
+      existingAdmin.isAdmin = true;
+      await existingAdmin.save();
+      promotedCount += 1;
+    }
   }
+  logger.info("Admin bootstrap complete", {
+    configuredCount: env.ADMIN_EMAILS.length,
+    createdCount,
+    promotedCount,
+  });
 }

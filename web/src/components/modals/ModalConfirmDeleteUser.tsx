@@ -106,8 +106,8 @@ export default function ModalConfirmDeleteUser({
                   Keep public meditations
                 </span>
                 <p className="mt-1 text-xs text-ink-muted">
-                  Convert user to benevolent account to preserve their public
-                  meditations
+                  Reassign public meditations to the existing
+                  benevolent_monkey account.
                 </p>
               </div>
             </label>

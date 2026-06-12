@@ -11,12 +11,14 @@ type TableAdminMeditationsProps = {
   meditations: AdminMeditation[];
   onEdit: (meditation: AdminMeditation) => void;
   onDelete: (meditation: AdminMeditation) => void;
+  onSetDefault: (meditation: AdminMeditation) => void;
 };
 
 export default function TableAdminMeditations({
   meditations,
   onEdit,
   onDelete,
+  onSetDefault,
 }: TableAdminMeditationsProps) {
   const columns: ColumnDef<AdminMeditation>[] = [
     { accessorKey: "id", header: "ID" },
@@ -24,9 +26,21 @@ export default function TableAdminMeditations({
     {
       accessorKey: "ownerUserId",
       header: "Owner",
-      cell: ({ row }) => row.original.ownerUserId ?? "Unknown",
+      cell: ({ row }) => row.original.ownerEmail ?? row.original.ownerUserId ?? "Unknown",
     },
     { accessorKey: "visibility", header: "Visibility" },
+    {
+      accessorKey: "isDefault",
+      header: "Default",
+      cell: ({ row }) =>
+        row.original.isDefault ? (
+          <span className="rounded-full border border-primary-200 bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
+            Default
+          </span>
+        ) : (
+          <span className="text-xs text-ink-muted">Hidden when selected</span>
+        ),
+    },
     {
       accessorKey: "status",
       header: "Status",
@@ -62,6 +76,14 @@ export default function TableAdminMeditations({
                 Edit
               </button>
             )}
+            <button
+              type="button"
+              disabled={row.original.isDefault}
+              onClick={() => onSetDefault(row.original)}
+              className="rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:border-primary-300 disabled:cursor-not-allowed disabled:border-subtle disabled:text-ink-muted/60 dark:border-primary-500/40 dark:text-primary-200"
+            >
+              Set Default
+            </button>
             <button
               type="button"
               onClick={() => onDelete(row.original)}

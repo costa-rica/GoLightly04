@@ -33,6 +33,7 @@ export type StreamTokenPayload = BaseTokenPayload & {
   kind: "stream-token";
   meditationId: number;
   userId: number;
+  isAdmin: boolean;
 };
 
 export function issueAccessToken(user: AuthenticatedRequestUser): string {
@@ -64,10 +65,10 @@ export function issueResetPasswordToken(email: string): string {
   });
 }
 
-export function issueStreamToken(meditationId: number, userId: number): string {
+export function issueStreamToken(meditationId: number, userId: number, isAdmin = false): string {
   const env = readApiEnv();
   return jwt.sign(
-    { kind: "stream-token", meditationId, userId } satisfies StreamTokenPayload,
+    { kind: "stream-token", meditationId, userId, isAdmin } satisfies StreamTokenPayload,
     env.JWT_SECRET,
     { expiresIn: "5m" },
   );
