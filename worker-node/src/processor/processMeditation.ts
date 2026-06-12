@@ -212,3 +212,7 @@ export async function reconcileStuckMeditations() {
 export function isMeditationActive(meditationId: number) {
   return activeMeditations.has(meditationId);
 }
+
+export function isAnyMeditationActive(): boolean {
+  return activeMeditations.size > 0;
+}

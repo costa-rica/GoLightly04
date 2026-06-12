@@ -1,10 +1,10 @@
-import { randomUUID } from "crypto";
-import fsPromises from "fs/promises";
-import path from "path";
+import { randomUUID } from "node:crypto";
+import fsPromises from "node:fs/promises";
+import path from "node:path";
 
-import { logger } from "../config/logger";
+import logger from "../config/logger";
 
-const EXCLUDED_RESTORE_DIRS = ["backups_db", "backups_db_and_data"];
+const EXCLUDED_RESTORE_DIRS = ["db_backups", "db_backups_and_data", "db_replenish"];
 
 function createTempSiblingPath(destPath: string): string {
   const destDir = path.dirname(destPath);

@@ -91,7 +91,7 @@ export default function ModalConfirmRestore({
             className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200"
             disabled={isLoading}
           >
-            {isLoading ? "Restoring..." : "Yes, restore"}
+            {isLoading ? "Queuing..." : "Yes, restore"}
           </button>
         </div>
       </div>

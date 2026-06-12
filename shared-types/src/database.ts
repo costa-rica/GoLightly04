@@ -19,6 +19,15 @@ export type CreateBackupResponse = {
   queuedAt: string;
 };
 
+export type ReplenishRequest = {
+  filename: string;
+};
+
+export type ReplenishDatabaseResponse = {
+  message: string;
+  queuedAt: string;
+};
+
 export type DeleteBackupResponse = {
   message: string;
   filename: string;

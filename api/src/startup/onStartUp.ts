@@ -17,7 +17,9 @@ export async function onStartUp(): Promise<void> {
     "meditation_soundfiles",
     "eleven_labs_audio_files",
     "prerecorded_audio",
-    "backups_db",
+    "db_backups",
+    "db_backups_and_data",
+    "db_replenish",
   ]) {
     fs.mkdirSync(path.join(env.PATH_PROJECT_RESOURCES, dirName), { recursive: true });
   }

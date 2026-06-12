@@ -19,7 +19,11 @@ const TABLE_ORDER = [
   "contract_user_meditations",
 ] as const;
 
-const EXCLUDED_BACKUP_DIRS = new Set(["backups_db", "backups_db_and_data"]);
+const EXCLUDED_BACKUP_DIRS = new Set([
+  "db_backups",
+  "db_backups_and_data",
+  "db_replenish",
+]);
 
 let _isBackupRunning = false;
 
@@ -130,7 +134,7 @@ export async function createBackup({
       package_type: includeResources ? "db_and_resources" : "db_only",
       database_tables: [...TABLE_ORDER],
       resources_root: env.PATH_PROJECT_RESOURCES,
-      excluded_dirs: ["backups_db", "backups_db_and_data"],
+      excluded_dirs: ["db_backups", "db_backups_and_data", "db_replenish"],
     };
     await fsPromises.writeFile(
       path.join(tempDir, "manifest.json"),

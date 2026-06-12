@@ -16,7 +16,7 @@ import { optionalAuth, requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
 import { isStreamStart, readStreamToken } from "../lib/meditationAccess";
 import { issueStreamToken } from "../lib/authTokens";
-import { notifyWorker } from "../services/workerClient";
+import { notifyWorker, WorkerConflictError } from "../services/workerClient";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
 import { createMeditationFromElements } from "../services/meditations/createMeditationFromElements";
 import { regenerateMeditationFromScript } from "../services/meditations/regenerateMeditationFromScript";
@@ -127,7 +127,17 @@ export function buildMeditationsRouter(): Router {
         scriptSource: null,
       });
 
-      void notifyWorker(meditation.id, "intake");
+      try {
+        await notifyWorker(meditation.id, "intake");
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({
+            error: "Meditation saved but processing is temporarily unavailable. Please retry shortly.",
+          });
+          return;
+        }
+        throw error;
+      }
 
       res.status(201).json({
         message: "Meditation created successfully",
@@ -153,7 +163,17 @@ export function buildMeditationsRouter(): Router {
         script,
       });
 
-      void notifyWorker(meditation.id, "intake");
+      try {
+        await notifyWorker(meditation.id, "intake");
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({
+            error: "Meditation saved but processing is temporarily unavailable. Please retry shortly.",
+          });
+          return;
+        }
+        throw error;
+      }
 
       res.status(201).json({
         message: "Meditation created successfully",
@@ -254,7 +274,17 @@ export function buildMeditationsRouter(): Router {
         script,
         metadata: importMetadata,
       });
-      void notifyWorker(meditation.id, "intake");
+      try {
+        await notifyWorker(meditation.id, "intake");
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({
+            error: "Meditation saved but processing is temporarily unavailable. Please retry shortly.",
+          });
+          return;
+        }
+        throw error;
+      }
 
       res.status(existing ? 200 : 201).json({
         action: existing ? "overwritten" : "created",
@@ -293,10 +323,21 @@ export function buildMeditationsRouter(): Router {
     "/staging/generate",
     requireAuth,
     asyncHandler(async (req, res) => {
-      const meditation = await createOrRegenerateStagedMeditation({
-        userId: req.user!.id,
-        payload: req.body as GenerateStagedMeditationRequest,
-      });
+      let meditation;
+      try {
+        meditation = await createOrRegenerateStagedMeditation({
+          userId: req.user!.id,
+          payload: req.body as GenerateStagedMeditationRequest,
+        });
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({
+            error: "Meditation saved but processing is temporarily unavailable. Please retry shortly.",
+          });
+          return;
+        }
+        throw error;
+      }
       const soundFilenameToName = await loadSoundFilenameToNameLookup();
       res.status(201).json({
         message: "Staged meditation generation started",
@@ -530,7 +571,17 @@ export function buildMeditationsRouter(): Router {
         meditationId: meditation.id,
         script,
       });
-      void notifyWorker(updated.id, "intake");
+      try {
+        await notifyWorker(updated.id, "intake");
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({
+            error: "Meditation saved but processing is temporarily unavailable. Please retry shortly.",
+          });
+          return;
+        }
+        throw error;
+      }
       const soundFilenameToName = await loadSoundFilenameToNameLookup();
 
       res.json({

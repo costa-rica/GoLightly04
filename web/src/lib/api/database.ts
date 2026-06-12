@@ -4,7 +4,7 @@ import type {
   CreateBackupResponse,
   DeleteBackupResponse,
   GetBackupsResponse,
-  RestoreDatabaseResponse,
+  ReplenishDatabaseResponse,
 } from "@golightly/shared-types";
 
 import apiClient from "./client";
@@ -71,11 +71,11 @@ export const deleteBackup = async (
 
 export const replenishDatabase = async (
   file: File,
-): Promise<RestoreDatabaseResponse> => {
+): Promise<ReplenishDatabaseResponse> => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await apiClient.post<RestoreDatabaseResponse>(
+  const response = await apiClient.post<ReplenishDatabaseResponse>(
     "/database/replenish-database",
     formData,
     {

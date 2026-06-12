@@ -167,6 +167,6 @@ export async function createOrRegenerateStagedMeditation(opts: {
   if (shouldDeletePreviousAudio) {
     await deleteMeditationAudioFiles(meditation.id);
   }
-  void notifyWorker(meditation.id, "intake");
+  await notifyWorker(meditation.id, "intake");
   return meditation;
 }

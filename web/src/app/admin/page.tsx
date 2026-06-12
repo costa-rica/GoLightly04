@@ -439,21 +439,15 @@ export default function AdminPage() {
 
   const handleRestoreDatabase = async () => {
     if (!uploadFile) return;
-    dispatch(showLoading("Restoring database..."));
+    dispatch(showLoading("Queuing restore..."));
     try {
-      const response = await replenishDatabase(uploadFile);
+      await replenishDatabase(uploadFile);
       setUploadFile(null);
       if (uploadInputRef.current) {
         uploadInputRef.current.value = "";
       }
-      const tablesImported = response.tablesImported ?? 0;
-      const totalRows = response.totalRows ?? 0;
-      const resourceCount = response.resourceFilesRestored ?? 0;
-      const resourceText = response.resourcesRestored
-        ? ` Resource files restored: ${resourceCount}.`
-        : "";
       setToast({
-        message: `Database restored. ${tablesImported} tables, ${totalRows} rows.${resourceText}`,
+        message: "Restore queued. The database will be updated in the background.",
         variant: "success",
       });
       await fetchBackups();

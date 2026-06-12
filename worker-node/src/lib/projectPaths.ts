@@ -19,9 +19,13 @@ export function getPrerecordedAudioRoot() {
 }
 
 export function getBackupsPath(...segments: string[]) {
-  return path.join(getRoot(), "backups_db", ...segments);
+  return path.join(getRoot(), "db_backups", ...segments);
 }
 
 export function getFullBackupsPath(...segments: string[]): string {
-  return path.join(getRoot(), "backups_db_and_data", ...segments);
+  return path.join(getRoot(), "db_backups_and_data", ...segments);
+}
+
+export function getDbReplenishPath(...segments: string[]): string {
+  return path.join(getRoot(), "db_replenish", ...segments);
 }

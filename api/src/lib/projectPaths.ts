@@ -11,9 +11,13 @@ export function getPrerecordedAudioPath(filename: string): string {
 }
 
 export function getBackupsPath(...segments: string[]): string {
-  return getProjectResourcePath("backups_db", ...segments);
+  return getProjectResourcePath("db_backups", ...segments);
 }
 
 export function getFullBackupsPath(...segments: string[]): string {
-  return getProjectResourcePath("backups_db_and_data", ...segments);
+  return getProjectResourcePath("db_backups_and_data", ...segments);
+}
+
+export function getDbReplenishPath(...segments: string[]): string {
+  return getProjectResourcePath("db_replenish", ...segments);
 }

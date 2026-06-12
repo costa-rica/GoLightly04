@@ -1,11 +1,11 @@
-import fs from "fs";
-import fsPromises from "fs/promises";
-import path from "path";
-import { pipeline } from "stream/promises";
+import fs from "node:fs";
+import fsPromises from "node:fs/promises";
+import path from "node:path";
+import { pipeline } from "node:stream/promises";
 
 import unzipper from "unzipper";
 
-import { logger } from "../config/logger";
+import logger from "../config/logger";
 
 export function isEntryNameSafe(name: string): boolean {
   if (!name) return false;

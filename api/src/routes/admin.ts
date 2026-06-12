@@ -6,7 +6,7 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
 import { requireAdmin } from "../middleware/auth";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
-import { notifyWorker } from "../services/workerClient";
+import { notifyWorker, WorkerConflictError } from "../services/workerClient";
 import {
   BENEVOLENT_USER_EMAIL,
   findBenevolentUser,
@@ -404,7 +404,17 @@ export function buildAdminRouter(): Router {
         meditation.status = "pending";
         await meditation.save();
       }
-      void notifyWorker(meditationId, "requeue");
+      try {
+        await notifyWorker(meditationId, "requeue");
+      } catch (error) {
+        if (error instanceof WorkerConflictError) {
+          res.status(409).json({
+            error: "Requeue skipped because processing is temporarily unavailable during maintenance",
+          });
+          return;
+        }
+        throw error;
+      }
       res.json({ message: "Meditation requeued", meditationId });
     }),
   );

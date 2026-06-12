@@ -1,12 +1,21 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import express from "express";
 
 import logger from "./config/logger";
 import { getDb } from "./lib/db";
+import { getDbReplenishPath } from "./lib/projectPaths";
 import {
+  isAnyMeditationActive,
   isMeditationActive,
   processMeditation,
 } from "./processor/processMeditation";
 import { createBackup, isBackupRunning } from "./services/backupService";
+import {
+  isReplenishRunning,
+  replenishDatabase,
+} from "./services/replenishService";
 
 export function createApp() {
   const app = express();
@@ -14,6 +23,11 @@ export function createApp() {
 
   app.post("/process", async (req, res, next) => {
     try {
+      if (isReplenishRunning()) {
+        res.status(409).json({ error: "A replenish job is running; processing cannot start" });
+        return;
+      }
+
       const meditationId = Number(req.body?.meditationId);
       const mode = req.body?.mode === "requeue" ? "requeue" : "intake";
 
@@ -65,6 +79,11 @@ export function createApp() {
     try {
       const includeResources = req.body?.includeResources !== false;
 
+      if (isReplenishRunning()) {
+        res.status(409).json({ error: "A replenish job is running; backup cannot start" });
+        return;
+      }
+
       if (isBackupRunning()) {
         res.status(409).json({ error: "A backup job is already running" });
         return;
@@ -78,6 +97,54 @@ export function createApp() {
             error instanceof Error ? error.message : "Unknown error"
           }`,
         );
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/replenish", async (req, res, next) => {
+    try {
+      if (isReplenishRunning()) {
+        res.status(409).json({ error: "A replenish job is already running" });
+        return;
+      }
+
+      if (isBackupRunning()) {
+        res.status(409).json({ error: "A backup job is running; replenish cannot start" });
+        return;
+      }
+
+      if (isAnyMeditationActive()) {
+        res.status(409).json({ error: "Active meditation processing; replenish cannot start" });
+        return;
+      }
+
+      const filename = req.body?.filename;
+      if (
+        typeof filename !== "string" ||
+        filename.includes("/") ||
+        filename.includes("..") ||
+        !filename.endsWith(".zip")
+      ) {
+        res.status(400).json({ error: "filename must be a .zip basename" });
+        return;
+      }
+
+      const root = path.resolve(getDbReplenishPath());
+      const resolvedPath = path.resolve(getDbReplenishPath(filename));
+      if (!resolvedPath.startsWith(root + path.sep) || !fs.existsSync(resolvedPath)) {
+        res.status(404).json({ error: "Replenish file not found" });
+        return;
+      }
+
+      res.status(202).json({ accepted: true });
+
+      void replenishDatabase(filename).catch((error) => {
+        logger.error("Background replenish failed", {
+          error,
+          filename,
+        });
       });
     } catch (error) {
       next(error);
