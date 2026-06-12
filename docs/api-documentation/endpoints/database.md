@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-05-14
+updated_at: 2026-06-12
 created_by: codex (gpt-5)
-modified_by: codex (gpt-5)
+modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 ---
 
 # Database API
@@ -13,7 +13,7 @@ All endpoints are prefixed with `/database`.
 
 ## GET /database/backups-list
 
-Lists backup ZIP files stored under the configured backup directory.
+Lists backup ZIP files stored under the configured resource-inclusive backup directory (`db_backups_and_data`).
 
 - Authentication required: JWT access token with admin privileges.
 
@@ -84,11 +84,11 @@ curl http://localhost:3000/database/backups-list \
 
 ## POST /database/create-backup
 
-Exports database tables to CSV files, archives them into a ZIP backup, and stores the backup on disk.
+Queues the worker to export database tables to CSV files, archive them into a ZIP backup, and store the backup on disk.
 
 - Authentication required: JWT access token with admin privileges.
 - Creates CSV exports for `users`, `sound_files`, `meditations`, `jobs_queue`, and `contract_user_meditations`.
-- Creates a ZIP file under the configured backup directory.
+- Creates a ZIP file under `db_backups_and_data` by default, or `db_backups` when resource files are explicitly excluded.
 
 ### Parameters
 
@@ -107,7 +107,7 @@ curl -X POST http://localhost:3000/database/create-backup \
 {
   "message": "Backup created",
   "filename": "backup_20260514_120000.zip",
-  "path": "/path/to/resources/backups_db/backup_20260514_120000.zip",
+  "path": "/path/to/resources/db_backups_and_data/backup_20260514_120000.zip",
   "tablesExported": 5,
   "timestamp": "20260514_120000"
 }

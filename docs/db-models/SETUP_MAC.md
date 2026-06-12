@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-06-09
+updated_at: 2026-06-12
 created_by: codex (gpt-5)
-modified_by: codex (gpt-5)
+modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 ---
 
 # Local Database Setup - Mac
@@ -136,7 +136,7 @@ The project does not include a standalone database-manager CLI. The source imple
 
 - Create backup: `POST /database/create-backup`
 - Restore backup: `POST /database/replenish-database` with multipart field `file`
-- Backup location: `{PATH_PROJECT_RESOURCES}/backups_db`
+- Backup locations: `{PATH_PROJECT_RESOURCES}/db_backups` for DB-only backups, `{PATH_PROJECT_RESOURCES}/db_backups_and_data` for DB + resources backups, and `{PATH_PROJECT_RESOURCES}/db_replenish` for staged restore uploads
 
 For an empty local schema, start the API once and let `onStartUp()` run `provisionDatabase()`:
 
@@ -252,7 +252,7 @@ psql postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE d
 
 ### 5. Optional backup before dropping
 
-The backup route writes a zip file to `{PATH_PROJECT_RESOURCES}/backups_db`:
+The backup route writes zip files under `{PATH_PROJECT_RESOURCES}/db_backups_and_data` by default, or `{PATH_PROJECT_RESOURCES}/db_backups` for DB-only backups:
 
 ```bash
 curl -X POST http://localhost:3000/database/create-backup \
@@ -370,5 +370,5 @@ Then repeat the **First Build** steps from the top.
 | Owner role | `golightly04_boot` |
 | Runtime role | `golightly04_app` |
 | Schema name | `public` |
-| Backup path | `{PATH_PROJECT_RESOURCES}/backups_db` |
+| Backup paths | `{PATH_PROJECT_RESOURCES}/db_backups`, `{PATH_PROJECT_RESOURCES}/db_backups_and_data`, `{PATH_PROJECT_RESOURCES}/db_replenish` |
 | Log path | `PATH_TO_LOGS` from `api/.env` |

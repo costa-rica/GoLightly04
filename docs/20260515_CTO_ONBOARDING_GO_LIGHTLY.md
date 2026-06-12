@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-15
-updated_at: 2026-06-09
+updated_at: 2026-06-12
 created_by: codex (gpt-5)
-modified_by: codex (gpt-5)
+modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 ---
 
 # CTO Onboarding - GoLightly04
@@ -79,10 +79,13 @@ PATH_PROJECT_RESOURCES/
 ├── meditation_soundfiles/YYYYMMDD/meditation_<id>.mp3
 ├── eleven_labs_audio_files/YYYYMMDD/el_<meditation>_<job>_<sequence>.mp3
 ├── prerecorded_audio/<uploaded sound files>
-├── backups_db/ (legacy/older backup location)
-└── backups_db_and_data/
-    ├── backup_<timestamp>.zip
-    └── backup_w_sound_files_<timestamp>.zip
+├── db_backups/
+│   └── backup_<timestamp>.zip
+├── db_backups_and_data/
+│   ├── backup_<timestamp>.zip
+│   └── backup_w_sound_files_<timestamp>.zip
+└── db_replenish/
+    └── staged restore uploads awaiting worker processing
 ```
 
 The web app talks only to the API. The API and worker share PostgreSQL through `@golightly/db-models`. Audio files are still stored on the local filesystem under `PATH_PROJECT_RESOURCES`; there is no object storage, CDN, external queue, or container setup in the repo.
@@ -195,8 +198,8 @@ Database admin endpoints:
 
 1. `POST /database/create-backup` queues a worker backup job; backups include resources by default unless `includeResources` is explicitly false.
 2. DB-only backups are named `backup_<timestamp>.zip`; resource-inclusive backups are named `backup_w_sound_files_<timestamp>.zip`.
-3. Backup listing, download, and delete use `PATH_PROJECT_RESOURCES/backups_db_and_data`.
-4. Restore truncates dependent tables in reverse dependency order, reloads in dependency order, resets ID sequences, and restores resource files when the manifest package type is `db_and_resources`.
+3. Backup listing, download, and delete use `PATH_PROJECT_RESOURCES/db_backups_and_data`; DB-only backups use `PATH_PROJECT_RESOURCES/db_backups`, and restore uploads are staged in `PATH_PROJECT_RESOURCES/db_replenish` before the worker processes them.
+4. Restore uploads are accepted by the API and then queued to `worker-node` for background replenish processing; the worker truncates dependent tables in reverse dependency order, reloads in dependency order, resets ID sequences, and restores resource files when the manifest package type is `db_and_resources`.
 5. `GET /database/backup-size-estimate` estimates resource backup size while excluding backup directories.
 
 ## 9. Data Model

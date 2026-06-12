@@ -1,8 +1,8 @@
 ---
 created_at: 2026-05-14
-updated_at: 2026-05-15
+updated_at: 2026-06-12
 created_by: codex (gpt-5)
-modified_by: codex (gpt-5)
+modified_by: hermes nws-go-lightly-dev (gpt-5.5)
 ---
 
 # Production Database Setup - Ubuntu
@@ -289,5 +289,5 @@ Then repeat the **First Build** steps from the top.
 | Port | `5432` |
 | Host | `127.0.0.1` |
 | Schema | `public` |
-| Backup path | `{PATH_PROJECT_RESOURCES}/backups_db` |
+| Backup paths | `{PATH_PROJECT_RESOURCES}/db_backups`, `{PATH_PROJECT_RESOURCES}/db_backups_and_data`, `{PATH_PROJECT_RESOURCES}/db_replenish` |
 | Log file path | `PATH_TO_LOGS` from `api/.env` |
