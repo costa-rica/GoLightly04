@@ -49,9 +49,19 @@ jest.mock("../../src/lib/db", () => ({
   }),
 }));
 
-jest.mock("../../src/services/workerClient", () => ({
-  notifyWorker: (...args: unknown[]) => mockedNotifyWorker(...args),
-}));
+jest.mock("../../src/services/workerClient", () => {
+  class WorkerConflictError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "WorkerConflictError";
+    }
+  }
+
+  return {
+    notifyWorker: (...args: unknown[]) => mockedNotifyWorker(...args),
+    WorkerConflictError,
+  };
+});
 
 jest.mock("../../src/services/meditations/deleteMeditationCascade", () => ({
   deleteMeditationCascade: (...args: unknown[]) => mockedDeleteMeditationCascade(...args),
@@ -138,6 +148,24 @@ describe("meditations routes", () => {
     const inputData = JSON.parse(firstJob.inputData);
     expect(inputData.speed).toBe(0.9);
     expect(typeof inputData.speed).toBe("number");
+  });
+
+  it("returns 409 when worker processing is temporarily unavailable after create", async () => {
+    const { WorkerConflictError } = await import("../../src/services/workerClient");
+    meditationModel.create.mockResolvedValue({ id: 42 });
+    mockedNotifyWorker.mockRejectedValueOnce(new WorkerConflictError("busy"));
+
+    const response = await request(buildApp())
+      .post("/meditations/create")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        title: "Morning",
+        visibility: "public",
+        meditationArray: [{ id: 1, text: "Breathe in" }],
+      });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toContain("temporarily unavailable");
   });
 
   it("lists available meditations", async () => {
@@ -576,6 +604,28 @@ describe("meditations routes", () => {
     expect(mockedDeleteMeditationAudioFiles.mock.invocationCallOrder[0]).toBeLessThan(
       mockedNotifyWorker.mock.invocationCallOrder[0],
     );
+  });
+
+  it("returns 409 when worker processing is temporarily unavailable after regeneration", async () => {
+    const { WorkerConflictError } = await import("../../src/services/workerClient");
+    const lockedMeditation = meditationRecord({
+      id: 55,
+      status: "complete",
+      scriptSource: "Hello",
+    });
+    meditationModel.findByPk
+      .mockResolvedValueOnce(meditationRecord({ id: 55, status: "complete" }))
+      .mockResolvedValueOnce(meditationRecord({ id: 55, status: "complete" }))
+      .mockResolvedValueOnce(lockedMeditation);
+    mockedNotifyWorker.mockRejectedValueOnce(new WorkerConflictError("busy"));
+
+    const response = await request(buildApp())
+      .put("/meditations/55/script")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ script: "Hello" });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toContain("temporarily unavailable");
   });
 
   it("rejects script regeneration for non-owners without writes", async () => {

@@ -65,7 +65,7 @@ describe("backupService", () => {
 
     await createBackup({ includeResources: false });
 
-    const backupDir = path.join(resourceRoot, "backups_db_and_data");
+    const backupDir = path.join(resourceRoot, "db_backups_and_data");
     const backups = await fs.readdir(backupDir);
     expect(backups).toHaveLength(1);
     expect(backups[0]).toMatch(/^backup_\d{8}_\d{6}\.zip$/);
@@ -94,9 +94,9 @@ describe("backupService", () => {
 
     await createBackup({ includeResources: true });
 
-    const backups = await fs.readdir(path.join(resourceRoot, "backups_db_and_data"));
+    const backups = await fs.readdir(path.join(resourceRoot, "db_backups_and_data"));
     expect(backups[0]).toMatch(/^backup_w_sound_files_\d{8}_\d{6}\.zip$/);
-    const zip = await readZip(path.join(resourceRoot, "backups_db_and_data", backups[0]));
+    const zip = await readZip(path.join(resourceRoot, "db_backups_and_data", backups[0]));
     expect(zip.entries).toEqual(expect.arrayContaining(["resources/audio/file.mp3"]));
     expect(JSON.parse(await zip.readText("manifest.json"))).toEqual(
       expect.objectContaining({
@@ -112,29 +112,34 @@ describe("backupService", () => {
           "contract_user_meditations",
         ],
         resources_root: resourceRoot,
-        excluded_dirs: ["backups_db", "backups_db_and_data"],
+        excluded_dirs: ["db_backups", "db_backups_and_data", "db_replenish"],
       }),
     );
   });
 
   it("excludes backup directories from combined backups", async () => {
-    await fs.mkdir(path.join(resourceRoot, "backups_db"), { recursive: true });
-    await fs.mkdir(path.join(resourceRoot, "backups_db_and_data"), { recursive: true });
-    await fs.writeFile(path.join(resourceRoot, "backups_db", "old.zip"), "old");
-    await fs.writeFile(path.join(resourceRoot, "backups_db_and_data", "full.zip"), "full");
+    await fs.mkdir(path.join(resourceRoot, "db_backups"), { recursive: true });
+    await fs.mkdir(path.join(resourceRoot, "db_backups_and_data"), { recursive: true });
+    await fs.mkdir(path.join(resourceRoot, "db_replenish"), { recursive: true });
+    await fs.writeFile(path.join(resourceRoot, "db_backups", "old.zip"), "old");
+    await fs.writeFile(path.join(resourceRoot, "db_backups_and_data", "full.zip"), "full");
+    await fs.writeFile(path.join(resourceRoot, "db_replenish", "restore.zip"), "restore");
     await fs.writeFile(path.join(resourceRoot, "keep.txt"), "keep");
     const { createBackup } = await import("../../src/services/backupService");
 
     await createBackup({ includeResources: true });
 
-    const backups = (await fs.readdir(path.join(resourceRoot, "backups_db_and_data"))).filter(
+    const backups = (await fs.readdir(path.join(resourceRoot, "db_backups_and_data"))).filter(
       (file) => file.startsWith("backup_w_sound_files_"),
     );
-    const zip = await readZip(path.join(resourceRoot, "backups_db_and_data", backups[0]));
+    const zip = await readZip(path.join(resourceRoot, "db_backups_and_data", backups[0]));
     expect(zip.entries).toEqual(expect.arrayContaining(["resources/keep.txt"]));
-    expect(zip.entries).not.toEqual(expect.arrayContaining(["resources/backups_db/old.zip"]));
+    expect(zip.entries).not.toEqual(expect.arrayContaining(["resources/db_backups/old.zip"]));
     expect(zip.entries).not.toEqual(
-      expect.arrayContaining(["resources/backups_db_and_data/full.zip"]),
+      expect.arrayContaining(["resources/db_backups_and_data/full.zip"]),
+    );
+    expect(zip.entries).not.toEqual(
+      expect.arrayContaining(["resources/db_replenish/restore.zip"]),
     );
   });
 
@@ -146,10 +151,10 @@ describe("backupService", () => {
 
     await createBackup({ includeResources: true });
 
-    const backups = (await fs.readdir(path.join(resourceRoot, "backups_db_and_data"))).filter(
+    const backups = (await fs.readdir(path.join(resourceRoot, "db_backups_and_data"))).filter(
       (file) => file.startsWith("backup_w_sound_files_"),
     );
-    const zip = await readZip(path.join(resourceRoot, "backups_db_and_data", backups[0]));
+    const zip = await readZip(path.join(resourceRoot, "db_backups_and_data", backups[0]));
     expect(zip.entries).toEqual(expect.arrayContaining(["resources/target.txt"]));
     expect(zip.entries).not.toEqual(expect.arrayContaining(["resources/link.txt"]));
     expect(warnSpy).toHaveBeenCalled();

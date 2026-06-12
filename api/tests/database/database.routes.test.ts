@@ -1,11 +1,9 @@
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
-import archiver from "archiver";
 import request from "supertest";
 import { buildApp } from "../../src/app";
 import { issueAccessToken } from "../../src/lib/authTokens";
-import { toCsv } from "../../src/lib/csv";
 
 const usersModel = {
   findAll: jest.fn(),
@@ -38,25 +36,6 @@ const sequelizeMock = {
   transaction: jest.fn(async (callback: (transaction: object) => Promise<unknown>) => callback({})),
 };
 
-async function createRestoreZip(files: Record<string, string>): Promise<Buffer> {
-  const archive = archiver("zip", { zlib: { level: 9 } });
-  const chunks: Buffer[] = [];
-
-  archive.on("data", (chunk: Buffer) => chunks.push(chunk));
-
-  const finished = new Promise<Buffer>((resolve, reject) => {
-    archive.on("end", () => resolve(Buffer.concat(chunks)));
-    archive.on("error", reject);
-  });
-
-  for (const [filename, content] of Object.entries(files)) {
-    archive.append(content, { name: filename });
-  }
-
-  await archive.finalize();
-  return finished;
-}
-
 jest.mock("../../src/lib/db", () => ({
   getDb: () => ({
     sequelize: sequelizeMock,
@@ -78,12 +57,15 @@ jest.mock("../../src/services/workerClient", () => {
 
   return {
     requestWorkerBackup: jest.fn(),
+    requestWorkerReplenish: jest.fn(),
     WorkerConflictError,
   };
 });
 
 const mockedRequestWorkerBackup = jest.requireMock("../../src/services/workerClient")
   .requestWorkerBackup as jest.Mock;
+const mockedRequestWorkerReplenish = jest.requireMock("../../src/services/workerClient")
+  .requestWorkerReplenish as jest.Mock;
 
 describe("database routes", () => {
   const adminToken = issueAccessToken({
@@ -103,10 +85,11 @@ describe("database routes", () => {
     jobQueueModel.findAll.mockResolvedValue([]);
     contractUserMeditationsModel.findAll.mockResolvedValue([]);
     mockedRequestWorkerBackup.mockResolvedValue(undefined);
+    mockedRequestWorkerReplenish.mockResolvedValue(undefined);
   });
 
   it("queues a worker backup and lists full backup directory files", async () => {
-    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db_and_data");
+    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "db_backups_and_data");
     await fs.mkdir(backupsDir, { recursive: true });
     await fs.writeFile(path.join(backupsDir, "backup_test.zip"), "zip");
     const app = buildApp();
@@ -157,7 +140,7 @@ describe("database routes", () => {
   });
 
   it("deletes a backup file", async () => {
-    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db_and_data");
+    const backupsDir = path.join(process.env.PATH_PROJECT_RESOURCES!, "db_backups_and_data");
     await fs.mkdir(backupsDir, { recursive: true });
     await fs.writeFile(path.join(backupsDir, "backup_test.zip"), "zip");
 
@@ -169,132 +152,84 @@ describe("database routes", () => {
     expect(response.body.filename).toBe("backup_test.zip");
   });
 
-  it("resets table id sequences after replenishing rows with explicit ids", async () => {
-    const restoreZip = await createRestoreZip({
-      "jobs_queue.csv": [
-        "id,meditationId,sequence,type,inputData,status,filePath,attemptCount,lastError,lastAttemptedAt,createdAt,updatedAt",
-        "22,5,1,text,{},pending,,0,,,2026-05-17T14:13:33.919Z,2026-05-17T14:13:33.919Z",
-      ].join("\n"),
-    });
+  it("stages a replenish upload and delegates it to the worker", async () => {
+    const upload = Buffer.from("restore zip");
 
     const response = await request(buildApp())
       .post("/database/replenish-database")
       .set("Authorization", `Bearer ${adminToken}`)
-      .attach("file", restoreZip, "restore.zip");
+      .attach("file", upload, "restore.zip");
 
-    expect(response.status).toBe(200);
-    expect(jobQueueModel.bulkCreate).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ id: "22" })]),
-      expect.objectContaining({ validate: false }),
-    );
-    expect(sequelizeMock.query).toHaveBeenCalledWith(
-      expect.stringContaining("pg_get_serial_sequence"),
-      expect.objectContaining({
-        bind: ["public.jobs_queue"],
-      }),
-    );
-    expect(response.body.resourcesRestored).toBe(false);
-    expect(response.body.resourceFilesRestored).toBe(0);
-  });
-
-  it("restores resources when a combined manifest is present", async () => {
-    const restoreZip = await createRestoreZip({
-      "manifest.json": JSON.stringify({
-        created_at: "2026-06-07T00:00:00.000Z",
-        app: "GoLightly04",
-        environment: "production",
-        package_type: "db_and_resources",
-        database_tables: ["users"],
-        resources_root: "/resources",
-        excluded_dirs: ["backups_db", "backups_db_and_data"],
-      }),
-      "users.csv": "id,email\n1,user@example.com\n",
-      "resources/audio/file.mp3": "sound",
-      "resources/backups_db/old.zip": "old",
+    expect(response.status).toBe(202);
+    expect(response.body).toEqual({
+      message: "Replenish queued",
+      queuedAt: expect.any(String),
     });
-
-    const response = await request(buildApp())
-      .post("/database/replenish-database")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .attach("file", restoreZip, "restore.zip");
-
-    expect(response.status).toBe(200);
-    expect(response.body.resourcesRestored).toBe(true);
-    expect(response.body.resourceFilesRestored).toBe(1);
+    expect(mockedRequestWorkerReplenish).toHaveBeenCalledTimes(1);
+    const filename = mockedRequestWorkerReplenish.mock.calls[0][0].filename as string;
+    expect(filename).toMatch(
+      /^replenish_\d{8}_\d{9}_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.zip$/,
+    );
     await expect(
-      fs.readFile(path.join(process.env.PATH_PROJECT_RESOURCES!, "audio", "file.mp3"), "utf8"),
-    ).resolves.toBe("sound");
-    await expect(
-      fs.access(path.join(process.env.PATH_PROJECT_RESOURCES!, "backups_db", "old.zip")),
-    ).rejects.toThrow();
-  });
-
-  it("restores meditations with multiline script source CSV fields", async () => {
-    const scriptSource = 'inhale\nhold, softly\nexhale with "release"';
-    const restoreZip = await createRestoreZip({
-      "meditations.csv": toCsv([
-        {
-          id: 7,
-          userId: 1,
-          title: "Breath",
-          description: "A short practice",
-          meditationArray: [{ type: "text", text: "inhale" }],
-          filename: "",
-          filePath: "",
-          visibility: "private",
-          stage: "library",
-          sourceMode: "script",
-          scriptSource,
-          status: "complete",
-          listenCount: 0,
-          durationSeconds: 120,
-          createdAt: "2026-06-07T00:00:00.000Z",
-          updatedAt: "2026-06-07T00:00:00.000Z",
-        },
-      ]),
-    });
-
-    const response = await request(buildApp())
-      .post("/database/replenish-database")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .attach("file", restoreZip, "restore.zip");
-
-    expect(response.status).toBe(200);
-    expect(meditationsModel.bulkCreate).toHaveBeenCalledWith(
-      [
-        expect.objectContaining({
-          id: "7",
-          meditationArray: [{ type: "text", text: "inhale" }],
-          scriptSource,
-        }),
-      ],
-      expect.objectContaining({ validate: false }),
-    );
-    expect(response.body.rowsImported.meditations).toBe(1);
-  });
-
-  it("reports resource restore copy failures instead of treating them as manifest misses", async () => {
-    const copyError = new Error("operation not permitted");
-    const copyFileSpy = jest.spyOn(fs, "copyFile").mockRejectedValueOnce(copyError);
-    const restoreZip = await createRestoreZip({
-      "manifest.json": JSON.stringify({
-        created_at: "2026-06-07T00:00:00.000Z",
-        app: "GoLightly04",
-        environment: "production",
-        package_type: "db_and_resources",
-        database_tables: ["users"],
-      }),
-      "resources/audio/file.mp3": "sound",
-    });
-
-    const response = await request(buildApp())
-      .post("/database/replenish-database")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .attach("file", restoreZip, "restore.zip");
-
-    expect(response.status).toBe(500);
-    expect(response.body.error.code).toBe("RESOURCE_RESTORE_ERROR");
-    expect(copyFileSpy).toHaveBeenCalled();
+      fs.readFile(
+        path.join(process.env.PATH_PROJECT_RESOURCES!, "db_replenish", filename),
+        "utf8",
+      ),
+    ).resolves.toBe("restore zip");
     expect(sequelizeMock.transaction).not.toHaveBeenCalled();
+    expect(usersModel.bulkCreate).not.toHaveBeenCalled();
+    expect(jobQueueModel.bulkCreate).not.toHaveBeenCalled();
+  });
+
+  it("uses different staged filenames for concurrent replenish uploads", async () => {
+    const app = buildApp();
+
+    const responses = await Promise.all([
+      request(app)
+        .post("/database/replenish-database")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .attach("file", Buffer.from("a"), "restore-a.zip"),
+      request(app)
+        .post("/database/replenish-database")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .attach("file", Buffer.from("b"), "restore-b.zip"),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([202, 202]);
+    const filenames = mockedRequestWorkerReplenish.mock.calls.map(
+      ([payload]) => payload.filename,
+    );
+    expect(new Set(filenames).size).toBe(2);
+  });
+
+  it("deletes the staged file when worker replenish returns a conflict", async () => {
+    const { WorkerConflictError } = await import("../../src/services/workerClient");
+    mockedRequestWorkerReplenish.mockRejectedValueOnce(new WorkerConflictError("running"));
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("restore zip"), "restore.zip");
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toBe("A replenish job is already running");
+    await expect(
+      fs.readdir(path.join(process.env.PATH_PROJECT_RESOURCES!, "db_replenish")),
+    ).resolves.toEqual([]);
+  });
+
+  it("deletes the staged file when worker replenish is unavailable", async () => {
+    mockedRequestWorkerReplenish.mockRejectedValueOnce(new Error("offline"));
+
+    const response = await request(buildApp())
+      .post("/database/replenish-database")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("restore zip"), "restore.zip");
+
+    expect(response.status).toBe(503);
+    expect(response.body.error).toBe("Worker unavailable; replenish could not be started");
+    await expect(
+      fs.readdir(path.join(process.env.PATH_PROJECT_RESOURCES!, "db_replenish")),
+    ).resolves.toEqual([]);
   });
 });

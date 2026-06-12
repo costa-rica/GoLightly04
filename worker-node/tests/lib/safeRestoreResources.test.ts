@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 
 import { safeRestoreResources } from "../../src/lib/safeRestoreResources";
-import { logger } from "../../src/config/logger";
+import logger from "../../src/config/logger";
 
 describe("safeRestoreResources", () => {
   let tempDir: string;
@@ -63,25 +63,30 @@ describe("safeRestoreResources", () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("skipping symlink"));
   });
 
-  it("rejects backup directory entries", async () => {
+  it("rejects DB maintenance directory entries", async () => {
     const warnSpy = jest.spyOn(logger, "warn");
-    await fs.mkdir(path.join(tempDir, "resources", "backups_db"), { recursive: true });
-    await fs.mkdir(path.join(tempDir, "resources", "backups_db_and_data"), {
+    await fs.mkdir(path.join(tempDir, "resources", "db_backups"), { recursive: true });
+    await fs.mkdir(path.join(tempDir, "resources", "db_backups_and_data"), {
       recursive: true,
     });
-    await fs.writeFile(path.join(tempDir, "resources", "backups_db", "old.zip"), "old");
+    await fs.mkdir(path.join(tempDir, "resources", "db_replenish"), { recursive: true });
+    await fs.writeFile(path.join(tempDir, "resources", "db_backups", "old.zip"), "old");
     await fs.writeFile(
-      path.join(tempDir, "resources", "backups_db_and_data", "full.zip"),
+      path.join(tempDir, "resources", "db_backups_and_data", "full.zip"),
       "full",
     );
+    await fs.writeFile(path.join(tempDir, "resources", "db_replenish", "restore.zip"), "restore");
 
     await expect(safeRestoreResources(tempDir, destRoot)).resolves.toBe(0);
 
-    await expect(fs.access(path.join(destRoot, "backups_db", "old.zip"))).rejects.toThrow();
+    await expect(fs.access(path.join(destRoot, "db_backups", "old.zip"))).rejects.toThrow();
     await expect(
-      fs.access(path.join(destRoot, "backups_db_and_data", "full.zip")),
+      fs.access(path.join(destRoot, "db_backups_and_data", "full.zip")),
     ).rejects.toThrow();
-    expect(warnSpy).toHaveBeenCalledTimes(2);
+    await expect(
+      fs.access(path.join(destRoot, "db_replenish", "restore.zip")),
+    ).rejects.toThrow();
+    expect(warnSpy).toHaveBeenCalledTimes(3);
   });
 
   it("overwrites existing files through a temporary sibling and rename", async () => {

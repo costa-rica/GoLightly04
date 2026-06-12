@@ -109,6 +109,36 @@ describe("processMeditation", () => {
     expect(mockedConcatenateMeditation).toHaveBeenCalledWith(1);
   });
 
+  it("reports whether any meditation is active", async () => {
+    const meditation = createMeditation();
+    const firstJob = createJob();
+    let resolveSpeech: (filePath: string) => void = () => undefined;
+
+    mockedMeditationFindByPk.mockResolvedValue(meditation);
+    currentJobs = [firstJob];
+    mockedJobFindAll
+      .mockResolvedValueOnce([firstJob])
+      .mockResolvedValueOnce([{ ...firstJob, status: "complete" }]);
+    mockedGenerateSpeech.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSpeech = resolve;
+      }),
+    );
+
+    const { isAnyMeditationActive, processMeditation } = await import(
+      "../../src/processor/processMeditation"
+    );
+    expect(isAnyMeditationActive()).toBe(false);
+
+    const running = processMeditation(1);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(isAnyMeditationActive()).toBe(true);
+    resolveSpeech("/tmp/job-10.mp3");
+    await running;
+    expect(isAnyMeditationActive()).toBe(false);
+  });
+
   it("marks the job and meditation failed when ElevenLabs fails", async () => {
     const meditation = createMeditation();
     const firstJob = createJob();

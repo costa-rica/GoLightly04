@@ -41,9 +41,19 @@ jest.mock("../../src/lib/db", () => ({
   }),
 }));
 
-jest.mock("../../src/services/workerClient", () => ({
-  notifyWorker: jest.fn().mockResolvedValue(undefined),
-}));
+jest.mock("../../src/services/workerClient", () => {
+  class WorkerConflictError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "WorkerConflictError";
+    }
+  }
+
+  return {
+    notifyWorker: jest.fn().mockResolvedValue(undefined),
+    WorkerConflictError,
+  };
+});
 
 jest.mock("../../src/services/meditations/deleteMeditationCascade", () => ({
   deleteMeditationCascade: jest.fn().mockResolvedValue(undefined),

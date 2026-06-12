@@ -41,9 +41,19 @@ jest.mock("../../src/services/meditations/deleteMeditationCascade", () => ({
   deleteMeditationCascade: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock("../../src/services/workerClient", () => ({
-  notifyWorker: jest.fn().mockResolvedValue(undefined),
-}));
+jest.mock("../../src/services/workerClient", () => {
+  class WorkerConflictError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "WorkerConflictError";
+    }
+  }
+
+  return {
+    notifyWorker: jest.fn().mockResolvedValue(undefined),
+    WorkerConflictError,
+  };
+});
 
 jest.mock("../../src/config/logger", () => ({
   logger: {
@@ -436,5 +446,27 @@ describe("admin routes", () => {
     expect(response.status).toBe(200);
     expect(response.body.meditationId).toBe(8);
     expect(save).toHaveBeenCalled();
+  });
+
+  it("returns 409 when worker requeue is blocked by maintenance", async () => {
+    const { notifyWorker, WorkerConflictError } = await import(
+      "../../src/services/workerClient"
+    );
+    meditationModel.findByPk.mockResolvedValue({
+      id: 8,
+      status: "failed",
+      save: jest.fn().mockResolvedValue(undefined),
+    });
+    jobQueueModel.count
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(0);
+    (notifyWorker as jest.Mock).mockRejectedValueOnce(new WorkerConflictError("busy"));
+
+    const response = await request(buildApp())
+      .post("/admin/meditations/8/requeue")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toContain("temporarily unavailable");
   });
 });
