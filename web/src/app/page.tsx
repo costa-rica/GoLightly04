@@ -1,4 +1,3 @@
-import CreateMeditationModeSwitcher from "@/components/forms/CreateMeditationModeSwitcher";
 import TableMeditation from "@/components/tables/TableMeditation";
 
 export default function Home() {
@@ -19,7 +18,6 @@ export default function Home() {
         </header>
 
         <TableMeditation />
-        <CreateMeditationModeSwitcher />
       </div>
     </main>
   );

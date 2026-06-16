@@ -59,6 +59,26 @@ function ProfileIcon(props: IconProps) {
   );
 }
 
+function CreateIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+      <path d="M7 3h10" />
+      <path d="M7 21h10" />
+    </svg>
+  );
+}
+
 function InfoIcon(props: IconProps) {
   return (
     <svg
@@ -327,6 +347,12 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
           <nav className="mt-5 flex flex-col gap-1" aria-label="Main menu">
             {isAuthenticated ? (
               <>
+                <MenuLink
+                  href="/create-meditation"
+                  icon={CreateIcon}
+                  label="Create Meditation"
+                  onClick={() => closeMenu()}
+                />
                 <MenuLink
                   href="/profile"
                   icon={ProfileIcon}
