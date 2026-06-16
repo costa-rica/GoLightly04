@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getStreamToken, getStreamUrl } from "@/lib/api/meditations";
+import {
+  downloadMeditation,
+  getStreamToken,
+  getStreamUrl,
+} from "@/lib/api/meditations";
 import { useAppSelector } from "@/store/hooks";
 
 type AudioPlayerProps = {
@@ -16,6 +20,7 @@ export default function AudioPlayer({ meditationId, title }: AudioPlayerProps) {
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,18 +76,56 @@ export default function AudioPlayer({ meditationId, title }: AudioPlayerProps) {
     }
   };
 
+  const handleDownload = async () => {
+    setError(null);
+    setIsDownloading(true);
+
+    try {
+      await downloadMeditation(meditationId, title);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401) {
+        setError("Please log in to download this meditation.");
+      } else if (status === 403) {
+        setError("You do not have access to download this meditation.");
+      } else if (status === 409) {
+        setError("This meditation is not ready to download yet.");
+      } else {
+        setError("Download failed. Please try again.");
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-start gap-1">
-      <button
-        type="button"
-        onClick={handleToggle}
-        className="inline-flex items-center gap-2 rounded-full border border-calm-200 px-3 py-1 text-xs font-semibold text-calm-600 transition hover:border-primary-200 hover:text-primary-700"
-        aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`}
-        disabled={isLoading}
-      >
-        <span className="text-base">{isPlaying ? "⏸" : "▶"}</span>
-        {isLoading ? "Loading..." : isPlaying ? "Pause" : "Play"}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="inline-flex items-center gap-2 rounded-full border border-calm-200 px-3 py-1 text-xs font-semibold text-calm-600 transition hover:border-primary-200 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`}
+          disabled={isLoading}
+        >
+          <span className="text-base">{isPlaying ? "⏸" : "▶"}</span>
+          {isLoading ? "Loading..." : isPlaying ? "Pause" : "Play"}
+        </button>
+        {isAuthenticated && accessToken && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="inline-flex items-center gap-2 rounded-full border border-calm-200 px-3 py-1 text-xs font-semibold text-calm-600 transition hover:border-primary-200 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label={`Download ${title}`}
+            disabled={isDownloading}
+          >
+            <span className="text-base" aria-hidden="true">
+              ↓
+            </span>
+            {isDownloading ? "Saving..." : "Download"}
+          </button>
+        )}
+      </div>
       {error && <span className="text-xs text-red-500">{error}</span>}
       <audio ref={audioRef} preload="none" />
     </div>

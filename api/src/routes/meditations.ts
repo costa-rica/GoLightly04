@@ -16,6 +16,7 @@ import { optionalAuth, requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
 import { isStreamStart, readStreamToken } from "../lib/meditationAccess";
 import { issueStreamToken } from "../lib/authTokens";
+import { getProjectResourcePath } from "../lib/projectPaths";
 import { notifyWorker, WorkerConflictError } from "../services/workerClient";
 import { deleteMeditationCascade } from "../services/meditations/deleteMeditationCascade";
 import { createMeditationFromElements } from "../services/meditations/createMeditationFromElements";
@@ -85,6 +86,53 @@ async function loadSoundFilenameToNameLookup() {
   const { SoundFile } = getDb();
   const soundFiles = await SoundFile.findAll();
   return buildSoundFilenameToNameLookup(soundFiles);
+}
+
+function safeDownloadFilename(title: string | null | undefined, id: number): string {
+  const base = (title ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._ -]/g, "")
+    .replace(/[._ -]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
+  return `${base || `meditation-${id}`}.mp3`;
+}
+
+function restoredResourcePath(filePath: string): string | null {
+  const parts = filePath.split(/[\\/]+/).filter(Boolean);
+  const resourceIndex = parts.lastIndexOf("meditation_soundfiles");
+  if (resourceIndex === -1) {
+    return null;
+  }
+
+  return getProjectResourcePath(...parts.slice(resourceIndex));
+}
+
+async function loadMeditationAudioFile(filePath: string): Promise<{
+  filePath: string;
+  stat: Awaited<ReturnType<typeof fsPromises.stat>>;
+}> {
+  const candidates = [filePath, restoredResourcePath(filePath)].filter(
+    (candidate): candidate is string => Boolean(candidate),
+  );
+
+  for (const candidate of new Set(candidates)) {
+    try {
+      const stat = await fsPromises.stat(candidate);
+      if (stat.isFile()) {
+        return { filePath: candidate, stat };
+      }
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") {
+        throw error;
+      }
+    }
+  }
+
+  throw new AppError(409, "MEDITATION_NOT_READY", "Meditation audio is not ready");
 }
 
 function buildImportLookupWhere(opts: {
@@ -450,9 +498,9 @@ export function buildMeditationsRouter(): Router {
         throw new AppError(409, "MEDITATION_NOT_READY", "Meditation audio is not ready");
       }
 
-      const filePath = meditation.filePath;
-      const stat = await fsPromises.stat(filePath);
-      const fileSize = stat.size;
+      const audioFile = await loadMeditationAudioFile(meditation.filePath);
+      const filePath = audioFile.filePath;
+      const fileSize = Number(audioFile.stat.size);
       const range = req.headers.range;
 
       if (isStreamStart(range)) {
@@ -484,6 +532,26 @@ export function buildMeditationsRouter(): Router {
         "Accept-Ranges": "bytes",
       });
       fs.createReadStream(filePath).pipe(res);
+    }),
+  );
+
+  router.get(
+    "/:id/download",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const meditation = await loadMeditationOrThrow(Number(req.params.id));
+      assertMeditationAccess(meditation, req.user, "stream");
+      if (!meditation.filePath) {
+        throw new AppError(409, "MEDITATION_NOT_READY", "Meditation audio is not ready");
+      }
+
+      const audioFile = await loadMeditationAudioFile(meditation.filePath);
+      res.set({
+        "Content-Length": String(Number(audioFile.stat.size)),
+        "Content-Type": "audio/mpeg",
+        "Content-Disposition": `attachment; filename="${safeDownloadFilename(meditation.title, meditation.id)}"`,
+      });
+      fs.createReadStream(audioFile.filePath).pipe(res);
     }),
   );
 

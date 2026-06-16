@@ -111,6 +111,66 @@ export const getStreamToken = async (
   return response.data;
 };
 
+const getHeaderValue = (value: unknown): string | null => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+  return null;
+};
+
+const getFilenameFromContentDisposition = (header: string | null): string | null => {
+  if (!header) return null;
+
+  const encodedMatch = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (encodedMatch?.[1]) {
+    try {
+      return decodeURIComponent(encodedMatch[1].trim());
+    } catch (_error) {
+      return encodedMatch[1].trim();
+    }
+  }
+
+  const quotedMatch = /filename="([^"]+)"/i.exec(header);
+  if (quotedMatch?.[1]) return quotedMatch[1].trim();
+
+  const unquotedMatch = /filename=([^;]+)/i.exec(header);
+  return unquotedMatch?.[1]?.trim() || null;
+};
+
+const buildDownloadFilename = (title: string, id: number): string => {
+  const base = title
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._ -]/g, "")
+    .replace(/[._ -]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
+  return `${base || `meditation-${id}`}.mp3`;
+};
+
+export const downloadMeditation = async (
+  meditationId: number,
+  title: string,
+): Promise<void> => {
+  const response = await apiClient.get<Blob>(
+    `/meditations/${meditationId}/download`,
+    { responseType: "blob" },
+  );
+  const header = getHeaderValue(response.headers["content-disposition"]);
+  const filename =
+    getFilenameFromContentDisposition(header) ??
+    buildDownloadFilename(title, meditationId);
+
+  const objectUrl = URL.createObjectURL(response.data);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+};
+
 export const favoriteMeditation = async (
   meditationId: number,
   isFavorite: boolean,

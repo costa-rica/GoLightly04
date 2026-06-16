@@ -278,6 +278,100 @@ describe("meditations routes", () => {
     expect(response.headers["content-type"]).toContain("audio/mpeg");
   });
 
+  it("streams a restored meditation from the current resources root", async () => {
+    const resourcesRoot = process.env.PATH_PROJECT_RESOURCES!;
+    const restoredPath = path.join(
+      resourcesRoot,
+      "meditation_soundfiles",
+      "20260608",
+      "meditation_21.mp3",
+    );
+    await fs.mkdir(path.dirname(restoredPath), { recursive: true });
+    await fs.writeFile(restoredPath, "restored-stream-data");
+
+    meditationModel.findByPk.mockResolvedValue({
+      id: 21,
+      userId: 10,
+      visibility: "public",
+      status: "complete",
+      filePath: "/home/limited_user/project_resources/GoLightly/meditation_soundfiles/20260608/meditation_21.mp3",
+      listenCount: 0,
+      save: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const response = await request(buildApp()).get("/meditations/21/stream");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("audio/mpeg");
+    expect(response.headers["content-length"]).toBe(String(Buffer.byteLength("restored-stream-data")));
+  });
+
+  it("returns not-ready when stream audio file is missing", async () => {
+    meditationModel.findByPk.mockResolvedValue(
+      meditationRecord({
+        filePath: "/missing/meditation_soundfiles/20260608/meditation_404.mp3",
+      }),
+    );
+
+    const response = await request(buildApp()).get("/meditations/50/stream");
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("MEDITATION_NOT_READY");
+  });
+
+  it("requires auth before downloading a meditation", async () => {
+    const response = await request(buildApp()).get("/meditations/50/download");
+
+    expect(response.status).toBe(401);
+    expect(meditationModel.findByPk).not.toHaveBeenCalled();
+  });
+
+  it("rejects downloads for meditations the user cannot access", async () => {
+    meditationModel.findByPk.mockResolvedValue(meditationRecord({ visibility: "private" }));
+
+    const response = await request(buildApp())
+      .get("/meditations/50/download")
+      .set("Authorization", `Bearer ${otherUserToken}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("returns not-ready when authorized download audio is missing", async () => {
+    meditationModel.findByPk.mockResolvedValue(meditationRecord({ filePath: null }));
+
+    const response = await request(buildApp())
+      .get("/meditations/50/download")
+      .set("Authorization", `Bearer ${userToken}`);
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("MEDITATION_NOT_READY");
+  });
+
+  it("downloads a meditation file with an attachment filename", async () => {
+    const baseDir = path.join(os.tmpdir(), "golightly04-download-tests");
+    const filePath = path.join(baseDir, "download.mp3");
+    await fs.mkdir(baseDir, { recursive: true });
+    await fs.writeFile(filePath, "download-data");
+
+    meditationModel.findByPk.mockResolvedValue(
+      meditationRecord({
+        title: 'Morning "Breathe" / Reset',
+        filePath,
+      }),
+    );
+
+    const response = await request(buildApp())
+      .get("/meditations/50/download")
+      .set("Authorization", `Bearer ${userToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("audio/mpeg");
+    expect(response.headers["content-disposition"]).toBe(
+      'attachment; filename="morning-breathe-reset.mp3"',
+    );
+    expect(response.headers["content-length"]).toBe(String(Buffer.byteLength("download-data")));
+  });
+
   it("returns serialized script when scriptSource is null", async () => {
     soundFileModel.findAll.mockResolvedValue([{ id: 1, name: "Rain", filename: "rain.mp3" }]);
     meditationModel.findByPk.mockResolvedValue(
