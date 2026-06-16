@@ -1055,7 +1055,7 @@ export default function AdminPage() {
       <ModalConfirmDelete
         isOpen={!!meditationDefaultTarget}
         title="Set default meditation"
-        message={`Set "${meditationDefaultTarget?.title ?? "this meditation"}" as the default? It will be hidden from ordinary meditation lists and shown in the default meditation section.`}
+        message={`Set "${meditationDefaultTarget?.title ?? "this meditation"}" as the default? It will be hidden from ordinary meditation lists and used as the selected app default.`}
         confirmLabel="Set Default"
         variant="primary"
         isLoading={isSettingDefault}

@@ -1,8 +1,8 @@
 ---
 created_at: 2026-06-12
-updated_at: 2026-06-12
+updated_at: 2026-06-16
 created_by: hermes nws-go-lightly-dev (gpt-5.5)
-modified_by: hermes nws-go-lightly-dev (gpt-5.5)
+modified_by: codex (gpt-5)
 ---
 
 # System User Meditation Import Rollout Runbook
@@ -22,7 +22,7 @@ This rollout introduces:
 - Root importer command `npm run import:meditations`.
 - Retirement of the seeded/template default meditation path.
 - Comma-separated `ADMIN_EMAIL` bootstrap support.
-- Default meditation display on the home page and default-prefill behavior in the create form.
+- Default-meditation API support and default-prefill behavior in the create form.
 
 ## Preconditions
 
@@ -204,9 +204,9 @@ Verify the import results through API/admin UI or read-only database checks appr
 
 ### 14. Operator: select the app default meditation in `/admin`
 
-Open `/admin`, expand the Meditations table, and choose **Set Default** on the intended meditation.
+Open `/admin`, expand the Meditations table, and choose `Set Default` on the intended meditation.
 
-The selected default is expected to be hidden from ordinary meditation lists but visible through the home-page default meditation section and `GET /meditations/default`.
+The selected default is expected to be hidden from ordinary meditation lists but visible through `GET /meditations/default`.
 
 ### 15. Server Agent: verify default playback and create-form prefill
 
@@ -222,10 +222,9 @@ After default selection, verify:
 
 In a browser, confirm:
 
-- The home page renders the default meditation section.
-- If no default exists, logged-in users see a clear admin-style no-default banner rather than a crash.
+- The home page loads without rendering a default meditation section or no-default banner.
 - The ordinary meditation table/list does not show the selected default as a regular list item.
-- The admin Meditations table shows a Default badge and disables **Set Default** for the current default.
+- The admin Meditations table shows a Default badge and disables `Set Default` for the current default.
 - Delete-user preservation messaging refers to reassignment to the existing `benevolent_monkey` account and does not create a phantom benevolent user.
 
 ### 17. Server Agent: capture final deployment evidence

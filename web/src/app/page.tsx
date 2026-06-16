@@ -1,6 +1,5 @@
 import CreateMeditationModeSwitcher from "@/components/forms/CreateMeditationModeSwitcher";
 import TableMeditation from "@/components/tables/TableMeditation";
-import DefaultMeditationSection from "@/components/DefaultMeditationSection";
 
 export default function Home() {
   return (
@@ -18,8 +17,6 @@ export default function Home() {
             meditations that feel personal.
           </p>
         </header>
-
-        <DefaultMeditationSection />
 
         <TableMeditation />
         <CreateMeditationModeSwitcher />
