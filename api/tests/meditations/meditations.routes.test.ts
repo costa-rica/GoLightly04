@@ -45,6 +45,7 @@ jest.mock("../../src/lib/db", () => ({
     Meditation: meditationModel,
     JobQueue: jobQueueModel,
     SoundFile: soundFileModel,
+    User: {},
     ContractUserMeditation: contractUserMeditationModel,
   }),
 }));
@@ -183,6 +184,7 @@ describe("meditations routes", () => {
         listenCount: 0,
         status: "pending",
         userId: 10,
+        User: { id: 10, username: "creator" },
       },
     ]);
 
@@ -193,6 +195,29 @@ describe("meditations routes", () => {
     expect(response.status).toBe(200);
     expect(response.body.meditations).toHaveLength(1);
     expect(response.body.meditations[0].title).toBe("Evening");
+    expect(response.body.meditations[0].createdByUsername).toBe("creator");
+  });
+
+  it("returns a meditation with creator username", async () => {
+    meditationModel.findByPk.mockResolvedValue(meditationRecord({ User: { id: 10, username: "creator" } }));
+
+    const response = await request(buildApp())
+      .get("/meditations/50")
+      .set("Authorization", `Bearer ${userToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.meditation.createdByUsername).toBe("creator");
+  });
+
+  it("serializes a meditation without an included creator as null", async () => {
+    meditationModel.findByPk.mockResolvedValue(meditationRecord());
+
+    const response = await request(buildApp())
+      .get("/meditations/50")
+      .set("Authorization", `Bearer ${userToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.meditation.createdByUsername).toBeNull();
   });
 
   it("issues a stream token for an accessible meditation", async () => {

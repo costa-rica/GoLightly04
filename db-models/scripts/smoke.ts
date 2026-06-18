@@ -11,6 +11,7 @@ async function run(): Promise<void> {
 
     const user = await User.create({
       email: "smoke@example.com",
+      username: "smoke",
       password: "smoke-password",
     });
 

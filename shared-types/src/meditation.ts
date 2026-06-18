@@ -38,6 +38,7 @@ export type Meditation = {
   isFavorite?: boolean;
   isOwned?: boolean;
   ownerUserId?: number;
+  createdByUsername?: string | null;
   status?: MeditationStatus;
   stage: MeditationStage;
   sourceMode?: SourceMode;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getProfile, updateUserPreferences } from "@/lib/api/auth";
+import { getProfile, updateUsername, updateUserPreferences } from "@/lib/api/auth";
 import { setUser } from "@/store/features/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
@@ -17,7 +17,10 @@ export default function ProfilePage() {
   );
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
+  const [username, setUsername] = useState(user?.username ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -29,7 +32,8 @@ export default function ProfilePage() {
     setIsScriptModeEnabled(
       user?.showScriptModeForCreatingMeditations ?? false,
     );
-  }, [user?.showScriptModeForCreatingMeditations]);
+    setUsername(user?.username ?? "");
+  }, [user?.showScriptModeForCreatingMeditations, user?.username]);
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) return;
@@ -42,6 +46,7 @@ export default function ProfilePage() {
       .then((response) => {
         if (!isMounted) return;
         dispatch(setUser(response.user));
+        setUsername(response.user.username);
         setIsScriptModeEnabled(
           response.user.showScriptModeForCreatingMeditations ?? false,
         );
@@ -87,6 +92,35 @@ export default function ProfilePage() {
     }
   };
 
+  const handleUsernameSave = async () => {
+    const normalized = username.trim().toLowerCase();
+    setUsername(normalized);
+    setUsernameError(null);
+
+    if (!/^[a-z0-9._-]{3,30}$/.test(normalized)) {
+      setUsernameError("Username must be 3-30 lowercase letters, numbers, dots, underscores, or hyphens.");
+      return;
+    }
+
+    setIsSavingUsername(true);
+    try {
+      const response = await updateUsername({ username: normalized });
+      dispatch(setUser(response.user));
+      setUsername(response.user.username);
+    } catch (err: any) {
+      const code = err?.response?.data?.error?.code;
+      if (code === "USERNAME_TAKEN") {
+        setUsernameError("That username is already taken.");
+      } else if (code === "VALIDATION_ERROR") {
+        setUsernameError(err?.response?.data?.error?.message || "Username is invalid.");
+      } else {
+        setUsernameError("Unable to save username. Please try again.");
+      }
+    } finally {
+      setIsSavingUsername(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -100,6 +134,7 @@ export default function ProfilePage() {
               Profile
             </h1>
             <p className="mt-3 text-sm text-ink-muted">{user?.email}</p>
+            <p className="mt-1 text-sm text-ink-muted">@{user?.username}</p>
           </div>
 
           <div className="pt-6">
@@ -109,6 +144,45 @@ export default function ProfilePage() {
               </h2>
               {isLoadingProfile && (
                 <p className="text-sm text-ink-muted">Loading profile...</p>
+              )}
+            </div>
+
+            <div className="mt-6 rounded-lg border border-subtle bg-inset px-4 py-4">
+              <label className="block text-sm font-medium text-ink" htmlFor="username">
+                Username
+              </label>
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+                <input
+                  id="username"
+                  type="text"
+                  inputMode="text"
+                  autoComplete="username"
+                  className="min-w-0 flex-1 rounded-md border border-subtle bg-canvas px-3 py-2 text-sm text-ink focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  value={username}
+                  disabled={isLoadingProfile || isSavingUsername}
+                  onChange={(event) => {
+                    setUsername(event.target.value.toLowerCase());
+                    setUsernameError(null);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoadingProfile || isSavingUsername || username.trim().toLowerCase() === user?.username}
+                  onClick={() => {
+                    void handleUsernameSave();
+                  }}
+                >
+                  {isSavingUsername ? "Saving..." : "Save username"}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-ink-muted">
+                3-30 characters: lowercase letters, numbers, dots, underscores, or hyphens.
+              </p>
+              {usernameError && (
+                <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-200">
+                  {usernameError}
+                </p>
               )}
             </div>
 

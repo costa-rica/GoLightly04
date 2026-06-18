@@ -3,6 +3,7 @@ export type AuthProvider = "local" | "google" | "both";
 export type User = {
   id: number;
   email: string;
+  username: string;
   isAdmin: boolean;
   authProvider: AuthProvider;
   showScriptModeForCreatingMeditations: boolean;
@@ -70,5 +71,13 @@ export type UserProfileResponse = {
 };
 
 export type UpdateUserPreferencesResponse = {
+  user: User;
+};
+
+export type UpdateUsernameRequest = {
+  username: string;
+};
+
+export type UpdateUsernameResponse = {
   user: User;
 };

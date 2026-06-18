@@ -5,6 +5,7 @@ import { createSequelize, getDefaultSequelize, initializeModels, provisionDataba
 import { logger } from "../config/logger";
 import { readApiEnv } from "../config/env";
 import { getDb } from "../lib/db";
+import { allocateUniqueUsernameFromEmail } from "../lib/usernames";
 
 export async function onStartUp(): Promise<void> {
   const env = readApiEnv();
@@ -32,8 +33,10 @@ export async function onStartUp(): Promise<void> {
   for (const email of env.ADMIN_EMAILS) {
     const existingAdmin = await User.findOne({ where: { email } });
     if (!existingAdmin) {
+      const { username } = await allocateUniqueUsernameFromEmail(User, email);
       await User.create({
         email,
+        username,
         password: passwordHash,
         isAdmin: true,
         isEmailVerified: true,

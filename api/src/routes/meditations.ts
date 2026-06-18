@@ -70,12 +70,15 @@ export function mapMeditationRecord(
     ownerUserId: meditation.userId,
     isDefault: meditation.isDefault === true,
     importMetadata: meditation.metadata ?? {},
+    createdByUsername: meditation.User?.username ?? null,
   };
 }
 
 async function loadMeditationOrThrow(id: number) {
-  const { Meditation } = getDb();
-  const meditation = await Meditation.findByPk(id);
+  const { Meditation, User } = getDb();
+  const meditation = await Meditation.findByPk(id, {
+    include: [{ model: User, attributes: ["id", "username"], required: false }],
+  });
   if (!meditation) {
     throw new AppError(404, "NOT_FOUND", "Meditation not found");
   }
@@ -414,7 +417,7 @@ export function buildMeditationsRouter(): Router {
     "/all",
     optionalAuth,
     asyncHandler(async (req, res) => {
-      const { ContractUserMeditation, Meditation, SoundFile } = getDb();
+      const { ContractUserMeditation, Meditation, SoundFile, User } = getDb();
       const stageClause = { stage: "library", isDefault: false };
       const where = req.user?.isAdmin
         ? stageClause
@@ -430,6 +433,7 @@ export function buildMeditationsRouter(): Router {
 
       const meditations = await Meditation.findAll({
         where,
+        include: [{ model: User, attributes: ["id", "username"], required: false }],
         order: [["createdAt", "DESC"]],
       });
       const soundFilenameToName = buildSoundFilenameToNameLookup(await SoundFile.findAll());

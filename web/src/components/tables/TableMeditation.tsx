@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import {
   deleteMeditationObj,
   favoriteMeditation,
@@ -22,6 +23,8 @@ import {
   Meditation,
 } from "@/store/features/meditationSlice";
 import { formatDurationOrDash } from "@/lib/utils/formatters";
+
+import DataTable from "./DataTable";
 
 const MID_THRESHOLD = 5;
 const HIGH_THRESHOLD = 30;
@@ -59,6 +62,38 @@ function guidanceColor(seconds: number | null | undefined): string {
     return `${baseClass} bg-yellow-300 dark:bg-yellow-400`;
   }
   return `${baseClass} bg-calm-300 dark:bg-calm-600`;
+}
+
+type MeditationTableRow = Meditation & {
+  createdByUsername?: string | null;
+  listens?: number;
+};
+
+function getListenCount(meditation: MeditationTableRow): number {
+  return meditation.listenCount ?? meditation.listens ?? 0;
+}
+
+function isMeditationInFlight(meditation: MeditationTableRow): boolean {
+  return Boolean(
+    meditation.isOwned &&
+      (meditation.status === "pending" || meditation.status === "processing"),
+  );
+}
+
+function isMeditationFailed(meditation: MeditationTableRow): boolean {
+  return Boolean(meditation.isOwned && meditation.status === "failed");
+}
+
+function GuidanceDot({ meditation }: { meditation: MeditationTableRow }) {
+  return (
+    <span
+      className={guidanceColor(meditation.durationSecondsTalking)}
+      title={formatGuidanceDuration(meditation.durationSecondsTalking)}
+      aria-label={`Guidance ${formatGuidanceDuration(
+        meditation.durationSecondsTalking,
+      )}`}
+    />
+  );
 }
 
 function HeaderHelp({
@@ -114,7 +149,6 @@ export default function TableMeditation() {
   const { isAuthenticated, accessToken, user } = useAppSelector(
     (state) => state.auth,
   );
-  const [isExpanded, setIsExpanded] = useState(true);
   const [selectedMeditation, setSelectedMeditation] =
     useState<Meditation | null>(null);
   const [toast, setToast] = useState<{
@@ -158,16 +192,11 @@ export default function TableMeditation() {
   // Backend already filters meditations based on authentication state:
   // - Anonymous: only public meditations
   // - Authenticated: public meditations + user's private meditations
-  const visibleRows = useMemo(() => {
-    return Array.isArray(meditations) ? meditations : [];
+  const visibleRows = useMemo<MeditationTableRow[]>(() => {
+    return Array.isArray(meditations) ? (meditations as MeditationTableRow[]) : [];
   }, [meditations]);
   const hasInFlight = useMemo(
-    () =>
-      visibleRows.some(
-        (meditation) =>
-          meditation.isOwned &&
-          (meditation.status === "pending" || meditation.status === "processing"),
-      ),
+    () => visibleRows.some((meditation) => isMeditationInFlight(meditation)),
     [visibleRows],
   );
 
@@ -193,20 +222,20 @@ export default function TableMeditation() {
     return () => window.clearInterval(interval);
   }, [fetchMeditations, hasInFlight]);
 
-  const handleToggleFavorite = async (
-    meditationId: number,
-    currentValue?: boolean,
-  ) => {
-    if (!isAuthenticated) return;
-    const nextValue = !currentValue;
-    dispatch(toggleFavorite({ id: meditationId, isFavorite: nextValue }));
+  const handleToggleFavorite = useCallback(
+    async (meditationId: number, currentValue?: boolean) => {
+      if (!isAuthenticated) return;
+      const nextValue = !currentValue;
+      dispatch(toggleFavorite({ id: meditationId, isFavorite: nextValue }));
 
-    try {
-      await favoriteMeditation(meditationId, nextValue);
-    } catch (err) {
-      dispatch(toggleFavorite({ id: meditationId, isFavorite: !nextValue }));
-    }
-  };
+      try {
+        await favoriteMeditation(meditationId, nextValue);
+      } catch (err) {
+        dispatch(toggleFavorite({ id: meditationId, isFavorite: !nextValue }));
+      }
+    },
+    [dispatch, isAuthenticated],
+  );
 
   const handleUpdate = async (
     id: number,
@@ -302,337 +331,257 @@ export default function TableMeditation() {
     }
   };
 
+  const renderPlayCell = useCallback((meditation: MeditationTableRow) => {
+    const isInFlight = isMeditationInFlight(meditation);
+    const isFailed = isMeditationFailed(meditation);
+
+    if (isInFlight) {
+      return (
+        <div className="flex items-center gap-2 text-xs text-calm-500 dark:text-calm-400">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-calm-200 border-t-primary-500" />
+          <span>Your meditation will be ready shortly…</span>
+        </div>
+      );
+    }
+
+    if (isFailed) {
+      return (
+        <span className="text-xs text-red-600 dark:text-red-300">
+          Generation failed. Edit or delete to try again.
+        </span>
+      );
+    }
+
+    return <AudioPlayer meditationId={meditation.id} title={meditation.title} />;
+  }, []);
+
+  const renderFavoriteCell = useCallback(
+    (meditation: MeditationTableRow) => {
+      const isInFlight = isMeditationInFlight(meditation);
+      const isFailed = isMeditationFailed(meditation);
+
+      if (isInFlight || isFailed) {
+        return <span className="text-xs text-calm-400">Pending</span>;
+      }
+
+      return (
+        <button
+          type="button"
+          onClick={() => handleToggleFavorite(meditation.id, meditation.isFavorite)}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
+            meditation.isFavorite
+              ? "border-amber-200 bg-amber-50 text-amber-500"
+              : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
+          }`}
+          aria-label={
+            meditation.isFavorite
+              ? `Remove ${meditation.title} from favorites`
+              : `Add ${meditation.title} to favorites`
+          }
+        >
+          ★
+        </button>
+      );
+    },
+    [handleToggleFavorite],
+  );
+
+  const columns = useMemo<ColumnDef<MeditationTableRow>[]>(() => {
+    const tableColumns: ColumnDef<MeditationTableRow>[] = [
+      {
+        accessorKey: "title",
+        id: "title",
+        header: "Title",
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => setSelectedMeditation(row.original)}
+            className="text-left font-medium text-calm-900 underline decoration-calm-300 underline-offset-2 transition hover:text-primary-700 hover:decoration-primary-500 dark:text-calm-100 dark:decoration-calm-600 dark:hover:text-primary-300"
+          >
+            {row.original.title}
+          </button>
+        ),
+      },
+      {
+        accessorKey: "createdByUsername",
+        id: "createdByUsername",
+        header: "Created By",
+        cell: ({ row }) => row.original.createdByUsername || "—",
+      },
+      {
+        id: "play",
+        header: "Play",
+        enableSorting: false,
+        cell: ({ row }) => renderPlayCell(row.original),
+      },
+      {
+        accessorKey: "durationSeconds",
+        id: "durationSeconds",
+        header: () => <HeaderHelp label="Length" helpText={headerHelp.length} />,
+        cell: ({ row }) => formatDurationOrDash(row.original.durationSeconds),
+      },
+      {
+        accessorKey: "durationSecondsTalking",
+        id: "durationSecondsTalking",
+        header: () => (
+          <HeaderHelp
+            label="Guidance"
+            helpText={headerHelp.guidance}
+            align="center"
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="text-center">
+            <GuidanceDot meditation={row.original} />
+          </div>
+        ),
+      },
+    ];
+
+    if (isAuthenticated) {
+      tableColumns.push({
+        id: "favorite",
+        header: () => (
+          <HeaderHelp
+            label="Favorite"
+            helpText={headerHelp.favorite}
+            align="center"
+          />
+        ),
+        enableSorting: false,
+        cell: ({ row }) => <div className="text-center">{renderFavoriteCell(row.original)}</div>,
+      });
+    }
+
+    tableColumns.push({
+      id: "listenCount",
+      accessorFn: (row) => getListenCount(row),
+      header: () => (
+        <HeaderHelp
+          label="Listens"
+          helpText={headerHelp.listens}
+          align="right"
+        />
+      ),
+      cell: ({ row }) => (
+        <div className="text-right text-calm-600 dark:text-calm-400">
+          {getListenCount(row.original)}
+        </div>
+      ),
+    });
+
+    return tableColumns;
+  }, [isAuthenticated, renderFavoriteCell, renderPlayCell]);
+
+  const renderMeditationMobileCard = useCallback(
+    (_row: Row<MeditationTableRow>, meditation: MeditationTableRow) => {
+      const isInFlight = isMeditationInFlight(meditation);
+      const isFailed = isMeditationFailed(meditation);
+
+      return (
+        <div className="space-y-3 rounded-2xl border border-calm-100 bg-white p-4 dark:border-calm-800 dark:bg-calm-950/60">
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setSelectedMeditation(meditation)}
+              className="text-left text-sm font-medium text-calm-900 underline decoration-calm-300 underline-offset-2 transition hover:text-primary-700 hover:decoration-primary-500 dark:text-calm-100 dark:decoration-calm-600 dark:hover:text-primary-300"
+            >
+              {meditation.title}
+            </button>
+            <div className="text-xs text-calm-500 dark:text-calm-400">
+              Created By: {meditation.createdByUsername || "—"}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">{renderPlayCell(meditation)}</div>
+            <div className="flex shrink-0 items-center gap-3">
+              {isAuthenticated && !isInFlight && !isFailed && renderFavoriteCell(meditation)}
+              {isAuthenticated && (isInFlight || isFailed) && (
+                <span className="text-xs text-calm-400">Pending</span>
+              )}
+              <div className="flex items-center gap-1 text-xs text-calm-600 dark:text-calm-400">
+                <span>{formatDurationOrDash(meditation.durationSeconds)}</span>
+                <span aria-hidden="true">·</span>
+                <GuidanceDot meditation={meditation} />
+                <span aria-hidden="true">·</span>
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.414C4.22 13.935 3 11.793 3 9.5 3 5.916 5.916 3 9.5 3c1.793 0 3.435.72 4.621 1.879"
+                  />
+                </svg>
+                <span>{getListenCount(meditation)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    },
+    [isAuthenticated, renderFavoriteCell, renderPlayCell],
+  );
+
   return (
     <section className="space-y-4">
-      <button
-        type="button"
-        onClick={() => setIsExpanded((prev) => !prev)}
-        className="flex w-full items-center justify-between rounded-2xl border border-calm-200/70 bg-white/80 px-4 py-3 text-left shadow-sm transition hover:border-primary-200 dark:border-calm-800 dark:bg-calm-900/80 dark:hover:border-primary-800"
-        aria-expanded={isExpanded}
-      >
-        <div>
-          <h2 className="text-xl font-display font-semibold text-calm-900 dark:text-calm-50">
-            Meditations
-          </h2>
-          <p className="text-sm text-calm-500 dark:text-calm-400">Explore the community library</p>
-        </div>
-        <span className="text-calm-500 dark:text-calm-400">
-          {isExpanded ? (
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 15l7-7 7 7"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          )}
-        </span>
-      </button>
+      <div className="rounded-2xl border border-calm-200/70 bg-white/80 px-4 py-3 shadow-sm dark:border-calm-800 dark:bg-calm-900/80">
+        <h2 className="text-xl font-display font-semibold text-calm-900 dark:text-calm-50">
+          Meditations
+        </h2>
+        <p className="text-sm text-calm-500 dark:text-calm-400">Explore the community library</p>
+      </div>
 
-      {isExpanded && (
-        <div className="rounded-3xl border border-calm-200/70 bg-white p-4 shadow-sm dark:border-calm-800 dark:bg-calm-900 md:p-6">
-          {loading && (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  className="flex animate-pulse items-center justify-between rounded-2xl border border-calm-100 bg-calm-50 px-4 py-3 dark:border-calm-800 dark:bg-calm-800"
-                >
-                  <div className="h-4 w-1/2 rounded-full bg-calm-200 dark:bg-calm-700" />
-                  <div className="h-4 w-16 rounded-full bg-calm-200 dark:bg-calm-700" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {!loading && error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
-              <p>{error}</p>
-              <button
-                type="button"
-                onClick={() => void fetchMeditations()}
-                className="mt-3 rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300"
+      <div className="rounded-3xl border border-calm-200/70 bg-white p-4 shadow-sm dark:border-calm-800 dark:bg-calm-900 md:p-6">
+        {loading && (
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="flex animate-pulse items-center justify-between rounded-2xl border border-calm-100 bg-calm-50 px-4 py-3 dark:border-calm-800 dark:bg-calm-800"
               >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {!loading && !error && (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <div className="max-h-[360px] min-w-[520px] overflow-y-auto rounded-2xl border border-calm-100 dark:border-calm-800">
-                  <table className="w-full text-left text-xs md:text-sm">
-                    <thead className="sticky top-0 bg-white/90 backdrop-blur dark:bg-calm-900/90">
-                      <tr className="text-calm-500 dark:text-calm-400">
-                        <th className="px-4 py-3 font-semibold">Title</th>
-                        <th className="px-4 py-3 font-semibold">Play</th>
-                        <th className="px-4 py-3 font-semibold">
-                          <HeaderHelp label="Length" helpText={headerHelp.length} />
-                        </th>
-                        <th className="px-4 py-3 text-center font-semibold">
-                          <HeaderHelp
-                            label="Guidance"
-                            helpText={headerHelp.guidance}
-                            align="center"
-                          />
-                        </th>
-                        {isAuthenticated && (
-                          <th className="px-4 py-3 text-center font-semibold">
-                            <HeaderHelp
-                              label="Favorite"
-                              helpText={headerHelp.favorite}
-                              align="center"
-                            />
-                          </th>
-                        )}
-                        <th className="px-4 py-3 text-right font-semibold">
-                          <HeaderHelp
-                            label="Listens"
-                            helpText={headerHelp.listens}
-                            align="right"
-                          />
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleRows.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={isAuthenticated ? 6 : 5}
-                            className="px-4 py-6 text-center text-calm-500"
-                          >
-                            No meditations available yet.
-                          </td>
-                        </tr>
-                      )}
-                      {visibleRows.map((meditation) => {
-                        const listenCount =
-                          (meditation as { listenCount?: number }).listenCount ??
-                          (meditation as { listens?: number }).listens ??
-                          0;
-                        const isInFlight =
-                          meditation.isOwned &&
-                          (meditation.status === "pending" || meditation.status === "processing");
-                        const isFailed = meditation.isOwned && meditation.status === "failed";
-
-                        return (
-                          <tr
-                            key={meditation.id}
-                            className="border-t border-calm-100 text-calm-700 dark:border-calm-800 dark:text-calm-300"
-                          >
-                            <td className="px-4 py-3 font-medium text-calm-900 dark:text-calm-100">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedMeditation(meditation)}
-                                className="text-left underline decoration-calm-300 underline-offset-2 transition hover:text-primary-700 hover:decoration-primary-500 dark:decoration-calm-600 dark:hover:text-primary-300"
-                              >
-                                {meditation.title}
-                              </button>
-                            </td>
-                            <td className="px-4 py-3">
-                              {isInFlight ? (
-                                <div className="flex items-center gap-2 text-xs text-calm-500 dark:text-calm-400">
-                                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-calm-200 border-t-primary-500" />
-                                  <span>Your meditation will be ready shortly…</span>
-                                </div>
-                              ) : isFailed ? (
-                                <span className="text-xs text-red-600 dark:text-red-300">
-                                  Generation failed. Edit or delete to try again.
-                                </span>
-                              ) : (
-                                <AudioPlayer
-                                  meditationId={meditation.id}
-                                  title={meditation.title}
-                                />
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-calm-600 dark:text-calm-400">
-                              {formatDurationOrDash(meditation.durationSeconds)}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <span
-                                className={guidanceColor(meditation.durationSecondsTalking)}
-                                title={formatGuidanceDuration(meditation.durationSecondsTalking)}
-                                aria-label={`Guidance ${formatGuidanceDuration(
-                                  meditation.durationSecondsTalking,
-                                )}`}
-                              />
-                            </td>
-                            {isAuthenticated && (
-                              <td className="px-4 py-3 text-center">
-                                {isInFlight || isFailed ? (
-                                  <span className="text-xs text-calm-400">Pending</span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleToggleFavorite(
-                                        meditation.id,
-                                        meditation.isFavorite,
-                                      )
-                                    }
-                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
-                                      meditation.isFavorite
-                                        ? "border-amber-200 bg-amber-50 text-amber-500"
-                                        : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
-                                    }`}
-                                    aria-label={
-                                      meditation.isFavorite
-                                        ? `Remove ${meditation.title} from favorites`
-                                        : `Add ${meditation.title} to favorites`
-                                    }
-                                  >
-                                    ★
-                                  </button>
-                                )}
-                              </td>
-                            )}
-                            <td className="px-4 py-3 text-right text-calm-600 dark:text-calm-400">
-                              {listenCount}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <div className="h-4 w-1/2 rounded-full bg-calm-200 dark:bg-calm-700" />
+                <div className="h-4 w-16 rounded-full bg-calm-200 dark:bg-calm-700" />
               </div>
+            ))}
+          </div>
+        )}
 
-              {/* Mobile Card View */}
-              <div className="block md:hidden">
-                {visibleRows.length === 0 ? (
-                  <div className="rounded-2xl border border-calm-100 px-4 py-6 text-center text-sm text-calm-500 dark:border-calm-800 dark:text-calm-400">
-                    No meditations available yet.
-                  </div>
-                ) : (
-                  <div className="max-h-[360px] overflow-y-auto space-y-3">
-                    {visibleRows.map((meditation) => {
-                      const listenCount =
-                        (meditation as { listenCount?: number }).listenCount ??
-                        (meditation as { listens?: number }).listens ??
-                        0;
-                      const isInFlight =
-                        meditation.isOwned &&
-                        (meditation.status === "pending" || meditation.status === "processing");
-                      const isFailed = meditation.isOwned && meditation.status === "failed";
+        {!loading && error && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => void fetchMeditations()}
+              className="mt-3 rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-                      return (
-                        <div
-                          key={meditation.id}
-                          className="space-y-3 rounded-2xl border border-calm-100 bg-white p-4 dark:border-calm-800 dark:bg-calm-950/60"
-                        >
-                          {/* Title Row */}
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedMeditation(meditation)}
-                              className="text-left text-sm font-medium text-calm-900 underline decoration-calm-300 underline-offset-2 transition hover:text-primary-700 hover:decoration-primary-500 dark:text-calm-100 dark:decoration-calm-600 dark:hover:text-primary-300"
-                            >
-                              {meditation.title}
-                            </button>
-                          </div>
+        {!loading && !error && (
+          <DataTable
+            columns={columns}
+            data={visibleRows}
+            emptyMessage="No meditations available yet."
+            filterMode="column"
+            filterColumnId="title"
+            searchPlaceholder="Search by title…"
+            pageSize={10}
+            showPagination
+            showPageSizeSelector={false}
+            minWidthClassName="min-w-[720px]"
+            renderMobileRow={({ row, item }) => renderMeditationMobileCard(row, item)}
+          />
+        )}
+      </div>
 
-                          {/* Controls Row */}
-                          <div className="flex items-center justify-between gap-3">
-                            {isInFlight ? (
-                              <div className="flex items-center gap-2 text-xs text-calm-500 dark:text-calm-400">
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-calm-200 border-t-primary-500" />
-                                <span>Your meditation will be ready shortly…</span>
-                              </div>
-                            ) : isFailed ? (
-                              <span className="text-xs text-red-600 dark:text-red-300">
-                                Generation failed. Edit or delete to try again.
-                              </span>
-                            ) : (
-                              <AudioPlayer
-                                meditationId={meditation.id}
-                                title={meditation.title}
-                              />
-                            )}
-                            <div className="flex items-center gap-3">
-                              {isAuthenticated && !isInFlight && !isFailed && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleToggleFavorite(
-                                      meditation.id,
-                                      meditation.isFavorite,
-                                    )
-                                  }
-                                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
-                                    meditation.isFavorite
-                                      ? "border-amber-200 bg-amber-50 text-amber-500"
-                                      : "border-calm-200 text-calm-400 hover:border-primary-200 hover:text-primary-700 dark:border-calm-700 dark:text-calm-500 dark:hover:border-primary-500 dark:hover:text-primary-300"
-                                  }`}
-                                  aria-label={
-                                    meditation.isFavorite
-                                      ? `Remove ${meditation.title} from favorites`
-                                      : `Add ${meditation.title} to favorites`
-                                  }
-                                >
-                                  ★
-                                </button>
-                              )}
-                              <div className="flex items-center gap-1 text-xs text-calm-600 dark:text-calm-400">
-                                <span>{formatDurationOrDash(meditation.durationSeconds)}</span>
-                                <span aria-hidden="true">·</span>
-                                <span
-                                  className={guidanceColor(meditation.durationSecondsTalking)}
-                                  title={formatGuidanceDuration(meditation.durationSecondsTalking)}
-                                  aria-label={`Guidance ${formatGuidanceDuration(
-                                    meditation.durationSecondsTalking,
-                                  )}`}
-                                />
-                                <span aria-hidden="true">·</span>
-                                <svg
-                                  className="h-4 w-4"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.414C4.22 13.935 3 11.793 3 9.5 3 5.916 5.916 3 9.5 3c1.793 0 3.435.72 4.621 1.879"
-                                  />
-                                </svg>
-                                <span>{listenCount}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
       <ModalMeditationDetails
         isOpen={!!selectedMeditation}
         meditation={selectedMeditation}

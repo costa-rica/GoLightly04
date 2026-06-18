@@ -10,6 +10,7 @@ import {
 export class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare id: CreationOptional<number>;
   declare email: string;
+  declare username: string;
   declare password: string | null;
   declare authProvider: CreationOptional<"local" | "google" | "both">;
   declare isEmailVerified: CreationOptional<boolean>;
@@ -32,6 +33,13 @@ export function initUserModel(sequelize: Sequelize): typeof User {
         type: DataTypes.TEXT,
         allowNull: false,
         unique: true,
+      },
+      username: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        validate: {
+          is: /^[a-z0-9._-]{3,30}$/,
+        },
       },
       password: {
         type: DataTypes.TEXT,

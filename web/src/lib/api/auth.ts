@@ -9,6 +9,8 @@ import type {
   RegisterResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  UpdateUsernameRequest,
+  UpdateUsernameResponse,
   UpdateUserPreferencesRequest,
   UpdateUserPreferencesResponse,
   UserProfileResponse,
@@ -41,6 +43,16 @@ export const updateUserPreferences = async (
 ): Promise<UpdateUserPreferencesResponse> => {
   const response = await apiClient.patch<UpdateUserPreferencesResponse>(
     "/users/me/preferences",
+    data,
+  );
+  return response.data;
+};
+
+export const updateUsername = async (
+  data: UpdateUsernameRequest,
+): Promise<UpdateUsernameResponse> => {
+  const response = await apiClient.patch<UpdateUsernameResponse>(
+    "/users/me/username",
     data,
   );
   return response.data;

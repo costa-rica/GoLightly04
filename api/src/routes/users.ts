@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
-import type { UpdateUserPreferencesRequest } from "@golightly/shared-types";
+import type { UpdateUsernameRequest, UpdateUserPreferencesRequest } from "@golightly/shared-types";
 import { getDb } from "../lib/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { AppError } from "../lib/errors";
@@ -17,6 +17,13 @@ import { requireAuth } from "../middleware/auth";
 import { ensureString, requireBodyFields } from "../middleware/validate";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../services/email";
 import { readApiEnv } from "../config/env";
+import {
+  createUserWithUniqueUsername,
+  isEmailUniqueConstraintError,
+  isUsernameTaken,
+  isUsernameUniqueConstraintError,
+  normalizeSubmittedUsername,
+} from "../lib/usernames";
 
 async function hasPublicMeditations(userId: number): Promise<boolean> {
   const { Meditation } = getDb();
@@ -33,6 +40,7 @@ function mapUser(
   user: {
     id: number;
     email: string;
+    username: string;
     isAdmin: boolean;
     authProvider?: "local" | "google" | "both";
     showScriptModeForCreatingMeditations?: boolean;
@@ -42,6 +50,7 @@ function mapUser(
   return {
     id: user.id,
     email: user.email,
+    username: user.username,
     isAdmin: user.isAdmin,
     authProvider: user.authProvider ?? "local",
     showScriptModeForCreatingMeditations: user.showScriptModeForCreatingMeditations ?? false,
@@ -66,12 +75,20 @@ export function buildUsersRouter(): Router {
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await User.create({
-        email,
-        password: passwordHash,
-        authProvider: "local",
-        isEmailVerified: false,
-      });
+      let user;
+      try {
+        user = await createUserWithUniqueUsername(User, {
+          email,
+          password: passwordHash,
+          authProvider: "local",
+          isEmailVerified: false,
+        });
+      } catch (error) {
+        if (isEmailUniqueConstraintError(error)) {
+          throw new AppError(409, "EMAIL_EXISTS", "Email is already registered");
+        }
+        throw error;
+      }
 
       const token = issueVerificationToken(email);
       await sendVerificationEmail({ email }, token);
@@ -169,6 +186,51 @@ export function buildUsersRouter(): Router {
     }),
   );
 
+  router.patch(
+    "/me/username",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      requireBodyFields<UpdateUsernameRequest>(req.body, ["username"]);
+      if (typeof req.body.username !== "string") {
+        throw new AppError(400, "VALIDATION_ERROR", "username must be a string");
+      }
+
+      const username = normalizeSubmittedUsername(req.body.username);
+      if (!username) {
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "username must be 3-30 lowercase characters using only letters, numbers, dots, underscores, or hyphens",
+        );
+      }
+
+      const { User } = getDb();
+      const user = await User.findOne({ where: { id: req.user!.id } });
+
+      if (!user) {
+        throw new AppError(404, "USER_NOT_FOUND", "User not found");
+      }
+
+      if (await isUsernameTaken(User, username, user.id)) {
+        throw new AppError(409, "USERNAME_TAKEN", "Username is already taken");
+      }
+
+      try {
+        user.username = username;
+        await user.save();
+      } catch (error) {
+        if (isUsernameUniqueConstraintError(error)) {
+          throw new AppError(409, "USERNAME_TAKEN", "Username is already taken");
+        }
+        throw error;
+      }
+
+      res.json({
+        user: mapUser(user, await hasPublicMeditations(user.id)),
+      });
+    }),
+  );
+
   router.post(
     "/forgot-password",
     asyncHandler(async (req, res) => {
@@ -249,17 +311,29 @@ export function buildUsersRouter(): Router {
       }
 
       const { User } = getDb();
-      let user = await User.findOne({ where: { email } });
+      let user: any = await User.findOne({ where: { email } });
 
       if (!user) {
-        user = await User.create({
-          email,
-          password: null,
-          authProvider: "google",
-          isEmailVerified: true,
-          emailVerifiedAt: new Date(),
-        });
-      } else if (user.authProvider === "local") {
+        try {
+          user = await createUserWithUniqueUsername(User, {
+            email,
+            password: null,
+            authProvider: "google",
+            isEmailVerified: true,
+            emailVerifiedAt: new Date(),
+          });
+        } catch (error) {
+          if (!isEmailUniqueConstraintError(error)) {
+            throw error;
+          }
+          user = await User.findOne({ where: { email } });
+          if (!user) {
+            throw error;
+          }
+        }
+      }
+
+      if (user.authProvider === "local") {
         user.authProvider = "both";
         user.isEmailVerified = true;
         user.emailVerifiedAt = new Date();
