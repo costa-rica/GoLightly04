@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { AdminUser } from "@/lib/api/admin";
@@ -18,7 +19,7 @@ export default function TableAdminUsers({
   currentUserId,
   onDelete,
 }: TableAdminUsersProps) {
-  const columns: ColumnDef<AdminUser>[] = [
+  const columns = useMemo<ColumnDef<AdminUser>[]>(() => [
     { accessorKey: "id", header: "ID" },
     { accessorKey: "email", header: "Email" },
     {
@@ -58,7 +59,7 @@ export default function TableAdminUsers({
           </button>
         ),
     },
-  ];
+  ], [currentUserId, onDelete]);
 
   return <AdminTable columns={columns} data={users} emptyMessage="No users found." />;
 }

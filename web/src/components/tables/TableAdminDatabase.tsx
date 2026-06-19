@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { BackupFile } from "@/lib/api/database";
@@ -18,7 +19,7 @@ export default function TableAdminDatabase({
   onDownload,
   onDelete,
 }: TableAdminDatabaseProps) {
-  const columns: ColumnDef<BackupFile>[] = [
+  const columns = useMemo<ColumnDef<BackupFile>[]>(() => [
     {
       accessorKey: "filename",
       header: "Filename",
@@ -56,7 +57,7 @@ export default function TableAdminDatabase({
         </button>
       ),
     },
-  ];
+  ], [onDelete, onDownload]);
 
   return <AdminTable columns={columns} data={backups} emptyMessage="No backups available." />;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { AdminMeditation } from "@/lib/api/admin";
@@ -20,7 +21,7 @@ export default function TableAdminMeditations({
   onDelete,
   onSetDefault,
 }: TableAdminMeditationsProps) {
-  const columns: ColumnDef<AdminMeditation>[] = [
+  const columns = useMemo<ColumnDef<AdminMeditation>[]>(() => [
     { accessorKey: "id", header: "ID" },
     { accessorKey: "title", header: "Title" },
     {
@@ -95,7 +96,7 @@ export default function TableAdminMeditations({
         );
       },
     },
-  ];
+  ], [onDelete, onEdit, onSetDefault]);
 
   return (
     <AdminTable

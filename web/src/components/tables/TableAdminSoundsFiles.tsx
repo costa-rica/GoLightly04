@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { SoundFile } from "@/lib/api/sounds";
@@ -17,7 +18,7 @@ export default function TableAdminSoundsFiles({
   onEdit,
   onDelete,
 }: TableAdminSoundsFilesProps) {
-  const columns: ColumnDef<SoundFile>[] = [
+  const columns = useMemo<ColumnDef<SoundFile>[]>(() => [
     {
       accessorKey: "id",
       header: "ID",
@@ -57,7 +58,7 @@ export default function TableAdminSoundsFiles({
         </button>
       ),
     },
-  ];
+  ], [onDelete, onEdit]);
 
   return (
     <AdminTable

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { QueueRecord } from "@/lib/api/admin";
@@ -29,7 +30,7 @@ export default function TableAdminQueuer({
   onDelete,
   onRequeue,
 }: TableAdminQueuerProps) {
-  const columns: ColumnDef<QueueRecord>[] = [
+  const columns = useMemo<ColumnDef<QueueRecord>[]>(() => [
     { accessorKey: "id", header: "ID" },
     { accessorKey: "meditationId", header: "Meditation ID" },
     { accessorKey: "sequence", header: "Sequence" },
@@ -96,7 +97,7 @@ export default function TableAdminQueuer({
         </div>
       ),
     },
-  ];
+  ], [onDelete, onRequeue]);
 
   return <AdminTable columns={columns} data={records} emptyMessage="No queue records found." />;
 }

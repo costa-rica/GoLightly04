@@ -53,7 +53,7 @@ import { hideLoading, showLoading } from "@/store/features/uiSlice";
 export default function AdminPage() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -221,8 +221,10 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    if (isExpanded) {
+      fetchUsers();
+    }
+  }, [fetchUsers, isExpanded]);
 
   useEffect(() => {
     if (isSoundsExpanded) {
@@ -482,12 +484,17 @@ export default function AdminPage() {
 
           <section className="space-y-4">
             <div className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm">
-              <div>
+              <button
+                type="button"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                className="rounded-xl text-left transition hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-raised"
+                aria-expanded={isExpanded}
+              >
                 <h2 className="text-xl font-display font-semibold text-ink">
                   Users
                 </h2>
                 <p className="text-sm text-ink-muted">Manage registered users</p>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsExpanded((prev) => !prev)}
@@ -569,14 +576,19 @@ export default function AdminPage() {
 
           <section className="space-y-4">
             <div className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm">
-              <div>
+              <button
+                type="button"
+                onClick={() => setIsSoundsExpanded((prev) => !prev)}
+                className="rounded-xl text-left transition hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-raised"
+                aria-expanded={isSoundsExpanded}
+              >
                 <h2 className="text-xl font-display font-semibold text-ink">
                   Sound Files
                 </h2>
                 <p className="text-sm text-ink-muted">
                   Upload and manage audio assets
                 </p>
-              </div>
+              </button>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -670,14 +682,19 @@ export default function AdminPage() {
 
           <section className="space-y-4">
             <div className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm">
-              <div>
+              <button
+                type="button"
+                onClick={() => setIsMeditationsExpanded((prev) => !prev)}
+                className="rounded-xl text-left transition hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-raised"
+                aria-expanded={isMeditationsExpanded}
+              >
                 <h2 className="text-xl font-display font-semibold text-ink">
                   Meditations
                 </h2>
                 <p className="text-sm text-ink-muted">
                   Review all meditation content
                 </p>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsMeditationsExpanded((prev) => !prev)}
@@ -760,7 +777,12 @@ export default function AdminPage() {
 
           <section className="space-y-4">
             <div className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm">
-              <div>
+              <button
+                type="button"
+                onClick={() => setIsQueuerExpanded((prev) => !prev)}
+                className="rounded-xl text-left transition hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-raised"
+                aria-expanded={isQueuerExpanded}
+              >
                 <h2 className="text-xl font-display font-semibold text-ink">
                   Jobs Queue
                 </h2>
@@ -768,7 +790,7 @@ export default function AdminPage() {
                   Jobs Queue mirrors the database table, one row per meditation
                   element.
                 </p>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsQueuerExpanded((prev) => !prev)}
