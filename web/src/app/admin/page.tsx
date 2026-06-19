@@ -225,26 +225,29 @@ export default function AdminPage() {
   }, [fetchUsers]);
 
   useEffect(() => {
-    fetchSoundFiles();
-  }, [fetchSoundFiles]);
+    if (isSoundsExpanded) {
+      fetchSoundFiles();
+    }
+  }, [fetchSoundFiles, isSoundsExpanded]);
 
   useEffect(() => {
-    fetchMeditations();
-  }, [fetchMeditations]);
+    if (isMeditationsExpanded) {
+      fetchMeditations();
+    }
+  }, [fetchMeditations, isMeditationsExpanded]);
 
   useEffect(() => {
-    fetchQueuerRecords();
-  }, [fetchQueuerRecords]);
-
-  useEffect(() => {
-    fetchBackups();
-  }, [fetchBackups]);
+    if (isQueuerExpanded) {
+      fetchQueuerRecords();
+    }
+  }, [fetchQueuerRecords, isQueuerExpanded]);
 
   useEffect(() => {
     if (isDatabaseExpanded) {
+      fetchBackups();
       fetchBackupSizeEstimate();
     }
-  }, [fetchBackupSizeEstimate, isDatabaseExpanded]);
+  }, [fetchBackupSizeEstimate, fetchBackups, isDatabaseExpanded]);
 
   const handleDeleteConfirm = async (savePublicMeditations: boolean) => {
     if (!deleteTarget) return;
@@ -847,14 +850,19 @@ export default function AdminPage() {
 
           <section className="space-y-4">
             <div className="flex w-full items-center justify-between rounded-2xl border border-subtle bg-raised px-4 py-3 text-left shadow-sm">
-              <div>
+              <button
+                type="button"
+                onClick={() => setIsDatabaseExpanded((prev) => !prev)}
+                className="rounded-xl text-left transition hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-raised"
+                aria-expanded={isDatabaseExpanded}
+              >
                 <h2 className="text-xl font-display font-semibold text-ink">
                   Database
                 </h2>
                 <p className="text-sm text-ink-muted">
                   Backup and restore database
                 </p>
-              </div>
+              </button>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 rounded-full border border-subtle px-3 py-2 text-xs font-semibold text-ink-muted">
                   <input
