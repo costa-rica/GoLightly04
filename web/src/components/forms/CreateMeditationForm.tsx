@@ -243,11 +243,15 @@ export default function CreateMeditationForm({
   const [activeRowMenu, setActiveRowMenu] = useState<number | null>(null);
   const maxDescriptionLength = 300;
   const isGenerating = ["pending", "processing"].includes(stagingMeditation?.status ?? "");
+  const hasGenerationFailed =
+    stagingMeditation?.stage === "staged" && stagingMeditation.status === "failed";
   const initialElements = useMemo(
     () => rowsToElements((stagingMeditation?.meditationArray ?? []).map(elementToRow)),
     [stagingMeditation?.id, stagingMeditation?.updatedAt],
   );
   const isDirty = JSON.stringify(rowsToElements(rows)) !== JSON.stringify(initialElements);
+  // A failed staged meditation has nothing to save, so let unchanged rows be regenerated.
+  const needsGenerate = isDirty || hasGenerationFailed;
   const canSave =
     isActive &&
     stagingMeditation?.stage === "staged" &&
@@ -600,6 +604,12 @@ export default function CreateMeditationForm({
             {isGenerating && (
               <p className="mb-4 text-sm text-ink-muted">Generation in progress - please wait</p>
             )}
+            {hasGenerationFailed && (
+              <p role="alert" className="mb-4 text-sm text-red-600">
+                Audio generation failed. Please try generating again. If it keeps failing, contact
+                support.
+              </p>
+            )}
 
             {soundsError && (
               <p className="mt-2 text-xs text-red-500">{soundsError}</p>
@@ -912,11 +922,11 @@ export default function CreateMeditationForm({
             )}
             <button
               type="button"
-              onClick={isDirty ? handleGenerate : handleOpenModal}
-              disabled={isDirty ? !generateEnabled : !canSave}
+              onClick={needsGenerate ? handleGenerate : handleOpenModal}
+              disabled={needsGenerate ? !generateEnabled : !canSave}
               className="rounded-full bg-primary-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-primary-200"
             >
-              {isSubmitting ? "Working..." : isDirty ? "Generate" : "Save to Library"}
+              {isSubmitting ? "Working..." : needsGenerate ? "Generate" : "Save to Library"}
             </button>
           </div>
         </div>

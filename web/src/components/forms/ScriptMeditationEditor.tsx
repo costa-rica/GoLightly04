@@ -147,7 +147,11 @@ export default function ScriptMeditationEditor({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
   const isGenerating = ["pending", "processing"].includes(stagingMeditation?.status ?? "");
+  const hasGenerationFailed =
+    stagingMeditation?.stage === "staged" && stagingMeditation.status === "failed";
   const isDirty = script !== (stagingMeditation?.scriptSource ?? "");
+  // A failed staged meditation has nothing to save, so let an unchanged script be regenerated.
+  const needsGenerate = isDirty || hasGenerationFailed;
   const canSave =
     isActive &&
     stagingMeditation?.stage === "staged" &&
@@ -334,6 +338,12 @@ export default function ScriptMeditationEditor({
             {isGenerating && (
               <p className="text-sm text-ink-muted">Generation in progress - please wait</p>
             )}
+            {hasGenerationFailed && (
+              <p role="alert" className="text-sm text-red-600">
+                Audio generation failed. Please try generating again. If it keeps failing, contact
+                support.
+              </p>
+            )}
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_10rem]">
               <label className="block">
                 <span className="text-sm font-medium text-ink-muted">Title</span>
@@ -437,15 +447,15 @@ export default function ScriptMeditationEditor({
 
             <button
               type="button"
-              onClick={isDirty ? handleGenerate : handleSave}
-              disabled={isDirty ? generateDisabled : !canSave}
+              onClick={needsGenerate ? handleGenerate : handleSave}
+              disabled={needsGenerate ? generateDisabled : !canSave}
               className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-strong/60"
             >
               {hasPendingSoundValidation
                 ? "Validating sounds..."
                 : isSubmitting
                   ? "Working..."
-                  : isDirty
+                  : needsGenerate
                     ? "Generate"
                     : canSave
                       ? "Save to Library"

@@ -145,6 +145,20 @@ export async function processMeditation(
         lastError: message,
         lastAttemptedAt: new Date(),
       });
+      // Processing stops here, so later jobs will never run. Leaving them "pending" makes the
+      // API treat the meditation as still busy and reject every regenerate with MEDITATION_BUSY.
+      await db.JobQueue.update(
+        {
+          status: "failed",
+          lastError: `skipped: job ${claimedJob.id} (sequence ${claimedJob.sequence}) failed`,
+        },
+        {
+          where: {
+            meditationId,
+            status: { [Op.in]: ["pending", "processing"] },
+          },
+        },
+      );
       await meditation.update({
         status: "failed",
       });

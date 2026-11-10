@@ -123,7 +123,9 @@ export async function createOrRegenerateStagedMeditation(opts: {
       if (!REGENERATABLE_STATUSES.has(existing.status)) {
         throw new AppError(409, "MEDITATION_BUSY", "Meditation is currently being processed");
       }
-      if (await hasActiveJob(existing.id, transaction)) {
+      // A failed meditation is no longer being processed; older workers could leave later jobs
+      // "pending" after a failure, and those leftovers must not block a retry.
+      if (existing.status !== "failed" && (await hasActiveJob(existing.id, transaction))) {
         throw new AppError(409, "MEDITATION_BUSY", "Meditation is currently being processed");
       }
 

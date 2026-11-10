@@ -109,6 +109,33 @@ describe("processMeditation", () => {
     expect(mockedConcatenateMeditation).toHaveBeenCalledWith(1);
   });
 
+  it("marks remaining jobs failed when a text job fails so retries are not blocked", async () => {
+    const meditation = createMeditation();
+    const firstJob = createJob({ id: 10, sequence: 1 });
+    const laterJob = createJob({ id: 11, sequence: 2, inputData: { text: "never reached" } });
+
+    mockedMeditationFindByPk.mockResolvedValue(meditation);
+    currentJobs = [firstJob, laterJob];
+    mockedJobFindAll.mockResolvedValueOnce([firstJob, laterJob]);
+    mockedGenerateSpeech.mockRejectedValueOnce(new Error("ElevenLabs request failed with status 400"));
+
+    const { processMeditation } = await import("../../src/processor/processMeditation");
+    await expect(processMeditation(1)).rejects.toThrow("status 400");
+
+    expect(firstJob.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        lastError: "ElevenLabs request failed with status 400",
+      }),
+    );
+    expect(mockedJobUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", lastError: expect.stringContaining("skipped") }),
+      { where: { meditationId: 1, status: expect.anything() } },
+    );
+    expect(meditation.update).toHaveBeenLastCalledWith({ status: "failed" });
+    expect(mockedGenerateSpeech).toHaveBeenCalledTimes(1);
+  });
+
   it("reports whether any meditation is active", async () => {
     const meditation = createMeditation();
     const firstJob = createJob();
