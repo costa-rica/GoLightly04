@@ -48,6 +48,12 @@ export type DataTableProps<TData, TValue = unknown> = {
   renderMobileRow?: (ctx: { row: Row<TData>; item: TData }) => ReactNode;
 };
 
+// Stable empty values. TanStack memoizes row models by reference, so passing a fresh `[]` each
+// render recomputes them every render; each recompute queues an auto page-index reset that sets
+// new pagination state, which re-renders again: an endless render loop that freezes the page.
+const EMPTY_SORTING: SortingState = [];
+const EMPTY_COLUMN_FILTERS: ColumnFiltersState = [];
+
 function resolveUpdater<T>(updaterOrValue: T | ((old: T) => T), currentValue: T): T {
   return typeof updaterOrValue === "function"
     ? (updaterOrValue as (old: T) => T)(currentValue)
@@ -102,7 +108,7 @@ export default function DataTable<TData, TValue = unknown>({
 
   const isSortingControlled = sorting !== undefined || onSortingChange !== undefined;
   const [internalSorting, setInternalSorting] = useState<SortingState>(defaultSorting);
-  const effectiveSorting = isSortingControlled ? (sorting ?? []) : internalSorting;
+  const effectiveSorting = isSortingControlled ? (sorting ?? EMPTY_SORTING) : internalSorting;
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -120,7 +126,9 @@ export default function DataTable<TData, TValue = unknown>({
   }
 
   const columnFilters = useMemo<ColumnFiltersState>(() => {
-    if (filterMode !== "column" || !filterColumnId || !effectiveFilterValue) return [];
+    if (filterMode !== "column" || !filterColumnId || !effectiveFilterValue) {
+      return EMPTY_COLUMN_FILTERS;
+    }
     return [{ id: filterColumnId, value: effectiveFilterValue }];
   }, [effectiveFilterValue, filterColumnId, filterMode]);
 
@@ -130,6 +138,17 @@ export default function DataTable<TData, TValue = unknown>({
       setInternalSorting(nextSorting);
     }
     onSortingChange?.(nextSorting);
+  };
+
+  // TanStack's page reset always returns a new object, even when nothing changed. Keep the
+  // current state in that case so React bails out instead of re-rendering.
+  const handlePaginationChange: OnChangeFn<PaginationState> = (updaterOrValue) => {
+    setPagination((current) => {
+      const next = resolveUpdater(updaterOrValue, current);
+      return next.pageIndex === current.pageIndex && next.pageSize === current.pageSize
+        ? current
+        : next;
+    });
   };
 
   const handleFilterValueChange = (value: string) => {
@@ -147,12 +166,12 @@ export default function DataTable<TData, TValue = unknown>({
     state: {
       sorting: effectiveSorting,
       globalFilter: filterMode === "global" ? effectiveFilterValue : undefined,
-      columnFilters: filterMode === "column" ? columnFilters : [],
+      columnFilters: filterMode === "column" ? columnFilters : EMPTY_COLUMN_FILTERS,
       pagination,
     },
     enableSorting,
     onSortingChange: handleSortingChange,
-    onPaginationChange: setPagination,
+    onPaginationChange: handlePaginationChange,
     globalFilterFn: (row, _columnId, value) => {
       const text = Object.values(row.original as Record<string, unknown>)
         .join(" ")
