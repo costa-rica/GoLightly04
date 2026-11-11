@@ -47,6 +47,7 @@ modified_by: claude (haiku-4.5)
 
 - Really old docs are moved into `docs/archive/`.
 - Organized into per-month subfolders named `YYYYMM/` (e.g. `202604/`).
+- The `YYYYMM/` folder is the month the file was archived, not the month it was created; the filename's date prefix keeps the creation date.
 - Not every month will have a folder — only months with archived files exist.
 - Usually managed by the operator, not the AI coding agent.
 - Agents: these files are kept for reference only; do not review them when scanning the project to build context.
