@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-10
-updated_at: 2026-11-10
+updated_at: 2026-11-11
 created_by: claude (opus-5.5)
 modified_by: claude (opus-5.5)
 ---
@@ -43,8 +43,17 @@ sudo -u postgres psql -d golightly04_prod -c "GRANT CONNECT ON DATABASE golightl
 sudo -u postgres psql -d golightly04_prod -c "GRANT ALL ON SCHEMA public TO golightly04_boot;"
 sudo -u postgres psql -d golightly04_prod -c "ALTER SCHEMA public OWNER TO golightly04_boot;"
 sudo -u postgres psql -d golightly04_prod -c "GRANT USAGE ON SCHEMA public TO golightly04_app;"
-sudo -u postgres psql -d golightly04_prod -c "ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO golightly04_app;"
-sudo -u postgres psql -d golightly04_prod -c "ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO golightly04_app;"
+sudo -u postgres psql -d golightly04_prod -c "ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO golightly04_app;"
+sudo -u postgres psql -d golightly04_prod -c "ALTER DEFAULT PRIVILEGES FOR ROLE golightly04_boot IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO golightly04_app;"
+```
+
+`TRUNCATE` on tables and `UPDATE` on sequences are required by the restore (step 5): the worker runs it as `golightly04_app`, empties the tables, then resets the id sequences with `setval`.
+
+If the tables already exist without these privileges, grant them directly:
+
+```bash
+sudo -u postgres psql -d golightly04_prod -c "GRANT TRUNCATE ON ALL TABLES IN SCHEMA public TO golightly04_app;"
+sudo -u postgres psql -d golightly04_prod -c "GRANT UPDATE ON ALL SEQUENCES IN SCHEMA public TO golightly04_app;"
 ```
 
 ### 3. Start services
