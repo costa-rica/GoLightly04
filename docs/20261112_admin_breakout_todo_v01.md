@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-12T22:59:09Z
-updated_at: 2026-11-12T23:17:00Z
+updated_at: 2026-11-12T23:19:01Z
 created_by: claude (fable-5.2) nicksmacbookair
 modified_by: codex (gpt-6) nicksmacbookair
 ---
@@ -112,7 +112,7 @@ Follow the pattern from phase 2 for each page. Each page has its own `toast` sta
 
 ### Check
 
-- [ ] Open each of the three pages and confirm the table loads.
+- [x] Open each of the three pages and confirm the table loads.
 - [x] Run the end of phase steps.
 
 ## Phase 4: Database page
@@ -127,7 +127,7 @@ Follow the pattern from phase 2 for each page. Each page has its own `toast` sta
 - [x] Pass the include resources checkbox and the Create Backup button as the shell's `actions`.
 - [x] As the shell's children, render the size estimate line, `TableAdminDatabase`, and the upload and restore block, copied from the old page.
 - [x] Render `ModalConfirmRestore` and `Toast` with the same props as the old page.
-- [ ] Open `/admin/database` and confirm the backup list and size estimate load.
+- [x] Open `/admin/database` and confirm the backup list and size estimate load.
 - [x] Run the end of phase steps.
 
 ## Phase 5: Sidebar Admin group and scrolling
@@ -158,10 +158,10 @@ All tasks are in `web/src/components/Navigation.tsx`.
 
 ### Check
 
-- [ ] As an admin, confirm the group is open on an admin page and closed on other pages.
+- [x] As an admin, confirm the group is open on an admin page and closed on other pages.
 - [ ] Confirm each link navigates, the menu closes, and the current page is marked.
-- [ ] At a viewport of 375 by 568 with the group open, confirm the menu scrolls and Logout can be reached.
-- [ ] As a non-admin, confirm the Admin group is not shown and the menu looks as before.
+- [x] At a viewport of 375 by 568 with the group open, confirm the menu scrolls and Logout can be reached.
+- [x] As a non-admin, confirm the Admin group is not shown and the menu looks as before.
 - [x] Run the end of phase steps.
 
 ## Phase 6: Index redirect and cleanup
@@ -169,15 +169,15 @@ All tasks are in `web/src/components/Navigation.tsx`.
 - [x] Before deleting anything, compare each new page against its section in the old page: state, fetch, handlers, modals, toasts, and header actions. Fix any gap.
 - [x] Replace the contents of `web/src/app/admin/page.tsx` with a server component that calls `redirect("/admin/users")` from `next/navigation`. It has no `"use client"` line.
 - [x] Search `web/src` for imports or references that are now unused, and remove only those left unused by this work.
-- [ ] Confirm opening `/admin` lands on `/admin/users`.
-- [ ] Confirm a non-admin opening `/admin` or any `/admin` page is sent to `/`.
+- [x] Confirm opening `/admin` lands on `/admin/users`.
+- [x] Confirm a non-admin opening `/admin` or any `/admin` page is sent to `/`.
 - [x] Run the end of phase steps.
 
 ## Phase 7: Manual verification
 
 Run the app with the API and worker available. Record any failure and fix it before closing the phase.
 
-- [ ] Every page: the title and one-line description show, with no collapse control and no "Manage Go Lightly" header.
+- [x] Every page: the title and one-line description show, with no collapse control and no "Manage Go Lightly" header.
 - [ ] Every page: the skeleton shows while loading. With the API stopped, the error box and Retry button show.
 - [ ] Users: delete a user. Confirm an admin cannot delete their own account.
 - [ ] Sound Files: upload, edit, and delete a sound file.
@@ -187,6 +187,22 @@ Run the app with the API and worker available. Record any failure and fix it bef
 - [ ] Database: upload a backup and restore, only on a development database.
 - [ ] Sidebar: the group opens on admin pages, links navigate, and the menu closes.
 - [ ] Sidebar: at 375 by 568 and in phone landscape, every admin link and Logout can be reached by scrolling.
-- [ ] Keyboard: tab through the open menu at a short viewport and confirm focused rows scroll into view. Escape closes the menu and focus returns to the menu button.
-- [ ] Access: a non-admin user cannot open any `/admin` route.
+- [x] Keyboard: tab through the open menu at a short viewport and confirm focused rows scroll into view. Escape closes the menu and focus returns to the menu button.
+- [x] Access: a non-admin user cannot open any `/admin` route.
 - [ ] Check off the completed tasks and commit any fixes, following the end of phase steps.
+
+## Verification record
+
+- Branch: `dev_15_admin_breakout`, created from updated `main` at `7fc2845`. Remote `main` was fast-forwarded to that commit with operator approval.
+- Documentation commit: `453e5f9`, cherry-picked from `5da3e4d`; it is excluded from `main`.
+- Phases 1–6: lint, typecheck, and build passed after each implementation phase. Lint retains four existing hook dependency warnings outside the changed files.
+- Source comparison verified 17 fetch/handler declarations and 19 table/modal/toast instances against the original page. The approved queue-only refresh is the sole handler change.
+- Browser checks used a temporary local fixture API with synthetic admin and non-admin users. Checked boxes for rendering, navigation, and access describe those frontend checks, not live backend verification.
+- Verified all five page titles and loaded tables, the Database size estimate, and the redirect from `/admin` to `/admin/users`.
+- Verified all five error boxes with fixture 503 responses and Database Retry recovery. The API-stopped and loading-skeleton check remains pending.
+- Verified automatic group expansion on admin routes and collapse on About, the current-page attribute, navigation to Database, and menu closing. The check for navigating through every sidebar link remains pending.
+- Verified scrolling at 375 by 568 and keyboard scrolling at 568 by 375. Logout stayed within the viewport after scrolling or tabbing; Escape returned focus to the menu button.
+- Verified the Admin group is hidden for a synthetic non-admin and all six admin URLs redirect that user to `/`.
+- Phase 7 remains open: local PostgreSQL reported no response, and the real API and worker were unavailable. Live delete, upload, edit, requeue, backup, and restore operations were not performed.
+- The original-page visual check from phase 1 was not performed before the redirect replaced that page.
+- Temporary servers were stopped, the synthetic browser session was logged out, and the viewport override was reset.
