@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-12T22:59:09Z
-updated_at: 2026-11-12T23:15:25Z
+updated_at: 2026-11-12T23:16:00Z
 created_by: claude (fable-5.2) nicksmacbookair
 modified_by: codex (gpt-6) nicksmacbookair
 ---
@@ -117,18 +117,18 @@ Follow the pattern from phase 2 for each page. Each page has its own `toast` sta
 
 ## Phase 4: Database page
 
-- [ ] Create `web/src/app/admin/database/page.tsx` named `AdminDatabasePage`.
-- [ ] Copy the state: `backups`, `databaseLoading`, `databaseError`, `includeResources`, `isRestoreConfirmOpen`, `sizeEstimate`, `uploadFile`, and the `uploadInputRef` ref.
-- [ ] Add `useAppDispatch` for `showLoading` and `hideLoading`.
-- [ ] Copy `fetchBackups` and `fetchBackupSizeEstimate`.
-- [ ] Copy `handleCreateBackup`, `handleDownloadBackup`, `handleDeleteBackup`, and `handleRestoreDatabase`.
-- [ ] Add a `useEffect` that calls both `fetchBackups` and `fetchBackupSizeEstimate` when the page loads.
-- [ ] Render `AdminPageShell` with title "Database" and description "Backup and restore database".
-- [ ] Pass the include resources checkbox and the Create Backup button as the shell's `actions`.
-- [ ] As the shell's children, render the size estimate line, `TableAdminDatabase`, and the upload and restore block, copied from the old page.
-- [ ] Render `ModalConfirmRestore` and `Toast` with the same props as the old page.
+- [x] Create `web/src/app/admin/database/page.tsx` named `AdminDatabasePage`.
+- [x] Copy the state: `backups`, `databaseLoading`, `databaseError`, `includeResources`, `isRestoreConfirmOpen`, `sizeEstimate`, `uploadFile`, and the `uploadInputRef` ref.
+- [x] Add `useAppDispatch` for `showLoading` and `hideLoading`.
+- [x] Copy `fetchBackups` and `fetchBackupSizeEstimate`.
+- [x] Copy `handleCreateBackup`, `handleDownloadBackup`, `handleDeleteBackup`, and `handleRestoreDatabase`.
+- [x] Add a `useEffect` that calls both `fetchBackups` and `fetchBackupSizeEstimate` when the page loads.
+- [x] Render `AdminPageShell` with title "Database" and description "Backup and restore database".
+- [x] Pass the include resources checkbox and the Create Backup button as the shell's `actions`.
+- [x] As the shell's children, render the size estimate line, `TableAdminDatabase`, and the upload and restore block, copied from the old page.
+- [x] Render `ModalConfirmRestore` and `Toast` with the same props as the old page.
 - [ ] Open `/admin/database` and confirm the backup list and size estimate load.
-- [ ] Run the end of phase steps.
+- [x] Run the end of phase steps.
 
 ## Phase 5: Sidebar Admin group and scrolling
 
