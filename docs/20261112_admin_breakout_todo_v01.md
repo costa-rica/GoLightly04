@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-12T22:59:09Z
-updated_at: 2026-11-12T23:13:56Z
+updated_at: 2026-11-12T23:15:00Z
 created_by: claude (fable-5.2) nicksmacbookair
 modified_by: codex (gpt-6) nicksmacbookair
 ---
@@ -45,37 +45,37 @@ Then:
 ## Phase 1: Shared shell and admin layout
 
 - [x] Create `web/src/components/AdminPageShell.tsx` as a client component.
-  - [ ] Props: `title`, `description`, `actions` (optional), `loading`, `error` (string or null), `onRetry`, `children`.
-  - [ ] Render a `section` with the title row and the content panel, using the classes from the current section markup in the old admin page.
-  - [ ] Title row: an `h1` for `title`, a `p` for `description`, and `actions` on the right. No toggle button and no chevron.
-  - [ ] Content panel: when `loading`, show the four skeleton rows copied from the Users section.
-  - [ ] Content panel: when not loading and `error` is set, show the error box and a Retry button that calls `onRetry`.
-  - [ ] Content panel: otherwise show `children`.
+  - [x] Props: `title`, `description`, `actions` (optional), `loading`, `error` (string or null), `onRetry`, `children`.
+  - [x] Render a `section` with the title row and the content panel, using the classes from the current section markup in the old admin page.
+  - [x] Title row: an `h1` for `title`, a `p` for `description`, and `actions` on the right. No toggle button and no chevron.
+  - [x] Content panel: when `loading`, show the four skeleton rows copied from the Users section.
+  - [x] Content panel: when not loading and `error` is set, show the error box and a Retry button that calls `onRetry`.
+  - [x] Content panel: otherwise show `children`.
 - [x] Create `web/src/app/admin/layout.tsx`.
-  - [ ] Wrap `children` in `ProtectedRoute requireAdmin`.
-  - [ ] Inside it, render the `main` element and the centered container `div`, with the classes used by the old admin page.
-  - [ ] Add no header and no links.
+  - [x] Wrap `children` in `ProtectedRoute requireAdmin`.
+  - [x] Inside it, render the `main` element and the centered container `div`, with the classes used by the old admin page.
+  - [x] Add no header and no links.
 - [x] In `web/src/app/admin/page.tsx`, remove only the wrappers now in the layout.
-  - [ ] Remove the `ProtectedRoute` wrapper and its import.
-  - [ ] Remove the `main` element and the centered container `div`, keeping their contents.
-  - [ ] Keep the modals and toast rendering as they are.
+  - [x] Remove the `ProtectedRoute` wrapper and its import.
+  - [x] Remove the `main` element and the centered container `div`, keeping their contents.
+  - [x] Keep the modals and toast rendering as they are.
 - [ ] Run the dev server and confirm `/admin` looks and works as before, with no doubled padding.
 - [x] Run the end of phase steps.
 
 ## Phase 2: Users page
 
-- [ ] Create `web/src/app/admin/users/page.tsx` as a client component named `AdminUsersPage`.
-- [ ] Copy the users state: `users`, `loading`, `error`, `deleteTarget`, `isDeleting`.
-- [ ] Add a local `toast` state with the same shape as the old page.
-- [ ] Read `user` from the store with `useAppSelector`.
-- [ ] Copy `fetchUsers` and `handleDeleteConfirm`, including the self-delete guard.
-- [ ] Add a `useEffect` that calls `fetchUsers` when the page loads.
-- [ ] Render `AdminPageShell` with title "Users" and description "Manage registered users".
-- [ ] Pass `loading`, `error`, and `fetchUsers` as `onRetry`.
-- [ ] Render `TableAdminUsers` as the shell's children, with the same props as the old page.
-- [ ] Render `ModalConfirmDeleteUser` and `Toast` with the same props as the old page.
+- [x] Create `web/src/app/admin/users/page.tsx` as a client component named `AdminUsersPage`.
+- [x] Copy the users state: `users`, `loading`, `error`, `deleteTarget`, `isDeleting`.
+- [x] Add a local `toast` state with the same shape as the old page.
+- [x] Read `user` from the store with `useAppSelector`.
+- [x] Copy `fetchUsers` and `handleDeleteConfirm`, including the self-delete guard.
+- [x] Add a `useEffect` that calls `fetchUsers` when the page loads.
+- [x] Render `AdminPageShell` with title "Users" and description "Manage registered users".
+- [x] Pass `loading`, `error`, and `fetchUsers` as `onRetry`.
+- [x] Render `TableAdminUsers` as the shell's children, with the same props as the old page.
+- [x] Render `ModalConfirmDeleteUser` and `Toast` with the same props as the old page.
 - [ ] Open `/admin/users` and confirm the table loads and delete works.
-- [ ] Run the end of phase steps.
+- [x] Run the end of phase steps.
 
 ## Phase 3: Sound Files, Meditations, and Jobs Queue pages
 
