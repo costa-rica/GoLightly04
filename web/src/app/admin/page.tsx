@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import TableAdminUsers from "@/components/tables/TableAdminUsers";
 import TableAdminSoundsFiles from "@/components/tables/TableAdminSoundsFiles";
 import TableAdminMeditations from "@/components/tables/TableAdminMeditations";
@@ -466,9 +465,7 @@ export default function AdminPage() {
   };
 
   return (
-    <ProtectedRoute requireAdmin>
-      <main className="min-h-screen bg-canvas">
-        <div className="mx-auto flex w-full max-w-app flex-col gap-10 px-4 py-10 md:px-8 md:py-16">
+    <>
           <header className="rounded-3xl border border-subtle bg-raised p-8 shadow-sm backdrop-blur">
             <p className="text-xs uppercase tracking-[0.25em] text-ink-muted">
               Admin
@@ -1028,8 +1025,6 @@ export default function AdminPage() {
               </div>
             )}
           </section>
-        </div>
-      </main>
 
       <ModalConfirmDeleteUser
         isOpen={!!deleteTarget}
@@ -1107,6 +1102,6 @@ export default function AdminPage() {
           handleRestoreDatabase();
         }}
       />
-    </ProtectedRoute>
+    </>
   );
 }
