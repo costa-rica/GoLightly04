@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-12T22:59:09Z
-updated_at: 2026-11-12T23:15:00Z
+updated_at: 2026-11-12T23:15:25Z
 created_by: claude (fable-5.2) nicksmacbookair
 modified_by: codex (gpt-6) nicksmacbookair
 ---
@@ -83,37 +83,37 @@ Follow the pattern from phase 2 for each page. Each page has its own `toast` sta
 
 ### Sound Files
 
-- [ ] Create `web/src/app/admin/sounds/page.tsx` named `AdminSoundsPage`.
-- [ ] Copy the state: `soundFiles`, `soundsLoading`, `soundsError`, `soundDeleteTarget`, `soundEditTarget`, `isSoundDeleting`, `isUploadOpen`.
-- [ ] Copy `fetchSoundFiles` and `handleSoundDeleteConfirm`.
-- [ ] Render `AdminPageShell` with title "Sound Files" and description "Upload and manage audio assets".
-- [ ] Pass the Upload Sound File button as the shell's `actions`. It sets `isUploadOpen` to true.
-- [ ] Render `TableAdminSoundsFiles` with the same props as the old page.
-- [ ] Render `ModalUploadSoundFile`, `ModalEditSoundFile`, the sound file `ModalConfirmDelete`, and `Toast`, with the same props and callbacks as the old page.
+- [x] Create `web/src/app/admin/sounds/page.tsx` named `AdminSoundsPage`.
+- [x] Copy the state: `soundFiles`, `soundsLoading`, `soundsError`, `soundDeleteTarget`, `soundEditTarget`, `isSoundDeleting`, `isUploadOpen`.
+- [x] Copy `fetchSoundFiles` and `handleSoundDeleteConfirm`.
+- [x] Render `AdminPageShell` with title "Sound Files" and description "Upload and manage audio assets".
+- [x] Pass the Upload Sound File button as the shell's `actions`. It sets `isUploadOpen` to true.
+- [x] Render `TableAdminSoundsFiles` with the same props as the old page.
+- [x] Render `ModalUploadSoundFile`, `ModalEditSoundFile`, the sound file `ModalConfirmDelete`, and `Toast`, with the same props and callbacks as the old page.
 
 ### Meditations
 
-- [ ] Create `web/src/app/admin/meditations/page.tsx` named `AdminMeditationsPage`.
-- [ ] Copy the state: `meditations`, `meditationsLoading`, `meditationsError`, the edit, delete, and default targets, `isMeditationDeleting`, `isMeditationSaving`, `isSettingDefault`.
-- [ ] Copy `fetchMeditations`, `handleMeditationDeleteConfirm`, `handleMeditationMetadataSave`, and `handleSetDefaultConfirm`.
-- [ ] Render `AdminPageShell` with title "Meditations" and description "Review all meditation content".
-- [ ] Render `TableAdminMeditations` with the same props as the old page.
-- [ ] Render `ModalConfirmCascadeDelete`, `ModalEditAdminMeditation`, the set default `ModalConfirmDelete`, and `Toast`, with the same props as the old page.
+- [x] Create `web/src/app/admin/meditations/page.tsx` named `AdminMeditationsPage`.
+- [x] Copy the state: `meditations`, `meditationsLoading`, `meditationsError`, the edit, delete, and default targets, `isMeditationDeleting`, `isMeditationSaving`, `isSettingDefault`.
+- [x] Copy `fetchMeditations`, `handleMeditationDeleteConfirm`, `handleMeditationMetadataSave`, and `handleSetDefaultConfirm`.
+- [x] Render `AdminPageShell` with title "Meditations" and description "Review all meditation content".
+- [x] Render `TableAdminMeditations` with the same props as the old page.
+- [x] Render `ModalConfirmCascadeDelete`, `ModalEditAdminMeditation`, the set default `ModalConfirmDelete`, and `Toast`, with the same props as the old page.
 
 ### Jobs Queue
 
-- [ ] Create `web/src/app/admin/queue/page.tsx` named `AdminQueuePage`.
-- [ ] Copy the state: `queueRecords`, `queueLoading`, `queueError`, `queueDeleteTarget`, `isQueueDeleting`.
-- [ ] Copy `fetchQueuerRecords`, `handleQueueDeleteConfirm`, and `handleRequeueMeditation`.
-- [ ] In `handleRequeueMeditation`, remove the call to `fetchMeditations`. Keep the call to `fetchQueuerRecords`.
-- [ ] Render `AdminPageShell` with title "Jobs Queue" and description "Jobs Queue mirrors the database table, one row per meditation element."
-- [ ] Render `TableAdminQueuer` with the same props as the old page.
-- [ ] Render the queue `ModalConfirmCascadeDelete` and `Toast`, with the same props as the old page.
+- [x] Create `web/src/app/admin/queue/page.tsx` named `AdminQueuePage`.
+- [x] Copy the state: `queueRecords`, `queueLoading`, `queueError`, `queueDeleteTarget`, `isQueueDeleting`.
+- [x] Copy `fetchQueuerRecords`, `handleQueueDeleteConfirm`, and `handleRequeueMeditation`.
+- [x] In `handleRequeueMeditation`, remove the call to `fetchMeditations`. Keep the call to `fetchQueuerRecords`.
+- [x] Render `AdminPageShell` with title "Jobs Queue" and description "Jobs Queue mirrors the database table, one row per meditation element."
+- [x] Render `TableAdminQueuer` with the same props as the old page.
+- [x] Render the queue `ModalConfirmCascadeDelete` and `Toast`, with the same props as the old page.
 
 ### Check
 
 - [ ] Open each of the three pages and confirm the table loads.
-- [ ] Run the end of phase steps.
+- [x] Run the end of phase steps.
 
 ## Phase 4: Database page
 
