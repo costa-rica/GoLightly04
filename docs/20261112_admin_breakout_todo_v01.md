@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-12T22:59:09Z
-updated_at: 2026-11-12T23:16:34Z
+updated_at: 2026-11-12T23:17:00Z
 created_by: claude (fable-5.2) nicksmacbookair
 modified_by: codex (gpt-6) nicksmacbookair
 ---
@@ -166,12 +166,12 @@ All tasks are in `web/src/components/Navigation.tsx`.
 
 ## Phase 6: Index redirect and cleanup
 
-- [ ] Before deleting anything, compare each new page against its section in the old page: state, fetch, handlers, modals, toasts, and header actions. Fix any gap.
-- [ ] Replace the contents of `web/src/app/admin/page.tsx` with a server component that calls `redirect("/admin/users")` from `next/navigation`. It has no `"use client"` line.
-- [ ] Search `web/src` for imports or references that are now unused, and remove only those left unused by this work.
+- [x] Before deleting anything, compare each new page against its section in the old page: state, fetch, handlers, modals, toasts, and header actions. Fix any gap.
+- [x] Replace the contents of `web/src/app/admin/page.tsx` with a server component that calls `redirect("/admin/users")` from `next/navigation`. It has no `"use client"` line.
+- [x] Search `web/src` for imports or references that are now unused, and remove only those left unused by this work.
 - [ ] Confirm opening `/admin` lands on `/admin/users`.
 - [ ] Confirm a non-admin opening `/admin` or any `/admin` page is sent to `/`.
-- [ ] Run the end of phase steps.
+- [x] Run the end of phase steps.
 
 ## Phase 7: Manual verification
 
