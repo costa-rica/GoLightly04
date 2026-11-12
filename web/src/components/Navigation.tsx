@@ -10,7 +10,7 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/features/authSlice";
 import { setApiAuthToken } from "@/lib/api/client";
@@ -40,6 +40,31 @@ type MenuButtonProps = {
 
 const menuRowClass =
   "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-calm-700 transition hover:bg-calm-100 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:text-calm-200 dark:hover:bg-calm-900 dark:hover:text-primary-300";
+
+const ADMIN_LINKS = [
+  { label: "Users", href: "/admin/users" },
+  { label: "Sound Files", href: "/admin/sounds" },
+  { label: "Meditations", href: "/admin/meditations" },
+  { label: "Jobs Queue", href: "/admin/queue" },
+  { label: "Database", href: "/admin/database" },
+];
+
+function ChevronIcon(props: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
 
 function ProfileIcon(props: IconProps) {
   return (
@@ -163,6 +188,24 @@ function MenuLink({ href, icon: Icon, label, onClick }: MenuLinkProps) {
   );
 }
 
+function MenuSubLink({
+  href,
+  label,
+  onClick,
+  isCurrent,
+}: Omit<MenuLinkProps, "icon"> & { isCurrent: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`${menuRowClass} pl-11`}
+      onClick={onClick}
+      aria-current={isCurrent ? "page" : undefined}
+    >
+      {label}
+    </Link>
+  );
+}
+
 function MenuButton({ icon: Icon, label, onClick }: MenuButtonProps) {
   return (
     <button type="button" className={menuRowClass} onClick={onClick}>
@@ -179,11 +222,19 @@ function Divider() {
 export default function Navigation({ onLoginClick }: NavigationProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdminGroupOpen, setIsAdminGroupOpen] = useState(
+    pathname.startsWith("/admin"),
+  );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsAdminGroupOpen(pathname.startsWith("/admin"));
+  }, [pathname]);
 
   const closeMenu = useCallback((returnFocus = true) => {
     setIsMenuOpen(false);
@@ -304,7 +355,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
             isMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="flex items-center justify-between gap-4 border-b border-calm-200 pb-4 dark:border-calm-800">
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-calm-200 pb-4 dark:border-calm-800">
             <Link
               href="/"
               className="flex min-w-0 items-center gap-3"
@@ -344,7 +395,10 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
             </button>
           </div>
 
-          <nav className="mt-5 flex flex-col gap-1" aria-label="Main menu">
+          <nav
+            className="mt-5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+            aria-label="Main menu"
+          >
             {isAuthenticated ? (
               <>
                 <MenuLink
@@ -369,12 +423,32 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
                 <Divider />
                 {user?.isAdmin ? (
                   <>
-                    <MenuLink
-                      href="/admin"
-                      icon={ShieldIcon}
-                      label="Admin"
-                      onClick={() => closeMenu()}
-                    />
+                    <button
+                      type="button"
+                      className={menuRowClass}
+                      onClick={() => setIsAdminGroupOpen((open) => !open)}
+                      aria-expanded={isAdminGroupOpen}
+                      aria-controls="admin-navigation-links"
+                    >
+                      <ShieldIcon className="h-5 w-5 shrink-0 text-calm-500 dark:text-calm-400" />
+                      <span className="flex-1">Admin</span>
+                      <ChevronIcon
+                        className={`h-4 w-4 shrink-0 transition-transform ${isAdminGroupOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {isAdminGroupOpen && (
+                      <div id="admin-navigation-links" className="space-y-1">
+                        {ADMIN_LINKS.map(({ href, label }) => (
+                          <MenuSubLink
+                            key={href}
+                            href={href}
+                            label={label}
+                            isCurrent={pathname === href}
+                            onClick={() => closeMenu()}
+                          />
+                        ))}
+                      </div>
+                    )}
                     <Divider />
                   </>
                 ) : null}

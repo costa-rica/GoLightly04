@@ -1,6 +1,6 @@
 ---
 created_at: 2026-11-12T22:59:09Z
-updated_at: 2026-11-12T23:16:00Z
+updated_at: 2026-11-12T23:16:34Z
 created_by: claude (fable-5.2) nicksmacbookair
 modified_by: codex (gpt-6) nicksmacbookair
 ---
@@ -136,25 +136,25 @@ All tasks are in `web/src/components/Navigation.tsx`.
 
 ### Admin group
 
-- [ ] Add a constant `ADMIN_LINKS` with label and route for Users, Sound Files, Meditations, Jobs Queue, and Database, using the routes in the plan.
-- [ ] Import `usePathname` from `next/navigation` and read the current route.
-- [ ] Add state `isAdminGroupOpen`.
-- [ ] Add an effect that sets `isAdminGroupOpen` to true when the route starts with `/admin`, and to false otherwise, each time the route changes.
-- [ ] Add a chevron icon component in the same style as the existing icon components.
-- [ ] Add a `MenuSubLink` component: a `Link` using `menuRowClass`, indented, with no icon, that accepts `href`, `label`, `onClick`, and an `isCurrent` flag.
-- [ ] `MenuSubLink` sets `aria-current="page"` when `isCurrent` is true.
-- [ ] Replace the Admin `MenuLink` with a toggle `button` using `menuRowClass`, `ShieldIcon`, the label "Admin", and the chevron.
-- [ ] The toggle flips `isAdminGroupOpen` and sets `aria-expanded` and `aria-controls`.
-- [ ] Below the toggle, render the `ADMIN_LINKS` as `MenuSubLink` items inside a container whose `id` matches `aria-controls`, only when the group is open.
-- [ ] Each sub link calls `closeMenu()` on click.
-- [ ] Keep the group inside the existing `user?.isAdmin` check, with the existing dividers.
+- [x] Add a constant `ADMIN_LINKS` with label and route for Users, Sound Files, Meditations, Jobs Queue, and Database, using the routes in the plan.
+- [x] Import `usePathname` from `next/navigation` and read the current route.
+- [x] Add state `isAdminGroupOpen`.
+- [x] Add an effect that sets `isAdminGroupOpen` to true when the route starts with `/admin`, and to false otherwise, each time the route changes.
+- [x] Add a chevron icon component in the same style as the existing icon components.
+- [x] Add a `MenuSubLink` component: a `Link` using `menuRowClass`, indented, with no icon, that accepts `href`, `label`, `onClick`, and an `isCurrent` flag.
+- [x] `MenuSubLink` sets `aria-current="page"` when `isCurrent` is true.
+- [x] Replace the Admin `MenuLink` with a toggle `button` using `menuRowClass`, `ShieldIcon`, the label "Admin", and the chevron.
+- [x] The toggle flips `isAdminGroupOpen` and sets `aria-expanded` and `aria-controls`.
+- [x] Below the toggle, render the `ADMIN_LINKS` as `MenuSubLink` items inside a container whose `id` matches `aria-controls`, only when the group is open.
+- [x] Each sub link calls `closeMenu()` on click.
+- [x] Keep the group inside the existing `user?.isAdmin` check, with the existing dividers.
 
 ### Scrolling
 
-- [ ] Make the `nav` element the scroll region: add `min-h-0`, `flex-1`, and `overflow-y-auto` to its classes.
-- [ ] Leave the sidebar header, with the logo and Close button, outside the `nav` so it stays visible.
-- [ ] Leave Logout inside the `nav` in its current position.
-- [ ] Do not change the Escape handler, the focus return, or the body scroll lock.
+- [x] Make the `nav` element the scroll region: add `min-h-0`, `flex-1`, and `overflow-y-auto` to its classes.
+- [x] Leave the sidebar header, with the logo and Close button, outside the `nav` so it stays visible.
+- [x] Leave Logout inside the `nav` in its current position.
+- [x] Do not change the Escape handler, the focus return, or the body scroll lock.
 
 ### Check
 
@@ -162,7 +162,7 @@ All tasks are in `web/src/components/Navigation.tsx`.
 - [ ] Confirm each link navigates, the menu closes, and the current page is marked.
 - [ ] At a viewport of 375 by 568 with the group open, confirm the menu scrolls and Logout can be reached.
 - [ ] As a non-admin, confirm the Admin group is not shown and the menu looks as before.
-- [ ] Run the end of phase steps.
+- [x] Run the end of phase steps.
 
 ## Phase 6: Index redirect and cleanup
 
